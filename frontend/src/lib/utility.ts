@@ -17,10 +17,10 @@ export async function exportInstitutionAndCoursesToFile(): Promise<File> {
       ? institutions.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0))[0]
       : null;
 
-  const sanitizedInstitution = latestInstitution
+  let sanitizedInstitution = latestInstitution
     ? (() => {
         const { logoPreviewUrl, ...restInstitution } = latestInstitution;
-        return restInstitution;
+        return restInstitution as any;
       })()
     : null;
 
@@ -37,6 +37,32 @@ export async function exportInstitutionAndCoursesToFile(): Promise<File> {
       }),
     };
   });
+
+  // 🔁 Special handling for Study Abroad: promote key L2/L3 fields onto institution
+  if (sanitizedInstitution && sanitizedInstitution.instituteType === 'Study Abroad') {
+    // Try to find a course carrying consultancy meta
+    let meta: any = null;
+    for (const b of coursesGroups) {
+      for (const c of (b.courses || [])) {
+        if (c.consultancyName || c.studentAdmissions || c.countriesOffered || c.academicOfferings) {
+          meta = c; break;
+        }
+      }
+      if (meta) break;
+    }
+    if (meta) {
+      // Map course fields → institution fields (backend expects these at institution level for Study Abroad)
+      sanitizedInstitution = {
+        ...sanitizedInstitution,
+        consultancyName: sanitizedInstitution.consultancyName ?? meta.consultancyName ?? '',
+        totalAdmissions: sanitizedInstitution.totalAdmissions ?? Number(meta.studentAdmissions || 0),
+        countries: sanitizedInstitution.countries ?? (Array.isArray(meta.countriesOffered) ? meta.countriesOffered : (meta.countriesOffered ? String(meta.countriesOffered).split(',').map((s: string) => s.trim()).filter(Boolean) : [])),
+        academicOfferings: sanitizedInstitution.academicOfferings ?? (Array.isArray(meta.academicOfferings) ? meta.academicOfferings : (meta.academicOfferings ? String(meta.academicOfferings).split(',').map((s: string) => s.trim()).filter(Boolean) : [])),
+        businessProofUrl: sanitizedInstitution.businessProofUrl ?? meta.businessProofUrl ?? '',
+        legalIdUrl: sanitizedInstitution.legalIdUrl ?? meta.panAadhaarUrl ?? '',
+      };
+    }
+  }
   // 3) Build final JSON
   const exportData = {
     institution: sanitizedInstitution,

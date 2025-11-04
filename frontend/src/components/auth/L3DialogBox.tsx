@@ -29,6 +29,7 @@ import {
   CoachingSchema,
   CollegeSchema,
   UndergraduateSchema,
+  StudyAbroadSchema,
 } from "@/lib/validations/L3Schema";
 import {
   addInstitutionToDB,
@@ -47,6 +48,7 @@ import SchoolForm from "./L3DialogBoxParts/SchoolForm";
 import CollegeForm from "./L3DialogBoxParts/CollegeForm";
 import CoachingForm from "./L3DialogBoxParts/CoachingForm";
 import UndergraduateForm from "./L3DialogBoxParts/UndergraduateForm";
+import StudyAbroadForm from "./L3DialogBoxParts/StudyAbroadForm";
 
 interface L3DialogBoxProps {
   trigger?: React.ReactNode;
@@ -176,6 +178,7 @@ export default function L3DialogBox({
   const isIntermediate = institutionType === "Intermediate college(K12)";
   const isUndergraduate =
     institutionType === "Under Graduation/Post Graduation";
+  const isStudyAbroad = institutionType === "Study Abroad";
 
   useEffect(() => {
     if (!dialogOpen) return;
@@ -283,6 +286,17 @@ export default function L3DialogBox({
       busService: "",
     });
 
+  const [studyAbroadFormData, setStudyAbroadFormData] = useState({
+    applicationAssistance: "",
+    visaProcessingSupport: "",
+    testOperation: "",
+    preDepartureOrientation: "",
+    accommodationAssistance: "",
+    educationLoans: "",
+    postArrivalSupport: "",
+  });
+  const [studyAbroadFormErrors, setStudyAbroadFormErrors] = useState<any>({});
+
   const [formErrors, setFormErrors] = useState<
     Partial<Record<keyof FormData, string>>
   >({});
@@ -304,6 +318,12 @@ export default function L3DialogBox({
   const setDialogOpen = onOpenChange || setIsOpen;
 
   // ---------- Handlers ----------
+  const handleStudyAbroadRadioChange = (name: string, value: string) => {
+    setStudyAbroadFormData((prev: any) => ({ ...prev, [name]: value }));
+    const error = validateField(StudyAbroadSchema, name as any, value);
+    setStudyAbroadFormErrors((prev: any) => ({ ...prev, [name]: error || "" }));
+  };
+
 
   const handleRadioChangeField = (name: keyof FormData, value: string) => {
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -1207,6 +1227,56 @@ const handleUndergraduateSubmit = async (e: React.FormEvent<HTMLFormElement>) =>
     }
   };
 
+  const handleStudyAbroadSubmit = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const errors = validateForm(StudyAbroadSchema, studyAbroadFormData);
+    if (Object.keys(errors).length > 0) {
+      setStudyAbroadFormErrors(errors as any);
+      return;
+    }
+    setIsLoading(true);
+    try {
+      // Normalize Yes/No → booleans
+      const normalized = {
+        applicationAssistance: studyAbroadFormData.applicationAssistance === "Yes",
+        visaProcessingSupport: studyAbroadFormData.visaProcessingSupport === "Yes",
+        testOperation: studyAbroadFormData.testOperation === "Yes",
+        preDepartureOrientation: studyAbroadFormData.preDepartureOrientation === "Yes",
+        accommodationAssistance: studyAbroadFormData.accommodationAssistance === "Yes",
+        educationLoans: studyAbroadFormData.educationLoans === "Yes",
+        postArrivalSupport: studyAbroadFormData.postArrivalSupport === "Yes",
+      };
+
+      // Save to IndexedDB (merge into latest record)
+      const institutions = await getAllInstitutionsFromDB();
+      const latest = institutions && institutions.length > 0
+        ? institutions.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0))[0]
+        : null;
+
+      if (latest) {
+        await updateInstitutionInDB({
+          ...(latest as any),
+          ...normalized,
+          id: latest.id,
+          updatedAt: Date.now(),
+        });
+      } else {
+        await addInstitutionToDB({ ...(normalized as any) } as any);
+      }
+
+      // Export and upload to backend like other flows
+      const response = await exportAndUploadInstitutionAndCourses();
+      if (response.success) {
+        onSuccess?.();
+        router.push("/payment");
+      } else {
+        alert(response?.message || "Failed to save Study Abroad details. Please try again.");
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
       {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
@@ -1256,6 +1326,17 @@ const handleUndergraduateSubmit = async (e: React.FormEvent<HTMLFormElement>) =>
                 coachingFormErrors={coachingFormErrors}
                 handleCoachingFieldChange={handleCoachingFieldChange}
                 handleCoachingSubmit={handleCoachingSubmit}
+                isLoading={isLoading}
+                onPrevious={onPrevious}
+              />
+            )}
+
+            {isStudyAbroad && (
+              <StudyAbroadForm
+                formData={studyAbroadFormData}
+                formErrors={studyAbroadFormErrors}
+                onRadioChange={handleStudyAbroadRadioChange}
+                onSubmit={handleStudyAbroadSubmit}
                 isLoading={isLoading}
                 onPrevious={onPrevious}
               />

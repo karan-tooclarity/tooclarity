@@ -5,6 +5,15 @@ import HomeHeader from "./home/HomeHeader";
 import CourseCard from "./home/CourseCard";
 import FilterSidebar from "./home/FilterSidebar";
 import styles from "./StudentDashboard.module.css";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 import { studentDashboardAPI, type CourseForStudent } from "@/lib/students-api";
 import { useAuth } from "@/lib/auth-context";
 import { useNotifications } from "@/lib/hooks/notifications-hooks";
@@ -33,6 +42,23 @@ interface Course {
   streamType?: string; // e.g., "Engineering and Technology (B.E./B.Tech.)"
   educationType?: string; // e.g., "Full time", "Part time", "Distance learning"
 }
+
+const PAGE_SIZE = 9;
+
+type PageDescriptor = number | "ellipsis";
+
+const buildPageNumbers = (currentPage: number, totalPages: number): PageDescriptor[] => {
+  if (totalPages <= 5) {
+    return Array.from({ length: totalPages }, (_, index) => index + 1);
+  }
+  if (currentPage <= 3) {
+    return [1, 2, 3, 4, "ellipsis", totalPages];
+  }
+  if (currentPage >= totalPages - 2) {
+    return [1, "ellipsis", totalPages - 3, totalPages - 2, totalPages - 1, totalPages];
+  }
+  return [1, "ellipsis", currentPage - 1, currentPage, currentPage + 1, "ellipsis", totalPages];
+};
 
 /**
  * Get price range category based on price
@@ -113,6 +139,7 @@ const StudentDashboard: React.FC = () => {
     educationType: [] as string[],
   });
   const [activePane, setActivePane] = useState<"notifications" | "wishlist" | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
 
   const notificationsQuery = useNotifications();
   const notifications = notificationsQuery.data ?? [];
@@ -161,12 +188,14 @@ const StudentDashboard: React.FC = () => {
 
         setCourses(transformedCourses);
         setFilteredCourses(transformedCourses);
+        setCurrentPage(1);
       } catch (err) {
         console.error("Error fetching courses:", err);
         setError(err instanceof Error ? err.message : "Failed to load courses");
         // Keep the component functional even if API fails
         setCourses([]);
         setFilteredCourses([]);
+        setCurrentPage(1);
       } finally {
         setLoading(false);
       }
@@ -174,6 +203,13 @@ const StudentDashboard: React.FC = () => {
 
     fetchCourses();
   }, []);
+
+  useEffect(() => {
+    setCurrentPage((prev) => {
+      const total = Math.max(1, Math.ceil(filteredCourses.length / PAGE_SIZE));
+      return prev > total ? total : prev;
+    });
+  }, [filteredCourses]);
 
   const formatNotificationTime = (timestamp?: number) => {
     if (!timestamp) return "";
@@ -342,6 +378,7 @@ const StudentDashboard: React.FC = () => {
     }
 
     setFilteredCourses(result);
+    setCurrentPage(1);
   };
 
   const handleWishlistToggle = (courseId: string) => {
@@ -388,6 +425,20 @@ const StudentDashboard: React.FC = () => {
   }, []);
 
   const wishlistCourses = courses.filter((course) => course.wishlisted);
+  const totalPages = Math.max(1, Math.ceil(filteredCourses.length / PAGE_SIZE));
+  const paginatedCourses = filteredCourses.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+  const pageNumbers = buildPageNumbers(currentPage, totalPages);
+  const shouldShowPagination = filteredCourses.length > PAGE_SIZE;
+
+  const handlePageChange = (page: number) => {
+    if (page < 1 || page > totalPages || page === currentPage) {
+      return;
+    }
+    setCurrentPage(page);
+    if (typeof window !== "undefined") {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  };
 
   return (
     <div className={styles.dashboardContainer}>
@@ -492,26 +543,76 @@ const StudentDashboard: React.FC = () => {
               </div>
 
               {filteredCourses.length > 0 ? (
-                <div className={styles.coursesGrid}>
-                  {filteredCourses.map((course) => (
-                    <CourseCard
-                      key={course.id}
-                      course={{
-                        id: course.id,
-                        title: course.title,
-                        institution: course.institution,
-                        rating: course.rating,
-                        reviews: course.reviews,
-                        students: course.students,
-                        price: course.price,
-                        level: course.level,
-                        mode: course.mode,
-                        wishlisted: course.wishlisted,
-                      }}
-                      onWishlistToggle={handleWishlistToggle}
-                    />
-                  ))}
-                </div>
+                <>
+                  <div className={styles.coursesGrid}>
+                    {paginatedCourses.map((course) => (
+                      <CourseCard
+                        key={course.id}
+                        course={{
+                          id: course.id,
+                          title: course.title,
+                          institution: course.institution,
+                          rating: course.rating,
+                          reviews: course.reviews,
+                          students: course.students,
+                          price: course.price,
+                          level: course.level,
+                          mode: course.mode,
+                          wishlisted: course.wishlisted,
+                        }}
+                        onWishlistToggle={handleWishlistToggle}
+                      />
+                    ))}
+                  </div>
+                  {shouldShowPagination && (
+                    <div className={styles.paginationContainer}>
+                      <Pagination>
+                        <PaginationContent>
+                          <PaginationItem>
+                            <PaginationPrevious
+                              href="#"
+                              aria-disabled={currentPage === 1}
+                              className={currentPage === 1 ? styles.paginationDisabled : undefined}
+                              onClick={(event) => {
+                                event.preventDefault();
+                                handlePageChange(currentPage - 1);
+                              }}
+                            />
+                          </PaginationItem>
+                          {pageNumbers.map((page, index) => (
+                            <PaginationItem key={`${page}-${index}`}>
+                              {page === "ellipsis" ? (
+                                <PaginationEllipsis />
+                              ) : (
+                                <PaginationLink
+                                  href="#"
+                                  isActive={page === currentPage}
+                                  onClick={(event) => {
+                                    event.preventDefault();
+                                    handlePageChange(page);
+                                  }}
+                                >
+                                  {page}
+                                </PaginationLink>
+                              )}
+                            </PaginationItem>
+                          ))}
+                          <PaginationItem>
+                            <PaginationNext
+                              href="#"
+                              aria-disabled={currentPage === totalPages}
+                              className={currentPage === totalPages ? styles.paginationDisabled : undefined}
+                              onClick={(event) => {
+                                event.preventDefault();
+                                handlePageChange(currentPage + 1);
+                              }}
+                            />
+                          </PaginationItem>
+                        </PaginationContent>
+                      </Pagination>
+                    </div>
+                  )}
+                </>
               ) : (
                 <div className={styles.emptyState}>
                   <p className={styles.emptyStateText}>

@@ -264,6 +264,18 @@ exports.uploadFileData = asyncHandler(async (req, res, next) => {
     let branchToCoursesMap = [];
     let directCourses = [];
 
+    const normalizeCoursePayload = (course) => {
+      const normalized = { ...course };
+      if (!normalized.type) {
+        normalized.type = "COURSE";
+      }
+      if (normalized.brotureUrl && !normalized.brochureUrl) {
+        normalized.brochureUrl = normalized.brotureUrl;
+        delete normalized.brotureUrl;
+      }
+      return normalized;
+    };
+
     for (const item of courses || []) {
       if (item.branchName) {
         const { courses: branchCourses, ...branchData } = item;
@@ -275,7 +287,7 @@ exports.uploadFileData = asyncHandler(async (req, res, next) => {
       } else if (item.courses) {
         directCourses.push(
           ...item.courses.map((course) => ({
-            ...course,
+            ...normalizeCoursePayload(course),
             institution: institutionId,
             branch: null,
           }))
@@ -296,7 +308,7 @@ exports.uploadFileData = asyncHandler(async (req, res, next) => {
       const branchCourses = branchToCoursesMap[index];
       if (branchCourses.length > 0) {
         const courseDocs = branchCourses.map((course) => ({
-          ...course,
+          ...normalizeCoursePayload(course),
           institution: institutionId,
           branch: branch._id,
         }));

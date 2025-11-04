@@ -8,7 +8,6 @@ import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
   DialogTitle,
   DialogDescription,
   DialogTrigger,
@@ -40,6 +39,7 @@ import TuitionCenterForm from "./L2DialogBoxParts/Course/TuitionCenterForm";
 import UnderPostGraduateForm from "./L2DialogBoxParts/Course/UnderPostGraduateForm";
 import BasicCourseForm from "./L2DialogBoxParts/Course/BasicCourseForm";
 import FallbackCourseForm from "./L2DialogBoxParts/Course/FallbackCourseForm";
+import StudyAbroadForm from "./L2DialogBoxParts/Course/StudyAbroadForm";
 import BranchForm from "./L2DialogBoxParts/Branch/BranchForm";
 import { error } from "console";
 import {
@@ -109,6 +109,16 @@ export interface Course {
   instructorProfile: string;
   subject: string;
   createdBranch: string;
+  consultancyName?: string;
+  studentAdmissions?: string;
+  countriesOffered?: string;
+  academicOfferings?: string;
+  businessProof?: File | null;
+  businessProofUrl?: string;
+  businessProofPreviewUrl?: string;
+  panAadhaar?: File | null;
+  panAadhaarUrl?: string;
+  panAadhaarPreviewUrl?: string;
 }
 
 // Branch shape used locally in this component; dbId tracks IndexedDB id
@@ -155,6 +165,7 @@ export default function L2DialogBox({
   const isKindergarten = institutionType === "Kindergarten/childcare center";
   const isSchool = institutionType === "School's";
   const isIntermediateCollege = institutionType === "Intermediate college(K12)";
+  const isStudyAbroad = institutionType === "Study Abroad";
 
   // Basic course form (only common fields) for these institution types
   const isBasicCourseForm = isKindergarten || isSchool || isIntermediateCollege;
@@ -261,6 +272,17 @@ export default function L2DialogBox({
         instructorProfile: existingCourseData.instructorProfile || "",
         subject: existingCourseData.subject || "",
         createdBranch: existingCourseData.createdBranch || "",
+        // Study Abroad fields
+        consultancyName: existingCourseData.consultancyName || "",
+        studentAdmissions: existingCourseData.studentAdmissions || "",
+        countriesOffered: existingCourseData.countriesOffered || "",
+        academicOfferings: existingCourseData.academicOfferings || "",
+        businessProof: null as File | null,
+        businessProofUrl: existingCourseData.businessProofUrl || "",
+        businessProofPreviewUrl: "",
+        panAadhaar: null as File | null,
+        panAadhaarUrl: existingCourseData.panAadhaarUrl || "",
+        panAadhaarPreviewUrl: "",
       }];
     }
     
@@ -309,6 +331,17 @@ export default function L2DialogBox({
       instructorProfile: "",
       subject: "",
       createdBranch: "",
+      // Study Abroad fields
+      consultancyName: "",
+      studentAdmissions: "",
+      countriesOffered: "",
+      academicOfferings: "",
+      businessProof: null as File | null,
+      businessProofUrl: "",
+      businessProofPreviewUrl: "",
+      panAadhaar: null as File | null,
+      panAadhaarUrl: "",
+      panAadhaarPreviewUrl: "",
     }];
   });
 
@@ -410,7 +443,7 @@ export default function L2DialogBox({
 
   const handleFileChange = (
     e: ChangeEvent<HTMLInputElement>,
-    type: "image" | "brochure"
+    type: "image" | "brochure" | "businessProof" | "panAadhaar"
   ) => {
     const files = e.target.files;
     if (!files || !files[0]) return;
@@ -425,10 +458,10 @@ export default function L2DialogBox({
     let errorMessage = "";
 
     // 🔍 File type validation
-    if (type === "image" && !allowedImageTypes.includes(selectedFile.type)) {
+    if ((type === "image" || type === "businessProof") && !allowedImageTypes.includes(selectedFile.type)) {
       errorMessage = "Only PNG, JPG, or JPEG images are allowed.";
     } else if (
-      type === "brochure" &&
+      (type === "brochure" || type === "panAadhaar") &&
       !allowedBrochureTypes.includes(selectedFile.type)
     ) {
       errorMessage = "Only PDF files are allowed.";
@@ -581,6 +614,17 @@ export default function L2DialogBox({
       instructorProfile: "",
       subject: "",
       createdBranch: "",
+      // Study Abroad fields
+      consultancyName: "",
+      studentAdmissions: "",
+      countriesOffered: "",
+      academicOfferings: "",
+      businessProof: null as File | null,
+      businessProofUrl: "",
+      businessProofPreviewUrl: "",
+      panAadhaar: null as File | null,
+      panAadhaarUrl: "",
+      panAadhaarPreviewUrl: "",
     };
     setCourses([...courses, newCourse]);
     setSelectedCourseId(newId);
@@ -714,6 +758,9 @@ export default function L2DialogBox({
   // Inside L2DialogBox.tsx
 
   const getSchemaKey = (): keyof typeof L2Schemas => {
+    if (isStudyAbroad) {
+      return "studyAbroad";
+    }
     if (isCoachingCenter) {
       return "coaching";
     }
@@ -797,6 +844,66 @@ export default function L2DialogBox({
             }
           }
 
+          // --- 🏢 Business Proof Upload (for Study Abroad) ---
+          if (course.businessProof instanceof File) {
+            const isNewLocalFile =
+              !course.businessProofUrl || course.businessProofUrl.startsWith("blob:");
+            if (isNewLocalFile) {
+              console.log(
+                `🪣 Uploading new business proof for: ${course.courseName}`
+              );
+              try {
+                const uploadBusinessProof = await uploadToS3(course.businessProof);
+                if (uploadBusinessProof.success && uploadBusinessProof.fileUrl) {
+                  updated.businessProofUrl = uploadBusinessProof.fileUrl;
+                  updated.businessProofPreviewUrl = URL.createObjectURL(
+                    course.businessProof
+                  );
+                  console.log(`✅ Business proof uploaded for: ${course.courseName}`);
+                }
+              } catch (err) {
+                console.error(
+                  `❌ Failed to upload business proof for ${course.courseName}:`,
+                  err
+                );
+              }
+            } else {
+              console.log(
+                `⚡ Skipping business proof upload (already uploaded): ${course.courseName}`
+              );
+            }
+          }
+
+          // --- 📄 PAN/Aadhaar Upload (for Study Abroad) ---
+          if (course.panAadhaar instanceof File) {
+            const isNewLocalFile =
+              !course.panAadhaarUrl || course.panAadhaarUrl.startsWith("blob:");
+            if (isNewLocalFile) {
+              console.log(
+                `🪣 Uploading new PAN/Aadhaar for: ${course.courseName}`
+              );
+              try {
+                const uploadPanAadhaar = await uploadToS3(course.panAadhaar);
+                if (uploadPanAadhaar.success && uploadPanAadhaar.fileUrl) {
+                  updated.panAadhaarUrl = uploadPanAadhaar.fileUrl;
+                  updated.panAadhaarPreviewUrl = URL.createObjectURL(
+                    course.panAadhaar
+                  );
+                  console.log(`✅ PAN/Aadhaar uploaded for: ${course.courseName}`);
+                }
+              } catch (err) {
+                console.error(
+                  `❌ Failed to upload PAN/Aadhaar for ${course.courseName}:`,
+                  err
+                );
+              }
+            } else {
+              console.log(
+                `⚡ Skipping PAN/Aadhaar upload (already uploaded): ${course.courseName}`
+              );
+            }
+          }
+
           return updated;
         })
       );
@@ -831,50 +938,57 @@ export default function L2DialogBox({
       let hasErrors = false;
 
       // Custom date validation before Joi validation
+      // Only apply if the active schema actually defines startDate/endDate
+      const baseSchema = L2Schemas[getSchemaKey()];
+      const schemaKeys: string[] = (baseSchema as any)?.$_terms?.keys?.map((k: any) => k.key) || [];
+      const schemaHasStartDate = schemaKeys.includes("startDate");
+      const schemaHasEndDate = schemaKeys.includes("endDate");
+
       for (const course of uploadedCourses) {
         const courseErrors: Record<string, string> = {};
-        
-        // Validate startDate
-        if (!course.startDate || course.startDate.trim() === "") {
-          courseErrors.startDate = "Start date is required";
-          hasErrors = true;
-        } else {
-          const startDate = new Date(course.startDate);
-          if (isNaN(startDate.getTime())) {
-            courseErrors.startDate = "Start date must be a valid date";
+
+        if (schemaHasStartDate) {
+          if (!course.startDate || course.startDate.trim() === "") {
+            courseErrors.startDate = "Start date is required";
             hasErrors = true;
-          }
-        }
-        
-        // Validate endDate
-        if (!course.endDate || course.endDate.trim() === "") {
-          courseErrors.endDate = "End date is required";
-          hasErrors = true;
-        } else {
-          const endDate = new Date(course.endDate);
-          if (isNaN(endDate.getTime())) {
-            courseErrors.endDate = "End date must be a valid date";
-            hasErrors = true;
-          } else if (course.startDate && course.startDate.trim() !== "") {
+          } else {
             const startDate = new Date(course.startDate);
-            if (!isNaN(startDate.getTime()) && endDate <= startDate) {
-              courseErrors.endDate = "End date must be after start date";
+            if (isNaN(startDate.getTime())) {
+              courseErrors.startDate = "Start date must be a valid date";
               hasErrors = true;
             }
           }
         }
-        
+
+        if (schemaHasEndDate) {
+          if (!course.endDate || course.endDate.trim() === "") {
+            courseErrors.endDate = "End date is required";
+            hasErrors = true;
+          } else {
+            const endDate = new Date(course.endDate);
+            if (isNaN(endDate.getTime())) {
+              courseErrors.endDate = "End date must be a valid date";
+              hasErrors = true;
+            } else if (schemaHasStartDate && course.startDate && course.startDate.trim() !== "") {
+              const startDate = new Date(course.startDate);
+              if (!isNaN(startDate.getTime()) && endDate <= startDate) {
+                courseErrors.endDate = "End date must be after start date";
+                hasErrors = true;
+              }
+            }
+          }
+        }
+
         if (Object.keys(courseErrors).length > 0) {
-          allCourseErrors[course.id] = courseErrors;
+          allCourseErrors[course.id] = { ...(allCourseErrors[course.id] || {}), ...courseErrors };
         }
       }
 
       // --- 4️⃣ Joi Validation ---
-      let schema = L2Schemas[getSchemaKey()];
+      // Prepare the base schema and then (optionally) fork it for createdBranch rule
+      let schema = baseSchema;
       if (!showCourseAfterBranch) {
-        schema = schema.fork("createdBranch", (field) =>
-          field.optional().allow("")
-        );
+        schema = schema.fork("createdBranch", (field) => field.optional().allow(""));
       }
 
       for (const course of uploadedCourses) {
@@ -1312,7 +1426,17 @@ export default function L2DialogBox({
                       </div>
                     )}*/}
                     
-                    {isCoachingCenter ? (
+                    {isStudyAbroad ? (
+                      <StudyAbroadForm
+                        currentCourse={currentCourse}
+                        handleCourseChange={handleCourseChange}
+                        handleFileChange={handleFileChange}
+                        setCourses={setCourses}
+                        courses={courses}
+                        selectedCourseId={selectedCourseId}
+                        courseErrors={courseErrorsById[currentCourse.id] || {}}
+                      />
+                    ) : isCoachingCenter ? (
                       <CoachingCourseForm
                         currentCourse={currentCourse}
                         handleCourseChange={handleCourseChange}
@@ -1381,7 +1505,7 @@ export default function L2DialogBox({
                         labelVariant={isSubscriptionProgram ? 'program' : 'course'}
                       />
                     )}
-                    {!isStudyHall && !isTutionCenter && (
+                    {!isStudyHall && !isTutionCenter && !isStudyAbroad && (
                       <div className="grid md:grid-cols-2 gap-6">
                         {uploadFields.map((f) => (
                           <div key={f.type} className="flex flex-col gap-2">
@@ -1677,7 +1801,17 @@ export default function L2DialogBox({
                           </div>
                         )}
                         
-                        {isCoachingCenter ? (
+                        {isStudyAbroad ? (
+                          <StudyAbroadForm
+                            currentCourse={currentCourse}
+                            handleCourseChange={handleCourseChange}
+                            handleFileChange={handleFileChange}
+                            setCourses={setCourses}
+                            courses={courses}
+                            selectedCourseId={selectedCourseId}
+                            courseErrors={courseErrorsById[currentCourse.id] || {}}
+                          />
+                        ) : isCoachingCenter ? (
                           <CoachingCourseForm
                             currentCourse={currentCourse}
                             handleCourseChange={handleCourseChange}
@@ -1760,7 +1894,7 @@ export default function L2DialogBox({
                             labelVariant={isSubscriptionProgram ? 'program' : 'course'}
                           />
                         )}
-                        {!isStudyHall && !isTutionCenter && (
+                        {!isStudyHall && !isTutionCenter && !isStudyAbroad && (
                           <div className="grid md:grid-cols-2 gap-6">
                             {uploadFields.map((f) => (
                               <div key={f.type} className="flex flex-col gap-2">

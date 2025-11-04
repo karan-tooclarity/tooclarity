@@ -332,6 +332,70 @@ export const branchSchema = Joi.object({
   }),
 });
 
+export const StudyAbroadSchema = Joi.object({
+  consultancyName: Joi.string()
+    .min(3)
+    .max(100)
+    .required()
+    .messages({
+      "string.empty": "Consultancy name is required",
+      "string.min": "Consultancy name must be at least 3 characters",
+      "string.max": "Consultancy name must be at most 100 characters",
+      "any.required": "Consultancy name is required",
+    }),
+
+  studentAdmissions: Joi.number()
+    .min(0)
+    .required()
+    .messages({
+      "number.base": "Student admissions must be a number",
+      "number.min": "Student admissions cannot be negative",
+      "any.required": "Student admissions is required",
+    }),
+
+  countriesOffered: Joi.string()
+    .min(1)
+    .required()
+    .messages({
+      "string.empty": "Please select a country",
+      "any.required": "Country is required",
+    }),
+
+  academicOfferings: Joi.string()
+    .min(1)
+    .required()
+    .messages({
+      "string.empty": "Please select an academic offering",
+      "any.required": "Academic offering is required",
+    }),
+
+  image: Joi.any().optional(),
+  imageUrl: Joi.string().uri().allow("").optional().messages({
+    "string.uri": "Must be a valid URL",
+  }),
+  imagePreviewUrl: Joi.string().allow("").optional(),
+
+  brochure: Joi.any().optional(),
+  brochureUrl: Joi.string().uri().allow("").optional().messages({
+    "string.uri": "Must be a valid URL",
+  }),
+  brochurePreviewUrl: Joi.string().allow("").optional(),
+
+  businessProof: Joi.any().optional(),
+  businessProofUrl: Joi.string().uri().allow("").optional().messages({
+    "string.uri": "Must be a valid URL",
+  }),
+  businessProofPreviewUrl: Joi.string().allow("").optional(),
+
+  panAadhaar: Joi.any().optional(),
+  panAadhaarUrl: Joi.string().uri().allow("").optional().messages({
+    "string.uri": "Must be a valid URL",
+  }),
+  panAadhaarPreviewUrl: Joi.string().allow("").optional(),
+
+  createdBranch: createdBranchRule,
+});
+
 // L2Schema.tsx
 export const L2Schemas: Record<string, Joi.ObjectSchema> = {
   basic: baseCourseSchema,
@@ -340,4 +404,5 @@ export const L2Schemas: Record<string, Joi.ObjectSchema> = {
   tuition: TuitionCenterSchema,
   ugpg: UGPGSchema,
   branch: branchSchema,
+  studyAbroad: StudyAbroadSchema,
 };

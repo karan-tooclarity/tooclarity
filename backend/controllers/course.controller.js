@@ -255,15 +255,25 @@ exports.getAllCoursesForInstitution = asyncHandler(async (req, res, next) => {
 
   await checkOwnership(institutionId, req.userId);
 
+  const page = parseInt(req.query.page, 10) || 1;
+  const limit = parseInt(req.query.limit, 10) || 10;
+  const skip = (page - 1) * limit;
+
   const q = { institution: institutionId };
   if (req.query.type) {
     q.type = req.query.type; // optional filter by type: 'PROGRAM' | 'COURSE'
   }
-  const courses = await Course.find(q);
+  const courses = await Course.find(q).skip(skip).limit(limit);
+  const totalCourses = await Course.countDocuments(q);
 
   res.status(200).json({
     success: true,
     count: courses.length,
+    pagination: {
+      total: totalCourses,
+      page,
+      pages: Math.ceil(totalCourses / limit)
+    },
     data: courses,
   });
 });
@@ -411,7 +421,7 @@ function getPreviousPeriod(range) {
     endDate = new Date(now.getUTCFullYear(), 0, 1);
   } else {
     endDate = new Date(now); endDate.setUTCDate(endDate.getUTCDate() - 7);
-    startDate = new Date(endDate); startDate.setUTCDate(startDate.getUTCDate() - 6);
+    startDate = new Date(endDate); startDate.setUTCDate(endDate.getUTCDate() - 6);
   }
   return { startDate, endDate };
 }

@@ -162,10 +162,6 @@ export default function L1DialogBox({
   ) => {
     const { name, value } = e.target;
 
-    if (name === "instituteType" && value === "Study Abroad") {
-      toast.error("Please select another type. 'Study Abroad' is not allowed.");
-      return; // stop updating form
-    }
     // 1. Create an updated copy of the form data with the new value
     const updatedFormData = {
       ...formData,
@@ -241,17 +237,22 @@ export default function L1DialogBox({
   // L1DialogBox.tsx
 
   useEffect(() => {
-    if (formData.instituteType === "Study Halls") {
+    if (formData.instituteType === "Study Halls" || formData.instituteType === "Study Abroad") {
       setFormData((prev) => ({
         ...prev,
-        approvedBy: "", // Use the correct field name
+        approvedBy: "",
         establishmentDate: "",
+        logo: null,
+        logoUrl: "",
+        logoPreviewUrl: "",
       }));
 
       setErrors((prev) => ({
         ...prev,
-        approvedBy: undefined, // Use the correct field name
+        approvedBy: undefined,
         establishmentDate: undefined,
+        logo: undefined,
+        logoUrl: undefined,
       }));
     }
   }, [formData.instituteType]);
@@ -477,8 +478,8 @@ export default function L1DialogBox({
   }).error;
 
   const isLogoValid =
-    !errors.logFile &&
-    (formData.logo === null || formData.logo instanceof File);
+    formData.instituteType === "Study Abroad" ||
+    (!errors.logFile && (formData.logo === null || formData.logo instanceof File));
 
   const isFormComplete = isBaseFormValid && isLogoValid;
 
@@ -560,7 +561,7 @@ export default function L1DialogBox({
                 />
               </div>
 
-              {formData.instituteType !== "Study Halls" && (
+              {formData.instituteType !== "Study Halls" && formData.instituteType !== "Study Abroad" && (
                 <>
                   <div>
                     <InputField
@@ -887,46 +888,48 @@ export default function L1DialogBox({
                 )}
               </div> */}
 
-              <div>
-                <label className="font-montserrat font-normal text-base text-black">
-                  Logo <span className="text-red-500">*</span>
-                </label>
+              {formData.instituteType !== "Study Abroad" && (
+                <div>
+                  <label className="font-montserrat font-normal text-base text-black">
+                    Logo <span className="text-red-500">*</span>
+                  </label>
 
-                <div
-                  className="w-full h-[120px] rounded-[12px] border-2 border-dashed border-[#DADADD] bg-[#F8F9FA]
-     flex flex-col items-center justify-center cursor-pointer hover:bg-[#F0F1F2]
-     transition-colors mt-2 relative"
-                >
-                  <input
-                    id="logo"
-                    name="logo"
-                    type="file"
-                    accept=".jpg,.jpeg,.png"
-                    onChange={handleFileChange}
-                    className="absolute inset-0 opacity-0 cursor-pointer"
-                  />
-
-                  {!formData.logoPreviewUrl ? (
-                    <>
-                      <Upload size={24} className="text-gray-400 mb-2" />
-                      <span className="text-sm text-gray-500">
-                        Upload Logo (jpg / jpeg / png)
-                      </span>
-                    </>
-                  ) : (
-                    <img
-                      src={formData.logoPreviewUrl}
-                      alt="Logo preview"
-                      className="w-[100px] h-[100px] object-cover rounded-md"
+                  <div
+                    className="w-full h-[120px] rounded-[12px] border-2 border-dashed border-[#DADADD] bg-[#F8F9FA]
+       flex flex-col items-center justify-center cursor-pointer hover:bg-[#F0F1F2]
+       transition-colors mt-2 relative"
+                  >
+                    <input
+                      id="logo"
+                      name="logo"
+                      type="file"
+                      accept=".jpg,.jpeg,.png"
+                      onChange={handleFileChange}
+                      className="absolute inset-0 opacity-0 cursor-pointer"
                     />
+
+                    {!formData.logoPreviewUrl ? (
+                      <>
+                        <Upload size={24} className="text-gray-400 mb-2" />
+                        <span className="text-sm text-gray-500">
+                          Upload Logo (jpg / jpeg / png)
+                        </span>
+                      </>
+                    ) : (
+                      <img
+                        src={formData.logoPreviewUrl}
+                        alt="Logo preview"
+                        className="w-[100px] h-[100px] object-cover rounded-md"
+                      />
+                    )}
+                  </div>
+
+                  {/* ✅ Show validation error here */}
+                  {errors.logo && (
+                    <p className="text-red-500 text-sm mt-1">{errors.logo}</p>
                   )}
                 </div>
-
-                {/* ✅ Show validation error here */}
-                {errors.logo && (
-                  <p className="text-red-500 text-sm mt-1">{errors.logo}</p>
-                )}
-              </div>
+              )}
             </CardContent>
 
             <CardFooter>

@@ -222,6 +222,38 @@ export const CoachingSchema = Joi.object({
 });
 
 
+export const StudyAbroadSchema = Joi.object({
+  applicationAssistance: Joi.string().valid("Yes", "No").required().messages({
+    "any.only": "Please select Yes or No for Application Assistance",
+    "string.empty": "Application Assistance is required",
+  }),
+  visaProcessingSupport: Joi.string().valid("Yes", "No").required().messages({
+    "any.only": "Please select Yes or No for Visa Processing Support",
+    "string.empty": "Visa Processing Support is required",
+  }),
+  testOperation: Joi.string().valid("Yes", "No").required().messages({
+    "any.only": "Please select Yes or No for Test Operation",
+    "string.empty": "Test Operation is required",
+  }),
+  preDepartureOrientation: Joi.string().valid("Yes", "No").required().messages({
+    "any.only": "Please select Yes or No for Pre-departure orientation",
+    "string.empty": "Pre-departure orientation is required",
+  }),
+  accommodationAssistance: Joi.string().valid("Yes", "No").required().messages({
+    "any.only": "Please select Yes or No for Accommodation assistance",
+    "string.empty": "Accommodation assistance is required",
+  }),
+  educationLoans: Joi.string().valid("Yes", "No").required().messages({
+    "any.only": "Please select Yes or No for Education loans/Financial aid guidance",
+    "string.empty": "Education loans/Financial aid guidance is required",
+  }),
+  postArrivalSupport: Joi.string().valid("Yes", "No").required().messages({
+    "any.only": "Please select Yes or No for Post-arrival support",
+    "string.empty": "Post-arrival support is required",
+  }),
+});
+
+
 export const UndergraduateSchema = Joi.object({
     ownershipType: Joi.string()
         // ✅ Updated to match your frontend options
