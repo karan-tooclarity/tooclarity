@@ -4,7 +4,6 @@ import React, { useState, useEffect } from "react";
 import HomeHeader from "./home/HomeHeader";
 import CourseCard from "./home/CourseCard";
 import FilterSidebar from "./home/FilterSidebar";
-import CoursePage from "./home/CoursePage";
 import FooterNav from "./home/FooterNav";
 import styles from "./StudentDashboard.module.css";
 import { studentDashboardAPI, type CourseForStudent } from "@/lib/students-api";
@@ -100,7 +99,6 @@ const StudentDashboard: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedCourseId, setSelectedCourseId] = useState<string | null>(null);
   const [activeFilters, setActiveFilters] = useState({
     instituteType: "" as string, // Mutually exclusive - only one can be selected
     kindergartenLevels: [] as string[],
@@ -251,6 +249,34 @@ const StudentDashboard: React.FC = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, [displayedCourses.length, filteredCourses.length, isLoadingMore, currentPage]);
 
+  // Prevent body scroll when filter bottom sheet is open (mobile only)
+  useEffect(() => {
+    // Only apply scroll lock on mobile/tablet (below 1024px)
+    const isMobile = window.innerWidth < 1024;
+    
+    if (isFilterBottomSheetOpen && isMobile) {
+      // Save current scroll position
+      const scrollY = window.scrollY;
+      
+      // Prevent scrolling on body
+      document.body.style.position = 'fixed';
+      document.body.style.top = `-${scrollY}px`;
+      document.body.style.width = '100%';
+      document.body.style.overflow = 'hidden';
+      
+      return () => {
+        // Restore scrolling
+        document.body.style.position = '';
+        document.body.style.top = '';
+        document.body.style.width = '';
+        document.body.style.overflow = '';
+        
+        // Restore scroll position
+        window.scrollTo(0, scrollY);
+      };
+    }
+  }, [isFilterBottomSheetOpen]);
+
   const formatNotificationTime = (timestamp?: number) => {
     if (!timestamp) return "";
     const diff = Date.now() - timestamp;
@@ -273,23 +299,7 @@ const StudentDashboard: React.FC = () => {
   };
 
   const handleViewCourseDetails = (courseId: string) => {
-    setSelectedCourseId(courseId);
-  };
-
-  const handleBackFromDetails = () => {
-    setSelectedCourseId(null);
-  };
-
-  const handleRequestCall = () => {
-    // Handle request call action
-    console.log('Request call clicked');
-    // You can add API call here
-  };
-
-  const handleBookDemo = () => {
-    // Handle book demo action
-    console.log('Book demo clicked');
-    // You can add API call here
+    router.push(`/dashboard/${courseId}`);
   };
 
   const handleSearch = (query: string) => {
@@ -608,51 +618,6 @@ const StudentDashboard: React.FC = () => {
           <p className={styles.errorText}>⚠️ {error}</p>
           <p className={styles.errorSubtext}>Please refresh the page or try again later.</p>
         </div>
-      ) : selectedCourseId ? (
-        (() => {
-          const selectedCourse = courses.find((c) => c.id === selectedCourseId);
-          if (!selectedCourse) return null;
-
-          const apiData = selectedCourse.apiData;
-
-          return (
-            <CoursePage
-              course={{
-                id: selectedCourseId,
-                title: selectedCourse.title,
-                institution: selectedCourse.institution,
-                location: apiData?.location || selectedCourse.institution,
-                description: apiData?.aboutCourse || 'Discover quality education with comprehensive learning programs',
-                aboutCourse: apiData?.aboutCourse || 'Our institution provides world-class education with experienced faculty and modern facilities.',
-                eligibility: apiData?.eligibilityCriteria || 'All students meeting basic requirements',
-                price: selectedCourse.price,
-                duration: apiData?.courseDuration || selectedCourse.mode || '1 year',
-                mode: apiData?.mode || 'Classroom',
-                timings: apiData?.openingTime && apiData?.closingTime 
-                  ? `${apiData.openingTime} - ${apiData.closingTime}`
-                  : '9:00 AM - 5:00 PM',
-                brandLogo: apiData?.institution?.instituteLogo || '',
-                startDate: apiData?.startDate 
-                  ? new Date(apiData.startDate).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
-                  : 'July 2024',
-                operationalDays: apiData?.operationalDays && apiData.operationalDays.length > 0
-                  ? apiData.operationalDays
-                  : ['Mon', 'Tues', 'Wed', 'Thu', 'Fri'],
-                features: {
-                  recognized: true,
-                  activities: true,
-                  transport: true,
-                  extraCare: true,
-                  mealsProvided: apiData?.hasWifi === 'Yes',
-                  playground: apiData?.hasAC === 'Yes',
-                },
-              }}
-              onBack={handleBackFromDetails}
-              onRequestCall={handleRequestCall}
-              onBookDemo={handleBookDemo}
-            />
-          );
-        })()
       ) : (
         <div className={styles.contentWrapper}>
           <FilterSidebar

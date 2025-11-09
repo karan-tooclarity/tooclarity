@@ -48,10 +48,10 @@ export const FooterNav: React.FC<FooterNavProps> = ({ onExploreClick }) => {
         <path d="M0 15.5V1.6155C0 1.15517 0.154167 0.770833 0.4625 0.4625C0.770833 0.154167 1.15517 0 1.6155 0H10.3845C10.8448 0 11.2292 0.154167 11.5375 0.4625C11.8458 0.770833 12 1.15517 12 1.6155V15.5L6 12.923L0 15.5ZM1 13.95L6 11.8L11 13.95V1.6155C11 1.4615 10.9359 1.32042 10.8077 1.19225C10.6796 1.06408 10.5385 1 10.3845 1H1.6155C1.4615 1 1.32042 1.06408 1.19225 1.19225C1.06408 1.32042 1 1.4615 1 1.6155V13.95Z" fill="#697282"/>
         </svg>
       ),
-      path: null, // Wishlist is handled in the dashboard
+      path: '/student/wishlist', // Wishlist is handled in the dashboard
       onClick: () => {
         // This will be handled by the dashboard's wishlist pane
-        router.push('/dashboard');
+        router.push('/student/wishlist');
       },
     },
     {

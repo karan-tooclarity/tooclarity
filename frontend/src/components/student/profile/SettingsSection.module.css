@@ -126,6 +126,7 @@
   .section {
     padding: 0;
     width: 90%;
+    margin-bottom: 65px;
   }
 
   .title {

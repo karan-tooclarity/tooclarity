@@ -141,7 +141,8 @@
 }
 
 .filterBtn,
-.notificationBtn {
+.notificationBtn,
+.wishlistBtn {
   width: 52px;
   height: 52px;
   border-radius: 40px;
@@ -158,14 +159,16 @@
 }
 
 .filterBtn:hover,
-.notificationBtn:hover {
+.notificationBtn:hover,
+.wishlistBtn:hover {
   background: #f5f7ff;
   box-shadow: 0 4px 12px rgba(2, 34, 215, 0.15);
   transform: translateY(-2px);
 }
 
 .filterBtn:active,
-.notificationBtn:active {
+.notificationBtn:active,
+.wishlistBtn:active {
   transform: translateY(0);
 }
 
@@ -201,12 +204,16 @@
   background: white;
   border: none;
   cursor: pointer;
-  display: none; /* hidden by default; shown on desktop */
+  display: flex; /* shown on mobile, hidden on desktop via media query */
   align-items: center;
   justify-content: center;
   transition: all 0.3s ease;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   padding: 0;
+}
+
+.wishlistBtn {
+  display: none; /* hidden by default, shown on desktop */
 }
 
 .menuBtn:hover {
@@ -421,7 +428,10 @@
 
 @media (min-width: 1024px) {
   .menuBtn {
-    display: flex; /* show on desktop */
+    display: none; /* hide on desktop */
+  }
+  .wishlistBtn {
+    display: flex; /* show wishlist on desktop */
   }
 }
 
