@@ -35,9 +35,9 @@ interface CoursePageProps {
   onBookDemo?: () => void;
 }
 
-export const CoursePage: React.FC<CoursePageProps> = ({
+export const Kindergarten: React.FC<CoursePageProps> = ({
   course,
-  onBack: _onBack,
+  onBack,
   onRequestCall,
   onBookDemo,
 }) => {
@@ -51,6 +51,15 @@ export const CoursePage: React.FC<CoursePageProps> = ({
 
   return (
     <div className={styles.pageContainer} style={{ width: '100%', minWidth: 0 }}>
+      {/* Back Button */}
+      {onBack && (
+        <button className={styles.backButton} onClick={onBack} aria-label="Go back to dashboard">
+          <svg width="9" height="17" viewBox="0 0 9 17" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M0.219965 8.78104L7.71996 16.281C7.78965 16.3507 7.87237 16.406 7.96342 16.4437C8.05446 16.4814 8.15204 16.5008 8.25059 16.5008C8.34914 16.5008 8.44672 16.4814 8.53776 16.4437C8.62881 16.406 8.71153 16.3507 8.78122 16.281C8.8509 16.2114 8.90617 16.1286 8.94389 16.0376C8.9816 15.9465 9.00101 15.849 9.00101 15.7504C9.00101 15.6519 8.9816 15.5543 8.94389 15.4632C8.90617 15.3722 8.8509 15.2895 8.78122 15.2198L1.8109 8.25042L8.78122 1.28104C8.92195 1.14031 9.00101 0.94944 9.00101 0.750417C9.00101 0.551394 8.92195 0.360523 8.78122 0.219792C8.64048 0.0790615 8.44961 1.48284e-09 8.25059 0C8.05157 -1.48284e-09 7.8607 0.0790615 7.71996 0.219792L0.219965 7.71979C0.150232 7.78945 0.0949125 7.87216 0.0571699 7.96321C0.0194263 8.05426 9.53674e-07 8.15186 9.53674e-07 8.25042C9.53674e-07 8.34898 0.0194263 8.44657 0.0571699 8.53762C0.0949125 8.62867 0.150232 8.71139 0.219965 8.78104Z" fill="#060B13"/>
+          </svg>
+        </button>
+      )}
+      
       {/* Course Image with Overlays */}
       <div className={styles.imageContainer} style={{ width: '100%', minWidth: 0 }}>
         <Image
@@ -344,4 +353,4 @@ export const CoursePage: React.FC<CoursePageProps> = ({
   );
 };
 
-export default CoursePage;
+export default Kindergarten;

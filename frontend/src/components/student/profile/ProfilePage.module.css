@@ -3,6 +3,7 @@
   padding: 0;
   display: flex;
   justify-content: center;
+  background-image: linear-gradient(#dbe0ff, #ffffff, #ffffff, #ffffff);
 }
 
 .settingsSection{
@@ -42,7 +43,6 @@
   position: sticky;
   top: 0;
   z-index: 10;
-  border-bottom: 1px solid #f0f0f0;
   gap: 16px;
 }
 
@@ -137,7 +137,6 @@
   .header {
     padding: 24px 32px;
     background: linear-gradient(135deg, #ffffff 0%, #f8f9ff 100%);
-    border-bottom: 2px solid #f0f0ff;
   }
 
   .title {

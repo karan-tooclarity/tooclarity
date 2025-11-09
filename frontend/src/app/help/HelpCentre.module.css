@@ -1,0 +1,597 @@
+/* HelpCentre.module.css */
+
+.pageContainer {
+  width: 100%;
+  margin: 0 auto;
+  background-image: linear-gradient(#dbe0ff, #ffffff, #ffffff, #ffffff);
+  min-height: 100vh;
+  padding-bottom: 80px;
+}
+
+.content {
+  padding: 20px;
+  max-width: 100%;
+  margin: 0 auto;
+}
+
+.title {
+  font-size: clamp(22px, 5vw, 28px);
+  font-weight: 700;
+  color: #1a1a1a;
+  margin-bottom: 24px;
+  line-height: 1.2;
+}
+
+/* Action Cards */
+.actionCards {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  margin-bottom: 32px;
+  width: 100%;
+  max-width: 800px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.raiseTicketCard,
+.myRequestsCard {
+  background: linear-gradient(135deg, #0222D7 0%, #0119b8 100%);
+  border-radius: 16px;
+  padding: 20px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  cursor: pointer;
+  border: none;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(2, 34, 215, 0.2);
+  min-height: 140px;
+  aspect-ratio: 1;
+}
+
+.raiseTicketCard:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 20px rgba(2, 34, 215, 0.3);
+}
+
+.raiseTicketCard:active {
+  transform: translateY(-2px);
+}
+
+.myRequestsCard {
+  background: linear-gradient(135deg, #697282 0%, #4a5568 100%);
+  cursor: default;
+}
+
+.cardIcon {
+  width: clamp(40px, 10vw, 48px);
+  height: clamp(40px, 10vw, 48px);
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.cardIcon svg {
+  width: clamp(24px, 6vw, 32px);
+  height: clamp(24px, 6vw, 32px);
+}
+
+.cardContent {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+}
+
+.cardLabel {
+  font-size: clamp(12px, 3vw, 14px);
+  font-weight: 600;
+  color: white;
+  text-align: center;
+  line-height: 1.3;
+}
+
+.cardCount {
+  font-size: clamp(20px, 5vw, 24px);
+  font-weight: 700;
+  color: white;
+}
+
+/* Tickets Section */
+.ticketsSection {
+  margin-top: 16px;
+  width: 100%;
+  max-width: 900px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.ticketsTitle {
+  font-size: clamp(16px, 3.8vw, 20px);
+  font-weight: 700;
+  color: #1a1a1a;
+  margin-bottom: 12px;
+}
+
+.ticketsList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ticketItem {
+  background: #ffffff;
+  border: 1px solid #E5E7EB;
+  border-radius: 12px;
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.ticketMeta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.ticketId {
+  font-weight: 700;
+  color: #0222D7;
+  font-size: clamp(13px, 3.2vw, 14px);
+}
+
+.ticketCategory {
+  color: #111827;
+  font-weight: 600;
+  font-size: clamp(13px, 3.2vw, 14px);
+}
+
+.ticketRight {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ticketDate {
+  color: #6B7280;
+  font-size: clamp(12px, 3vw, 13px);
+}
+
+.statusBadge {
+  padding: 6px 10px;
+  border-radius: 9999px;
+  font-size: clamp(11px, 2.8vw, 12px);
+  font-weight: 700;
+}
+
+.statusOpen {
+  background: rgba(2, 34, 215, 0.12);
+  color: #0222D7;
+}
+
+.statusInProgress {
+  background: rgba(245, 158, 11, 0.18);
+  color: #B45309;
+}
+
+.statusResolved {
+  background: rgba(16, 185, 129, 0.18);
+  color: #065F46;
+}
+
+/* FAQs Section */
+.faqSection {
+  margin-top: 32px;
+  width: 100%;
+  max-width: 900px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.faqTitle {
+  font-size: clamp(18px, 4vw, 20px);
+  font-weight: 700;
+  color: #1a1a1a;
+  margin-bottom: 16px;
+  line-height: 1.2;
+}
+
+.faqList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+
+.faqItem {
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid #E5E7EB;
+  transition: all 0.3s ease;
+  width: 100%;
+}
+
+.faqItemExpanded {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.faqQuestion {
+  width: 100%;
+  padding: 16px 16px;
+  background: white;
+  border: none;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  text-align: left;
+}
+
+.faqQuestion:hover {
+  background: #F9FAFB;
+}
+
+.faqQuestion:active {
+  background: #F3F4F6;
+}
+
+.questionText {
+  font-size: clamp(14px, 3.5vw, 16px);
+  font-weight: 600;
+  color: #1a1a1a;
+  flex: 1;
+  line-height: 1.5;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+.chevron {
+  flex-shrink: 0;
+  transition: transform 0.3s ease;
+  margin-top: 2px;
+  width: 20px;
+  height: 20px;
+}
+
+.chevronExpanded {
+  transform: rotate(180deg);
+}
+
+.faqAnswer {
+  padding: 0 16px 16px 16px;
+  animation: slideDown 0.3s ease;
+}
+
+.faqAnswer p {
+  font-size: clamp(13px, 3vw, 14px);
+  line-height: 1.6;
+  color: #697282;
+  margin: 0;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Responsive adjustments */
+/* Small phones (up to 360px) */
+@media (max-width: 360px) {
+  .pageContainer {
+    padding-bottom: 70px;
+  }
+
+  .content {
+    padding: 16px 12px;
+  }
+
+  .title {
+    margin-bottom: 16px;
+  }
+
+  .actionCards {
+    gap: 10px;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .raiseTicketCard,
+  .myRequestsCard {
+    padding: 12px 8px;
+    min-height: 120px;
+    gap: 8px;
+  }
+
+  .faqSection {
+    margin-top: 24px;
+  }
+
+  .faqList {
+    gap: 10px;
+  }
+
+  .faqQuestion {
+    padding: 12px;
+  }
+
+  .faqAnswer {
+    padding: 0 12px 12px 12px;
+  }
+}
+
+/* Standard phones (361px - 480px) */
+@media (min-width: 361px) and (max-width: 480px) {
+  .content {
+    padding: 18px 16px;
+  }
+
+  .actionCards {
+    gap: 12px;
+  }
+
+  .raiseTicketCard,
+  .myRequestsCard {
+    padding: 16px 12px;
+    min-height: 130px;
+  }
+
+  .faqQuestion {
+    padding: 14px 16px;
+  }
+
+  .faqAnswer {
+    padding: 0 16px 14px 16px;
+  }
+}
+
+/* Tablets and small laptops (481px - 768px) */
+@media (min-width: 481px) and (max-width: 768px) {
+  .content {
+    padding: 24px 32px;
+  }
+
+  .actionCards {
+    gap: 20px;
+    max-width: 600px;
+  }
+
+  .raiseTicketCard,
+  .myRequestsCard {
+    padding: 24px 20px;
+    min-height: 160px;
+  }
+
+  .faqSection {
+    max-width: 700px;
+  }
+
+  .faqQuestion {
+    padding: 18px 20px;
+  }
+
+  .faqAnswer {
+    padding: 0 20px 18px 20px;
+  }
+}
+
+/* Large tablets and desktops (769px and up) */
+@media (min-width: 769px) {
+  .content {
+    padding: 32px 48px;
+  }
+
+  .title {
+    font-size: 32px;
+    margin-bottom: 32px;
+  }
+
+  .actionCards {
+    gap: 24px;
+    margin-bottom: 40px;
+    max-width: 900px;
+  }
+
+  .raiseTicketCard,
+  .myRequestsCard {
+    padding: 32px 28px;
+    min-height: 150px;
+    aspect-ratio: auto;
+  }
+
+  .cardIcon {
+    width: 56px;
+    height: 56px;
+  }
+
+  .cardIcon svg {
+    width: 36px;
+    height: 36px;
+  }
+
+  .cardLabel {
+    font-size: 16px;
+  }
+
+  .cardCount {
+    font-size: 28px;
+  }
+
+  .faqSection {
+    max-width: 1000px;
+  }
+
+  .ticketsSection {
+    max-width: 1000px;
+    margin-top: 20px;
+  }
+
+  .faqTitle {
+    font-size: 24px;
+    margin-bottom: 20px;
+  }
+
+  .faqList {
+    gap: 16px;
+  }
+
+  .faqQuestion {
+    padding: 20px 24px;
+  }
+
+  .questionText {
+    font-size: 17px;
+  }
+
+  .faqAnswer {
+    padding: 0 24px 20px 24px;
+  }
+
+  .faqAnswer p {
+    font-size: 15px;
+  }
+
+  .chevron {
+    width: 22px;
+    height: 22px;
+  }
+}
+
+/* Extra large desktops (1200px and up) */
+@media (min-width: 1200px) {
+  .content {
+    padding: 40px 64px;
+  }
+
+  .title {
+    font-size: 36px;
+    margin-bottom: 36px;
+  }
+
+  .actionCards {
+    gap: 28px;
+    max-width: 1000px;
+  }
+
+  .raiseTicketCard,
+  .myRequestsCard {
+    padding: 36px 32px;
+    min-height: 150px;
+    aspect-ratio: auto;
+  }
+
+  .cardIcon {
+    width: 60px;
+    height: 60px;
+  }
+
+  .cardIcon svg {
+    width: 40px;
+    height: 40px;
+  }
+
+  .cardLabel {
+    font-size: 17px;
+  }
+
+  .cardCount {
+    font-size: 30px;
+  }
+
+  .faqSection {
+    max-width: 1100px;
+  }
+
+  .ticketsSection {
+    max-width: 1100px;
+  }
+
+  .faqTitle {
+    font-size: 26px;
+    margin-bottom: 24px;
+  }
+
+  .faqList {
+    gap: 18px;
+  }
+
+  .faqQuestion {
+    padding: 22px 28px;
+  }
+
+  .questionText {
+    font-size: 18px;
+  }
+
+  .faqAnswer {
+    padding: 0 28px 22px 28px;
+  }
+
+  .faqAnswer p {
+    font-size: 16px;
+    line-height: 1.7;
+  }
+
+  .chevron {
+    width: 24px;
+    height: 24px;
+  }
+}
+
+/* Landscape orientation adjustments */
+@media (max-height: 600px) and (orientation: landscape) {
+  .pageContainer {
+    padding-bottom: 60px;
+  }
+
+  .content {
+    padding: 16px;
+  }
+
+  .title {
+    margin-bottom: 16px;
+  }
+
+  .actionCards {
+    margin-bottom: 20px;
+  }
+
+  .faqSection {
+    margin-top: 20px;
+  }
+}
+
+/* Touch device optimizations */
+@media (hover: none) and (pointer: coarse) {
+  .raiseTicketCard,
+  .faqQuestion {
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+
+  .raiseTicketCard:active {
+    transform: scale(0.98);
+  }
+
+  .faqQuestion:active {
+    background: #F3F4F6;
+  }
+}

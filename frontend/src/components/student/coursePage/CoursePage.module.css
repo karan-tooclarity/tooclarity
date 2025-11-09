@@ -145,7 +145,7 @@
 .backButton {
   position: absolute;
   top: 16px;
-  left: 16px;
+  left: 35px;
   width: 40px;
   height: 40px;
   border-radius: 50%;
@@ -248,6 +248,29 @@
   height: 22px;
   color: #666;
 }
+
+
+.titleContainer{
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+}
+
+.intituteLabel{
+    font-size: 10px;
+}
+
+.intituteBox {
+  background: #F9FAFB;
+  border: 1px solid #E5E7EB;
+  border-radius: 5px;
+  padding: 5px 10px;
+  text-align: center;
+  width: 80%;
+  font-size: 10px;
+  margin: 5px;
+}
+
 
 /* Institution Overlay */
 .institutionOverlay {
@@ -359,10 +382,18 @@
   margin-bottom: 16px;
 }
 
+.modeTimingsSection {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 16px;
+  font-size: 16px;
+}
+
 .modeTimingBox {
   background: #F9FAFB;
   border: 1px solid #E5E7EB;
-  border-radius: 12px;
+  border-radius: 8px;
   padding: 12px 16px;
 }
 
@@ -384,6 +415,13 @@
   margin-bottom: 20px;
 }
 
+.placementsection{
+    background-color: #A6D0F8;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    padding: 10px;
+}
+
 .sectionTitle {
   font-size: 16px;
   font-weight: 500;
@@ -402,6 +440,12 @@
   border: 1px solid #E5E7EB;
   border-radius: 12px;
   padding: 14px 16px;
+}
+
+.sectionValueBox {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
 }
 
 /* Action Buttons */
@@ -515,7 +559,9 @@
   border-color: #697282;
   height: 24px;
   background-color: #ffffff;
-  width: 39px;
+  min-width: 39px;
+  padding-left: 2px;
+  padding-right: 2px;
   border-radius: 5px;
   font-size: 12px;
   font-weight: 600;
@@ -532,6 +578,23 @@
   border-color: #FFFFFF;
   height: 24px;
   background-color: #1FC274;
+  width: 39px;
+  border-radius: 5px;
+  font-size: 12px;
+  font-weight: 600;
+  align-content: center;
+}
+
+
+.additionalBottomSupNo{
+  position: absolute;
+  top: -12px;
+  right: -20px;
+  color: #FFFFFF;
+  border-width: 1px;
+  border-color: #FFFFFF;
+  height: 24px;
+  background-color: #E84444;
   width: 39px;
   border-radius: 5px;
   font-size: 12px;

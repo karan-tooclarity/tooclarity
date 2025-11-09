@@ -117,6 +117,7 @@ export interface CourseForStudent {
     _id: string;
     instituteName: string;
     instituteLogo?: string;
+    instituteType?: string; // Added for institute-specific course page rendering
   };
   rating?: number;
   reviews?: number;
