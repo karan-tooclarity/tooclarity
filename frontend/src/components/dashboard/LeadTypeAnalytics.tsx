@@ -1,5 +1,5 @@
 import React from "react"
-import { Card, CardContent } from "@/components/ui/card"
+import { _Card, _CardContent } from "@/components/ui/card"
 import { motion } from "framer-motion"
 
 export interface LeadTypeData {
@@ -45,7 +45,7 @@ function polarToCartesian(cx: number, cy: number, r: number, angleDeg: number) {
 }
 
 // Helper: describe an arc path for a donut segment (outer and inner radii)
-function describeDonutArc(
+function _describeDonutArc(
   cx: number,
   cy: number,
   outerR: number,
@@ -235,8 +235,8 @@ const LeadTypeAnalytics: React.FC<LeadTypeAnalyticsProps> = ({ title = "Lead Typ
   const colors = ["#0222D7", "#4964FD", "#9AA9FE"] // Dark blue, medium blue, light lavender
 
   return (
-    <Card className="m-5 bg-gray-50 border border-gray-100 rounded-2xl dark:bg-gray-900 dark:border-gray-800 w-full">
-      <CardContent className="p-3 md:p-4">
+    <_Card className="m-5 bg-gray-50 border border-gray-100 rounded-2xl dark:bg-gray-900 dark:border-gray-800 w-full">
+      <_CardContent className="p-3 md:p-4">
         <h3 className="text-lg sm:text-xl md:text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-4">{title}</h3>
 
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6 dark:text-gray-100">
@@ -257,8 +257,8 @@ const LeadTypeAnalytics: React.FC<LeadTypeAnalyticsProps> = ({ title = "Lead Typ
             />
           </div>
         </div>
-      </CardContent>
-    </Card>
+      </_CardContent>
+    </_Card>
   )
 }
 

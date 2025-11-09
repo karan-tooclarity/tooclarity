@@ -4,7 +4,7 @@ const InstituteAdmin = require("../models/InstituteAdmin");
 
 exports.getProfile = async (req, res, next) => {
   try {
-    const user = await InstituteAdmin.findById(req.userId).select("name email contactNumber institution role isProfileCompleted isPaymentDone googleId");
+    const user = await InstituteAdmin.findById(req.userId).select("name email contactNumber institution role isProfileCompleted isPaymentDone googleId ProfilePicture address birthday");
 
     if (!user) {
       return res.status(401).json({
@@ -26,6 +26,9 @@ exports.getProfile = async (req, res, next) => {
         isProfileCompleted: user.isProfileCompleted,
         isPaymentDone: user.isPaymentDone,
         googleId: user.googleId,
+        profilePicture: user.ProfilePicture,
+        address: user.address,
+        birthday: user.birthday,
       },
     });
   } catch (error) {

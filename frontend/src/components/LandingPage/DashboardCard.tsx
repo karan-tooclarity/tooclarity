@@ -1,5 +1,5 @@
 import React from 'react';
-import AdCard from '../dashboard/AdCard';
+import _AdCard from '../dashboard/AdCard';
 import { Search, Calendar, MessageCircle, Linkedin } from 'lucide-react';
 
 const StaticDashboardCard = () => {

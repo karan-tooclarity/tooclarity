@@ -2,18 +2,18 @@
 
 
 import React from "react";
-import { useRouter } from "next/navigation";
-import { withAuth, useAuth } from "../../lib/auth-context";
+// import { useRouter } from "next/navigation";
+import { withAuth } from "../../lib/auth-context";
 import { motion } from "framer-motion";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import DashboardStats from "@/components/dashboard/DashboardStats";
 import AdCard from "@/components/dashboard/AdCard";
 import StudentList, { StudentItem } from "@/components/dashboard/StudentList";
 import CourseReachChart from "@/components/dashboard/CourseReachChart";
-import AdminDashboard from "@/components/dashboard/AdminDashboard";
-import { getMyInstitution, getInstitutionBranches, getInstitutionCourses } from "@/lib/api";
-import { authAPI, metricsAPI, enquiriesAPI } from "@/lib/api";
-import { getSocket } from "@/lib/socket";
+// import AdminDashboard from "@/components/dashboard/AdminDashboard";
+// import { getMyInstitution, getInstitutionBranches, getInstitutionCourses } from "@/lib/api";
+// import { authAPI, metricsAPI, enquiriesAPI } from "@/lib/api";
+// import { getSocket } from "@/lib/socket";
 import { useDashboardStats, useRecentStudents, useChartData, useInstitution, useProgramViews } from "@/lib/hooks/dashboard-hooks";
 import { useQueryClient } from "@tanstack/react-query";
 import { QUERY_KEYS } from "@/lib/hooks/dashboard-hooks";
@@ -60,33 +60,33 @@ function DashboardPage() {
 	const [isStatsLoading, setIsStatsLoading] = useState(true);
 	const [isListLoading, setIsListLoading] = useState(true);
 	const [institutionId, setInstitutionId] = useState<string | null>(null);
-	const [institutionAdminId, setInstitutionAdminId] = useState<string | null>(null);
+	// const [institutionAdminId, setInstitutionAdminId] = useState<string | null>(null);
 	const [chartValues, setChartValues] = useState<number[] | null>(null);
-	const [baselineCourseViews, setBaselineCourseViews] = useState<number>(0);
-	const [rangeBaseline, setRangeBaseline] = useState<number>(0);
+	// const [baselineCourseViews, setBaselineCourseViews] = useState<number>(0);
+	// const [rangeBaseline, setRangeBaseline] = useState<number>(0);
 
-	const generateStudents = useCallback(() => {
-		const names = [
-			"Raghavendar Reddy", "Sarah Johnson", "Michael Chen", "Emily Davis",
-			"David Wilson", "Lisa Anderson", "James Brown", "Maria Garcia",
-			"Robert Taylor", "Jennifer Martinez", "William Jones", "Ashley White"
-		];
-		const statuses = [
-			"Requested for callback", "Requested for demo",
-		];
-		const programs = [
-			"BTech Computer Science", "MBA Marketing", "BSc Data Science", "BCom Finance",
-			"BTech Mechanical", "MSc AI", "BA Economics"
-		];
-		const newStudents: StudentItem[] = Array.from({ length: 4 }, (_, i) => ({
-			date: new Date(Date.now() - i * 24 * 60 * 60 * 1000).toLocaleDateString('en-GB'),
-			name: names[Math.floor(Math.random() * names.length)],
-			id: (181200 + i).toString(),
-			status: statuses[Math.floor(Math.random() * statuses.length)],
-			programInterests: [programs[Math.floor(Math.random() * programs.length)]]
-		}));
-		setStudents(newStudents);
-	}, []);
+	// const generateStudents = useCallback(() => {
+		// const names = [
+		//	"Raghavendar Reddy", "Sarah Johnson", "Michael Chen", "Emily Davis",
+		//	"David Wilson", "Lisa Anderson", "James Brown", "Maria Garcia",
+		//	"Robert Taylor", "Jennifer Martinez", "William Jones", "Ashley White"
+		// ];
+		// const statuses = [
+		//	"Requested for callback", "Requested for demo",
+		// ];
+		// const programs = [
+		//	"BTech Computer Science", "MBA Marketing", "BSc Data Science", "BCom Finance",
+		//		"BTech Mechanical", "MSc AI", "BA Economics"
+		// ];
+		// const newStudents: StudentItem[] = Array.from({ length: 4 }, (_, i) => ({
+		// 	date: new Date(Date.now() - i * 24 * 60 * 60 * 1000).toLocaleDateString('en-GB'),
+		// 	name: names[Math.floor(Math.random() * names.length)],
+		// 	id: (181200 + i).toString(),
+		// 	status: statuses[Math.floor(Math.random() * statuses.length)],
+		// 	programInterests: [programs[Math.floor(Math.random() * programs.length)]]
+		// }));
+	// 	setStudents(newStudents);
+	// }, []);
 
 	// ------- TanStack Query hooks (source of truth) -------
 	const { data: inst } = useInstitution();
@@ -105,7 +105,7 @@ function DashboardPage() {
 	useEffect(() => {
 		setIsStatsLoading(!!statsLoading);
     if (statsData) {
-            const programViewsSum = Array.isArray(programViewsData) ? (programViewsData as any[]).reduce((sum, p:any) => sum + (Number(p.inRangeViews)||0), 0) : 0;
+            const programViewsSum = Array.isArray(programViewsData) ? (programViewsData as Array<Record<string, unknown>>).reduce((sum, p) => sum + (Number(p.inRangeViews)||0), 0) : 0;
             setStats({
                 courseViews: programViewsSum,
 				courseComparisons: statsData.courseComparisons,
@@ -120,13 +120,16 @@ function DashboardPage() {
 	useEffect(() => {
 		setIsListLoading(!!studentsLoading);
 		if (Array.isArray(recentStudents)) {
-			const mapped: StudentItem[] = recentStudents.map((c: any, idx: number) => ({
-				date: c.date,
-				name: c.name,
-				id: String(c.studentId ?? c.id ?? idx),
-				status: c.status,
-				programInterests: c.programInterests,
-				}));
+			const mapped: StudentItem[] = recentStudents.map((c: unknown, idx: number) => {
+				const student = c as Record<string, unknown>;
+				return {
+					date: String(student.date || ''),
+					name: String(student.name || ''),
+					id: String(student.studentId ?? student.id ?? idx),
+					status: String(student.status || ''),
+					programInterests: Array.isArray(student.programInterests) ? student.programInterests as string[] : [],
+				};
+			});
 				setStudents(mapped.slice(0, 4));
 			}
 	}, [studentsLoading, recentStudents]);
@@ -206,7 +209,7 @@ function DashboardPage() {
 					/>
 				</div>
 				<div className="lg:col-span-1">
-					<AdCard onShare={() => {}} />
+					<AdCard _onShare={() => {}} />
 				</div>
 			</motion.div>
 
@@ -232,7 +235,7 @@ function DashboardPage() {
 			>
 				<CourseReachChart 
 					timeRange={filters.timeRange}
-					course={filters.course}
+					_course={filters.course}
 					values={chartValues ?? new Array(12).fill(0)}
 					onDataPointClick={() => {}}
 					yTicksOverride={[0,50000,100000,150000,200000,250000]}

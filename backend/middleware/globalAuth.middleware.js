@@ -1,128 +1,132 @@
-const { verifyToken, generateToken, decodeToken, refreshAccessTokenIfNeeded, refreshRefreshTokenIfNeeded } = require("../utils/jwt.util");
+const { verifyToken, generateToken } = require("../utils/jwt.util");
 const CookieUtil = require("../utils/cookie.util");
 const {
-  getRefreshToken,
-  saveRefreshToken,
-  deleteRefreshToken,
+  getAccessToken,
+  saveAccessToken,
+  deleteAccessToken,
+  getLock,
+  releaseLock,
 } = require("../utils/redis.util");
-const User = require("../models/InstituteAdmin"); // 👈 import your User model
-const { decode } = require("jsonwebtoken");
+const Session = require("../models/Session");
+const InstituteAdmin = require("../models/InstituteAdmin");
 
 const globalAuthMiddleware = async (req, res, next) => {
   try {
     console.log("➡️ Incoming request:", req.method, req.path);
 
-    const publicPaths = ["/login", "/register", "/otp", "/verify-email","/payment/verify", "/forgot-password", "/reset-password" ];
-    if (publicPaths.includes(req.path)) {
-      console.log("✅ Public path, skipping auth");
-      return next();
+    const publicPaths = [
+      "/login",
+      "/register",
+      "/otp",
+      "/verify-email",
+      "/payment/verify",
+      "/forgot-password",
+      "/reset-password",
+    ];
+    if (publicPaths.some((p) => req.path.startsWith(p))) return next();
+
+    const sessionId = CookieUtil.getCookie(req, "session_id");
+    if (!sessionId) {
+      console.log("❌ No session ID in cookie");
+      return res.status(401).json({ message: "Session expired, please login again" });
     }
 
-    // 1️⃣ Extract cookies
-    const accessToken = CookieUtil.getCookie(req, "access_token");
-    const usernameCookie = CookieUtil.getCookie(req, "username");
-    // const usernameCookie = rawUsername ? decodeURIComponent(rawUsername) : null;
-    
-    console.log("🔹 Access token from cookie:", accessToken);
-    console.log("🔹 Username cookie:", usernameCookie);
-
-    let userId;
-    let refreshToken;
-
+    // 🔹 1. Try access token in Redis
+    let accessToken = await getAccessToken(sessionId);
     if (accessToken) {
       try {
-        // normal verify
         const decoded = verifyToken(accessToken);
-        console.log("✅ Access token valid:", decoded);
-        refreshAccessTokenIfNeeded(req, res, accessToken);
         req.userId = decoded.id;
         req.userRole = decoded.role;
-        return next(); // valid access token
+        return next(); // ✅ Access token valid
       } catch (err) {
         if (err.name !== "TokenExpiredError") {
           console.log("❌ Invalid access token:", err.message);
-          return res.status(401).json({ message: "Invalid access token" });
+          CookieUtil.clearCookie(res, "session_id");
+          return res.status(401).json({ message: "Invalid session, please login again" });
         }
-        console.log("⚠️ Access token expired, will try refresh flow");
-
-        // decode expired access token for userId
-        try {
-          const decodedAccess = decodeToken(accessToken);
-          userId = decodedAccess?.id;
-          console.log("🔹 Decoded expired access token:", decodedAccess);
-        } catch (decodeErr) {
-          console.log("❌ Could not decode expired access token:", decodeErr.message);
-        }
-      }
-    } else {
-      console.log("⚠️ No access token found in cookie, fallback to username cookie");
-      if (usernameCookie) {
-        try {
-          const user = await User.findOne({ name: usernameCookie }).select("_id role");
-          if (user) {
-            userId = user._id.toString();
-            console.log("✅ Found userId from username cookie:", userId);
-            // Short-circuit for dev usage when username cookie is present
-            req.userId = userId;
-            req.userRole = user.role;
-            const newAccessToken = generateToken(userId, usernameCookie,"access", user.role);
-            CookieUtil.setCookie(res, "access_token", newAccessToken);
-            console.log("🔹 New access token issued");
-            await refreshRefreshTokenIfNeeded(userId, usernameCookie,  refreshToken );
-            return next();
-          } else {
-            console.log("❌ No user found for username cookie");
-          }
-        } catch (dbErr) {
-          console.error("❌ DB error while fetching userId from username:", dbErr);
-        }
+        console.log("⚠️ Access token expired → check refresh token");
       }
     }
 
-    if (!userId) {
-      console.log("❌ No userId found (no access token & no valid username cookie)");
+    // 🔹 2. Prevent concurrent refreshes
+    const lockKey = `lock:${sessionId}`;
+    const gotLock = await getLock(lockKey, 10); // 10s lock
+    if (!gotLock) {
+      console.log("⏳ Another refresh in progress, waiting...");
+      await new Promise((r) => setTimeout(r, 1000));
+      accessToken = await getAccessToken(sessionId);
+      if (accessToken) {
+        try {
+          const decoded = verifyToken(accessToken);
+          req.userId = decoded.id;
+          req.userRole = decoded.role;
+          return next();
+        } catch {
+          CookieUtil.clearCookie(res, "session_id");
+          return res.status(401).json({ message: "Session expired, please login again" });
+        }
+      }
+      CookieUtil.clearCookie(res, "session_id");
       return res.status(401).json({ message: "Session expired, please login again" });
     }
 
-    // 2️⃣ Get refresh token from Redis
-    refreshToken = await getRefreshToken(userId);
-    console.log("🔹 Refresh token from Redis:", refreshToken);
-
-    if (!refreshToken) {
-      console.log("❌ No refresh token found, session expired");
-      return res.status(401).json({ message: "Session expired, please login again" });
-    }
-
-    // 3️⃣ Verify refresh token
-    let decodedRefresh;
     try {
-      decodedRefresh = verifyToken(refreshToken);
-      userId = decodedRefresh.id;
-      req.userRole = decodedRefresh.role;
+      // 🔹 3. Get refresh token from MongoDB
+      const sessionDoc = await Session.findOne({ sessionId });
+      if (!sessionDoc || !sessionDoc.refreshToken) {
+        console.log("❌ No refresh token in MongoDB");
+        await deleteAccessToken(sessionId);
+        CookieUtil.clearCookie(res, "session_id");
+        return res.status(401).json({ message: "Session expired, please login again" });
+      }
+
+      let decodedRefresh;
+      try {
+        decodedRefresh = verifyToken(sessionDoc.refreshToken);
+      } catch (err) {
+        console.log("❌ Refresh token invalid/expired:", err.message);
+        await Session.deleteOne({ sessionId });
+        await deleteAccessToken(sessionId);
+        CookieUtil.clearCookie(res, "session_id");
+        return res.status(401).json({ message: "Session expired, please login again" });
+      }
+
+      const { id: userId, role } = decodedRefresh;
+
+      // 🔹 4. Check user exists
+      const user = await InstituteAdmin.findById(userId);
+      if (!user) {
+        console.log("❌ User not found");
+        await Session.deleteOne({ sessionId });
+        await deleteAccessToken(sessionId);
+        CookieUtil.clearCookie(res, "session_id");
+        return res.status(401).json({ message: "User not found, please login again" });
+      }
+
+      // 🔹 5. Rotate refresh token
+      const newRefreshToken = generateToken(userId, "refresh", role);
+      sessionDoc.refreshToken = newRefreshToken;
+      sessionDoc.updatedAt = Date.now();
+      await sessionDoc.save();
+      console.log("🔄 Refresh token rotated");
+
+      // 🔹 6. Issue new access token
+      const newAccessToken = generateToken(userId, "access", role);
+      await saveAccessToken(sessionId, newAccessToken, 900); // 15 min TTL
+      console.log("🔁 New access token stored in Redis");
+
+      // 🔹 7. Attach user info
       req.userId = userId;
-      req.userRole = decodedRefresh.role;
-      console.log("userId set to req:", userId);
-      await refreshRefreshTokenIfNeeded(userId, usernameCookie, refreshToken);
-      console.log("✅ Refresh token valid:", decodedRefresh);
-    } catch (err) {
-      console.log("❌ Refresh token invalid or expired:", err.message);
-      await deleteRefreshToken(userId);
-      return res.status(401).json({ message: "Refresh expired, please login again" });
+      req.userRole = role;
+      return next();
+    } finally {
+      await releaseLock(lockKey); // always release
     }
-
-    // 4️⃣ Issue new tokens
-    const newAccessToken = generateToken(userId, usernameCookie ,"access", decodedRefresh.role);
-    CookieUtil.setCookie(res, "access_token", newAccessToken);
-    console.log("🔹 New access token issued");
-
-    await refreshRefreshTokenIfNeeded(userId, usernameCookie, refreshToken);
-
-    req.userId = userId;
-    req.userRole = decodedRefresh.role;
-    return next();
   } catch (err) {
     console.error("🔥 Auth Middleware Error:", err);
-    return res.status(500).json({ message: "Internal auth error" });
+    CookieUtil.clearCookie(res, "session_id");
+    return res.status(500).json({ message: "Internal authentication error" });
   }
 };
 

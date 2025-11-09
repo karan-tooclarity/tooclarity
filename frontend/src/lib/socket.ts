@@ -1,6 +1,14 @@
 "use client";
 
-let socketInstance: any | null = null;
+type IOSocket = {
+  connected?: boolean;
+  on: (event: string, handler: (...args: unknown[]) => void) => void;
+  off: (event: string, handler?: (...args: unknown[]) => void) => void;
+  emit: (event: string, ...args: unknown[]) => void;
+  disconnect: () => void;
+};
+
+let socketInstance: IOSocket | null = null;
 
 export async function getSocket(origin?: string) {
   // Disable Socket.IO in development if backend is not available
@@ -12,11 +20,12 @@ export async function getSocket(origin?: string) {
         signal: AbortSignal.timeout(2000)
       });
       if (!response.ok) {
-        console.warn('Backend not available, skipping Socket.IO connection');
+        if (process.env.NODE_ENV === 'development') console.error('Backend not available, skipping Socket.IO connection');
         return null;
       }
     } catch (error) {
-      console.warn('Backend not available, skipping Socket.IO connection');
+      if (process.env.NODE_ENV === 'development') console.error('Backend not available, skipping Socket.IO connection');
+      if (process.env.NODE_ENV === 'development') console.error('Error: ', error);
       return null;
     }
   }
@@ -35,7 +44,7 @@ export async function getSocket(origin?: string) {
 
 // ------- Production-grade Socket Manager -------
 
-type EventHandler = (...args: any[]) => void;
+type EventHandler = (...args: unknown[]) => void;
 
 type RoomKey = string; // e.g., institutionAdmin:<id>, institution:<id>
 
@@ -45,7 +54,7 @@ type BackoffConfig = {
 };
 
 class SocketManager {
-  private socket: any | null = null;
+  private socket: IOSocket | null = null;
   private isConnecting = false;
   private refCount = 0;
   private roomRefCounts: Map<RoomKey, number> = new Map();
@@ -115,6 +124,7 @@ class SocketManager {
     } catch (e) {
       this.isConnecting = false;
       this.scheduleReconnect();
+      if (process.env.NODE_ENV === 'development') console.error('Socket.IO connection error:', e);
     }
   }
 
@@ -133,12 +143,13 @@ class SocketManager {
       this.socket = null;
       this.scheduleReconnect();
     });
-    this.socket.on('connect_error', (error: any) => {
+    this.socket.on('connect_error', (error: unknown) => {
       // Only log in development and reduce noise
       if (process.env.NODE_ENV === 'development' && this.backoffAttempts < 3) {
-        console.warn('Socket.IO connection error:', error.message);
+        const msg = (error && typeof error === 'object' && 'message' in error) ? String((error as Record<string, unknown>).message) : 'unknown error';
+        if (process.env.NODE_ENV === 'development') console.error('Socket.IO connection error:', msg);
       }
-      try { this.socket?.disconnect(); } catch (err) { /* ignore */ }
+      try { this.socket?.disconnect(); } catch (_err) { /* ignore */ }
       this.socket = null;
       this.scheduleReconnect();
     });
@@ -179,7 +190,7 @@ class SocketManager {
   private safeDisconnect() {
     this.clearIdleTimer();
     if (this.socket) {
-      try { this.socket.disconnect(); } catch (err) { console.error('socketManager: safeDisconnect failed', err); }
+      try { this.socket.disconnect(); } catch (err) { if (process.env.NODE_ENV === 'development') console.error('socketManager: safeDisconnect failed', err); }
       this.socket = null;
     }
   }
@@ -240,6 +251,7 @@ export function cleanupSocket() {
     try {
       socketInstance.disconnect();
     } catch (e) {
+      if (process.env.NODE_ENV === 'development') console.error('Socket.IO cleanup error:', e);
       // ignore
     }
     socketInstance = null;

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Card, CardContent } from "../ui/card";
+import { _Card, _CardContent } from "../ui/card";
 import { motion, AnimatePresence } from "framer-motion";
 import AppSelect from "../ui/AppSelect";
 
@@ -69,8 +69,8 @@ export default function StatCard({
       className="cursor-pointer mx-1 sm:mx-3 pb-3"
       onClick={onClick}
     >
-      <Card className="border-none shadow-sm bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 hover:shadow-md transition-shadow duration-200">
-        <CardContent className="p-3 sm:p-4">
+      <_Card className="border-none shadow-sm bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 hover:shadow-md transition-shadow duration-200">
+        <_CardContent className="p-3 sm:p-4">
           <div className="flex items-start justify-between mb-2">
             <div className="text-sm sm:text-base md:text-lg text-gray-600 dark:text-gray-300 font-medium">{title}</div>
             <motion.div 
@@ -175,8 +175,8 @@ export default function StatCard({
               </motion.div>
         )}
           </AnimatePresence>
-      </CardContent>
-    </Card>
+      </_CardContent>
+    </_Card>
     </motion.div>
   );
 }

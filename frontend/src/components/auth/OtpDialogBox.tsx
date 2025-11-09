@@ -1,30 +1,30 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
+  _Dialog,
+  _DialogContent,
+  _DialogHeader,
+  _DialogTitle,
+  _DialogDescription,
 } from "@/components/ui/dialog";
-import InputField from "@/components/ui/InputField";
+import _InputField from "@/components/ui/InputField";
 import { authAPI } from "../../lib/api";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../../lib/auth-context";
 
-interface OtpDialogBoxProps {
+interface Otp_DialogBoxProps {
   open: boolean;
   setOpen: (open: boolean) => void;
   email: string;
   onVerificationSuccess: () => void;
 }
 
-export default function OtpDialogBox({ 
+export default function Otp_DialogBox({ 
   open, 
   setOpen, 
   email, 
   onVerificationSuccess 
-}: OtpDialogBoxProps) {
+}: Otp_DialogBoxProps) {
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -50,7 +50,7 @@ export default function OtpDialogBox({
     }
   }, [open, timer]);
 
-  // Reset state when dialog opens
+  // Reset state when _Dialog opens
   useEffect(() => {
     if (open) {
       setOtp(["", "", "", "", "", ""]);
@@ -106,7 +106,7 @@ export default function OtpDialogBox({
       } else {
         setError(response.message || "Invalid OTP. Please try again.");
       }
-    } catch (error) {
+    } catch (_error) {
       setError("Failed to verify OTP. Please try again.");
     } finally {
       setLoading(false);
@@ -118,7 +118,7 @@ export default function OtpDialogBox({
     setError("");
 
     try {
-      const response = await authAPI.resendOTP(email);
+      const response = await authAPI.resendOTP({email: email});
       
       if (response.success) {
         setTimer(60);
@@ -129,7 +129,7 @@ export default function OtpDialogBox({
       } else {
         setError(response.message || "Failed to resend OTP");
       }
-    } catch (error) {
+    } catch (_error) {
       setError("Failed to resend OTP. Please try again.");
     } finally {
       setResendLoading(false);
@@ -137,19 +137,19 @@ export default function OtpDialogBox({
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent
+    <_Dialog open={open} onOpenChange={setOpen}>
+      <_DialogContent
         className="max-w-lg flex flex-col justify-between scrollbar-hide"
         overlayClassName="bg-black/50"
       >
-        <DialogHeader className="flex flex-col items-center gap-2">
-          <DialogTitle className="max-w-xs font-montserrat font-bold text-xl sm:text-[24px] leading-tight text-center">
+        <_DialogHeader className="flex flex-col items-center gap-2">
+          <_DialogTitle className="max-w-xs font-montserrat font-bold text-xl sm:text-[24px] leading-tight text-center">
             Verify Your Email
-          </DialogTitle>
-          <DialogDescription className="max-w-xs font-montserrat font-normal text-sm sm:text-[14px] leading-relaxed text-center">
-            We've sent a 6-digit code to {email}
-          </DialogDescription>
-        </DialogHeader>
+          </_DialogTitle>
+          <_DialogDescription className="max-w-xs font-montserrat font-normal text-sm sm:text-[14px] leading-relaxed text-center">
+            We&apos;ve sent a 6-digit code to {email}
+          </_DialogDescription>
+        </_DialogHeader>
 
         <div className="grid gap-6 flex-1">
           {/* General Error */}
@@ -221,7 +221,7 @@ export default function OtpDialogBox({
             Back to Sign Up
           </button>
         </div>
-      </DialogContent>
-    </Dialog>
+      </_DialogContent>
+    </_Dialog>
   );
 }

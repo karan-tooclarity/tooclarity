@@ -1,8 +1,8 @@
 // Admin-specific API configuration and methods for dashboard operations
 
-import { API_BASE_URL, apiRequest, ApiResponse } from "./api";
+import { apiRequest, ApiResponse } from "./api";
 
-export type AdminApiResponse<T = any> = ApiResponse<T>;
+export type AdminApiResponse<T = unknown> = ApiResponse<T>;
 
 // Reuse shared request helper by wrapping endpoint with admin routes
 async function adminApiRequest<T>(

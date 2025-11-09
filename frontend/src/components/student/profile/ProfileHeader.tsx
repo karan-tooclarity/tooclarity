@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Image from 'next/image';
 import styles from './ProfileHeader.module.css';
 
 interface ProfileHeaderProps {
@@ -29,7 +30,7 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
       <div className={styles.userInfo}>
         <div className={styles.avatar}>
           {avatar ? (
-            <img src={avatar} alt={name} />
+            <Image src={avatar} alt={name} width={48} height={48} />
           ) : (
             <span className={styles.initials}>{getInitials(name)}</span>
           )}

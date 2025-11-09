@@ -34,9 +34,10 @@ export const queryClient = new QueryClient({
     queries: {
       staleTime: 5 * 60 * 1000, // 5 minutes
       gcTime: 30 * 60 * 1000, // 30 minutes (was cacheTime)
-      retry: (failureCount, error: any) => {
+      retry: (failureCount, error: unknown) => {
         // Don't retry on 4xx errors
-        if (error?.status >= 400 && error?.status < 500) {
+        const status = typeof error === 'object' && error && 'status' in error ? Number((error as Record<string, unknown>).status) : undefined;
+        if (typeof status === 'number' && status >= 400 && status < 500) {
           return false;
         }
         return failureCount < 3;

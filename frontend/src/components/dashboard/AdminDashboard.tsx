@@ -31,8 +31,6 @@ export default function AdminDashboard() {
 
   // Debounced search effect
   React.useEffect(() => {
-    let timer: number | undefined;
-
     const runSearch = async () => {
       const term = institutionQuery.trim();
       setSearchError(null);
@@ -47,7 +45,7 @@ export default function AdminDashboard() {
       const res = await adminDashboardAPI.listInstitutions({ search: term, limit: 10, page: 1 });
 
       if (res.success) {
-        const raw: any = res.data;
+        const raw: unknown = res.data;
         let items: AdminInstitution[] = [];
 
         // Handle different backend response shapes
@@ -55,14 +53,14 @@ export default function AdminDashboard() {
         // 2) Object with { institutions: [...] }
         if (Array.isArray(raw)) {
           // Try to normalize fields if needed
-          items = raw.map((i: any) => ({
-            id: i.id || i._id || i.uuid || "",
-            name: i.name || i.instituteName || "",
+          items = (raw as Array<Record<string, unknown>>).map((i) => ({
+            id: String(i.id || i._id || i.uuid || ""),
+            name: String(i.name || i.instituteName || ""),
           }));
-        } else if (raw && Array.isArray(raw.institutions)) {
-          items = raw.institutions.map((i: any) => ({
-            id: i.id || i._id || i.uuid || "",
-            name: i.name || i.instituteName || "",
+        } else if (raw && Array.isArray((raw as { institutions?: unknown[] }).institutions)) {
+          items = ((raw as { institutions: Array<Record<string, unknown>> }).institutions).map((i) => ({
+            id: String(i.id || i._id || i.uuid || ""),
+            name: String(i.name || i.instituteName || ""),
           }));
         }
 
@@ -75,7 +73,7 @@ export default function AdminDashboard() {
     };
 
     // debounce 400ms
-    timer = window.setTimeout(runSearch, 400);
+    const timer = window.setTimeout(runSearch, 400);
     return () => {
       if (timer) window.clearTimeout(timer);
     };

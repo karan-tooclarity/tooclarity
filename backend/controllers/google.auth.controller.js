@@ -12,6 +12,7 @@ exports.googleAuthCallback = async (req, res, next) => {
         .json({ status: "fail", message: "Missing authorization code" });
     }
 
+    // Parse state safely
     let stateData = {};
     try {
       stateData = JSON.parse(rawState);
@@ -22,16 +23,19 @@ exports.googleAuthCallback = async (req, res, next) => {
         .json({ status: "fail", message: "Invalid state parameter" });
     }
 
-    const state = stateData.state; // student | institution | admin
-    const type = stateData.type; // login | register
-    const device = stateData.device; // web | mobile
-
+    const { state, type, device } = stateData; // state = student | institution | admin; type = login | register
     const CLIENT_ORIGIN =
       device === "web"
         ? process.env.CLIENT_ORIGIN_WEB
-        : process.env.CLIENT_ORIGIN_MOBILE
+        : process.env.CLIENT_ORIGIN_MOBILE;
 
-    // 1. Exchange code for tokens from Google
+    // Helper to redirect via frontend page
+    const redirectViaFrontend = (to, params = {}) => {
+      const query = new URLSearchParams({ to, ...params }).toString();
+      return res.redirect(`${CLIENT_ORIGIN}/redirect?${query}`);
+    };
+
+    // 1️⃣ Exchange code for Google tokens
     const { data } = await axios.post(
       "https://oauth2.googleapis.com/token",
       new URLSearchParams({
@@ -51,59 +55,116 @@ exports.googleAuthCallback = async (req, res, next) => {
         .json({ status: "fail", message: "Google authentication failed" });
     }
 
-    // 2. Decode Google id_token
+    // 2️⃣ Decode token
     const payload = JSON.parse(
       Buffer.from(id_token.split(".")[1], "base64").toString()
     );
-    const { email, name, picture, sub } = payload;
+    const { email, name, sub } = payload;
 
-    // 3. Attach normalized body for auth.controller
+    // 3️⃣ Attach normalized body
     req.body = {
       name,
       email,
-      contactNumber: "", // phone not available from Google
+      contactNumber: "",
       address: "",
-      profilePicture: picture || "",
       googleId: sub,
       type: state, // student | institution | admin
     };
 
+    // 4️⃣ Handle login or register
     if (type === "login") {
       try {
-        await login(req, res, next, { returnTokens: true });
+        // ✅ Perform login (returns user via sendTokens)
+        const user = await login(req, res, next, {
+          returnTokens: true,
+        });
+
+        const { isProfileCompleted, isPaymentDone} = user;
+
         if (state === "student") {
-          return res.redirect(`${CLIENT_ORIGIN}/student/login`);
-        } else if (state === "institution") {
-          return res.redirect(`${CLIENT_ORIGIN}`);
+          if (!isProfileCompleted) {
+            return redirectViaFrontend("/student/onboarding", {
+              status: "success",
+              type: "login",
+            });
+          } else {
+            return redirectViaFrontend("/dashboard", {
+              status: "success",
+              type: "login",
+            });
+          }
         }
+
+        if (state === "institution") {
+          if (!isProfileCompleted) {
+            return redirectViaFrontend("/signup", {
+              status: "success",
+              type: "login",
+            });
+          } if (!isPaymentDone) {
+            return redirectViaFrontend("/payment", {
+              status: "success",
+              type: "login",
+            });
+          } else {
+            return redirectViaFrontend("/dashboard", {
+              status: "success",
+              type: "login",
+            });
+          }
+        }
+
+        // default fallback
+        return redirectViaFrontend("/", {
+          status: "success",
+          type: "login",
+        });
       } catch (err) {
         console.warn("Login failed:", err.message);
-        if(state === "student"){
-          return res.redirect(`${CLIENT_ORIGIN}/student/login?error=not_registered`)
-        }
-        if(state === "institution"){
-          return res.redirect(`${CLIENT_ORIGIN}?error=not_registered`)
-        }
+
+        // Handle errors and redirect accordingly
+        const reason =
+          err.code === "ROLE_MISMATCH"
+            ? "wrong_user_type"
+            : err.code === "USER_NOT_FOUND"
+            ? "not_registered"
+            : "login_failed";
+
+        const target =
+          state === "student" ? "/student/login" : "/";
+
+        return redirectViaFrontend(target, {
+          status: "fail",
+          reason,
+          type: "login",
+        });
       }
-    }
-    else if(type === "register"){
-      try{
-        await register(req, res, next, { returnTokens: true});
-        if(state === "student"){
-           return res.redirect(`${CLIENT_ORIGIN}/student/onboarding`);
+    } else if (type === "register") {
+      try {
+        const user = await register(req, res, next, { returnTokens: true });
+
+        // after successful register redirect
+        if (state === "student") {
+          return redirectViaFrontend("/student/onboarding", {
+            status: "success",
+            type: "register",
+          });
+        } else if (state === "institution") {
+          return redirectViaFrontend("/signup", {
+            status: "success",
+            type: "register",
+          });
         }
-        else if(state === "institution"){
-          return res.redirect(`${CLIENT_ORIGIN}`)
-        }
-      }
-      catch(err){
-        console.warn("Registeration failed:", err.message)
-        if(state === "student"){
-          return res.redirect(`${CLIENT_ORIGIN}/student/register?error=already_registered`)
-        }
-        else if(state === "institution"){
-          return res.redirect(`${CLIENT_ORIGIN}?error=already_registered`)
-        }
+      } catch (err) {
+        console.warn("Registration failed:", err.message);
+
+        const target =
+          state === "student" ? "/student/signup" : "/";
+        return redirectViaFrontend(target, {
+          status: "fail",
+          reason: "already_registered",
+          type: "register",
+        });
       }
     }
 

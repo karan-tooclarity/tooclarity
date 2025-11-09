@@ -1,7 +1,6 @@
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { _Dialog, _DialogContent } from "@/components/ui/dialog";
 import { Plus } from "lucide-react";
-
 interface CourseOrBranchSelectionDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -14,18 +13,18 @@ export default function CourseOrBranchSelectionDialog({
   onSelection,
 }: CourseOrBranchSelectionDialogProps) {
   return (
-    <Dialog
+    <_Dialog
       open={open}
       onOpenChange={() => {}} // prevent backdrop close
     >
-      <DialogContent
+      <_DialogContent
         className="
           w-[95vw] sm:w-[90vw] md:max-w-[700px] 
           rounded-[16px] bg-white border border-gray-200 shadow-lg 
           p-6 sm:p-8 text-center
         "
-        onEscapeKeyDown={(e) => e.preventDefault()}
-        onInteractOutside={(e) => e.preventDefault()}
+        onEscapeKeyDown={(event) => event.preventDefault()}
+        onInteractOutside={(event) => event.preventDefault()}
         showCloseButton={false}
         overlayClassName="bg-black/70"
       >
@@ -75,7 +74,7 @@ export default function CourseOrBranchSelectionDialog({
             Add Branch
           </Button>
         </div>
-      </DialogContent>
-    </Dialog>
+      </_DialogContent>
+    </_Dialog>
   );
 }

@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Image from 'next/image';
 import styles from './HomeHeader.module.css';
 
 interface HomeHeaderProps {
@@ -42,7 +43,7 @@ export const HomeHeader: React.FC<HomeHeaderProps> = ({
           aria-label="Open profile"
         >
           {userAvatar ? (
-            <img src={userAvatar} alt={userName} />
+            <Image src={userAvatar} alt={userName} width={48} height={48} />
           ) : (
             <span className={styles.initialsText}>{getInitials(userName)}</span>
           )}

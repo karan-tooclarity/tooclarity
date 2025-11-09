@@ -5,15 +5,14 @@ import { getSocket } from "@/lib/socket";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
 import { cacheSet, CACHE_DURATION } from "@/lib/localDb";
-import { BASE_CACHE_KEY, cacheKeyFor, type NotificationItem } from "@/lib/hooks/notifications-hooks";
+import { cacheKeyFor, type NotificationItem } from "@/lib/hooks/notifications-hooks";
 import { authAPI } from "@/lib/api";
 
 export default function NotificationSocketBridge() {
   const queryClient = useQueryClient();
 
   useEffect(() => {
-    let socket: any;
-    let mounted = true;
+    let socket: { on: (ev: string, h: (...args: unknown[]) => void) => void; off: (ev: string, h: (...args: unknown[]) => void) => void; emit: (ev: string, ...args: unknown[]) => void } | null;
     (async () => {
       try {
         const apiBase = process.env.NEXT_PUBLIC_API_URL || "";
@@ -24,28 +23,28 @@ export default function NotificationSocketBridge() {
         if (!socket) return;
 
         // Derive role and id once (uses existing session cookie)
-        let scope: any = {};
+        let scope: Record<string, unknown> = {};
         try {
           const prof = await authAPI.getProfile();
-          const role = ((prof as any)?.data?.role || '').toString().toUpperCase();
-          const id = (prof as any)?.data?.id;
+          const role = ((prof as { data?: { role?: string; id?: string } })?.data?.role || '').toString().toUpperCase();
+          const id = (prof as { data?: { role?: string; id?: string } })?.data?.id;
           if (role === 'INSTITUTE_ADMIN' && id) { scope = { scope: 'admin', institutionAdminId: id }; socket.emit('joinInstitutionAdmin', id); }
           else if (role === 'ADMIN' && id) { scope = { scope: 'admin', institutionAdminId: id }; socket.emit('joinAdmin', id); }
           else if (role === 'STUDENT' && id) { scope = { scope: 'student', studentId: id }; socket.emit('joinStudent', id); }
         } catch {}
 
-        const cacheKey = cacheKeyFor(scope);
+        const cacheKey = cacheKeyFor(scope as { scope: "institution" | "student" | "branch" | "admin"; institutionAdminId?: string; studentId?: string } );
         const listKey = ['notifications','list'] as const;
 
-        const onCreated = async (data: { notification: any }) => {
+        const onCreated = async (data: { notification: { _id: string; title?: string; description?: string; createdAt?: string; read?: boolean; category?: string } }) => {
           const n = data.notification;
           const newNotification: NotificationItem = {
             id: n._id,
-            title: n.title,
-            description: n.description,
+            title: n.title || '',
+            description: n.description || '',
             time: n.createdAt ? new Date(n.createdAt).getTime() : Date.now(),
             read: !!n.read,
-            category: n.category,
+            category: (n.category as NotificationItem['category']) || 'other',
           };
           const cat = (newNotification.category || 'other').toString().toLowerCase();
           const message = `${newNotification.title}${newNotification.description ? ` — ${newNotification.description}` : ''}`;
@@ -73,21 +72,23 @@ export default function NotificationSocketBridge() {
           try { await cacheSet(cacheKey, next, CACHE_DURATION.INSTITUTION); } catch {}
         };
 
-        socket.on('notificationCreated', onCreated);
-        socket.on('notificationUpdated', onUpdated);
-        socket.on('notificationRemoved', onRemoved);
+        socket.on('notificationCreated', (d: unknown) => { void onCreated(d as { notification: { _id: string; title?: string; description?: string; createdAt?: string; read?: boolean; category?: string } }); });
+        socket.on('notificationUpdated', (d: unknown) => { void onUpdated(d as { notificationId: string; read: boolean }); });
+        socket.on('notificationRemoved', (d: unknown) => { void onRemoved(d as { notificationId: string }); });
 
         return () => {
           try {
-            socket.off('notificationCreated', onCreated);
-            socket.off('notificationUpdated', onUpdated);
-            socket.off('notificationRemoved', onRemoved);
+            if (socket) {
+              socket.off('notificationCreated', (d: unknown) => { void onCreated(d as { notification: { _id: string; title?: string; description?: string; createdAt?: string; read?: boolean; category?: string } }); });
+              socket.off('notificationUpdated', (d: unknown) => { void onUpdated(d as { notificationId: string; read: boolean }); });
+              socket.off('notificationRemoved', (d: unknown) => { void onRemoved(d as { notificationId: string }); });
+            }
           } catch {}
         };
       } catch {}
     })();
 
-    return () => { mounted = false; };
+    return () => { /* cleanup */ };
   }, [queryClient]);
 
   return null;

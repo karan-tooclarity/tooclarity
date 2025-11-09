@@ -20,7 +20,7 @@ export function useProfile() {
     queryKey: ['profile'],
     queryFn: async (): Promise<UserProfile | null> => {
       const res = await authAPI.getProfile();
-      const d: any = (res as any)?.data || null;
+      const d = (res as { data?: Partial<UserProfile> })?.data || null;
       if (!d) return null;
       return {
         id: d.id || d._id,
@@ -30,7 +30,7 @@ export function useProfile() {
         contactNumber: d.contactNumber,
         designation: d.designation,
         linkedin: d.linkedin,
-        institution: d.institution,
+        institution: d.institution as string | undefined,
         role: d.role,
         isPaymentDone: d.isPaymentDone,
         isProfileCompleted: d.isProfileCompleted,

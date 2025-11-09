@@ -251,7 +251,7 @@ const FILTER_CONFIG: Record<string, {
   },
 };
 
-const MODES = ['Offline', 'Online'];
+/*const MODES = ['Offline', 'Online'];
 
 const PRICE_RANGES = [
   'Below ₹75,000',
@@ -259,7 +259,7 @@ const PRICE_RANGES = [
   '₹1,50,000 - ₹3,00,000',
   'Above ₹3,00,000',
 ];
-
+*/
 /**
  * FilterSidebar Component - Sidebar with course filters
  * Features: Multi-select pill-button filters for kindergarten courses

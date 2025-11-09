@@ -1,6 +1,6 @@
 // Student-specific API configuration placeholder
 
-import { API_BASE_URL, apiRequest, type ApiResponse } from "./api";
+import { apiRequest, type ApiResponse } from "./api";
 
 export type StudentApiResponse<T = unknown> = ApiResponse<T>;
 
@@ -27,6 +27,7 @@ export interface StudentProfile {
   phoneNumber?: string;
   profilePicture?: string;
   birthday?: string; // ISO or raw string if backend provides
+  address?: string;
 }
 
 export interface StudentCourse {
@@ -62,7 +63,7 @@ export interface UpdateAcademicProfilePayload {
     | "STUDY_HALLS"
     | "TUITION_CENTER"
     | "STUDY_ABROAD";
-  details: any;
+  details: Record<string, unknown>;
 }
 
 // ===== Course Types for Student Dashboard =====
@@ -92,18 +93,27 @@ export interface CourseForStudent {
 export const studentDashboardAPI = {
   // Fetch the current user's profile (shared profile endpoint)
   getProfile: async (): Promise<StudentApiResponse<StudentProfile>> => {
-    const res = await studentApiRequest<any>("/v1/profile", { method: "GET" });
-    // Normalize shape to StudentProfile best-effort
-    const data: any = (res as any)?.data || res?.data || res;
-    const normalized: StudentProfile = {
-      id: data?.id || data?._id || "",
-      name: data?.name || "",
-      email: data?.email || "",
-      phoneNumber: data?.contactNumber,
-      profilePicture: data?.profilePicture || data?.ProfilePicutre, // backend may use ProfilePicutre
-      birthday: data?.birthday, // if backend provides
+    type BackendProfile = {
+      id?: string;
+      _id?: string;
+      name?: string;
+      email?: string;
+      contactNumber?: string;
+      profilePicture?: string;
+      birthday?: string;
+      data?: unknown;
     };
-    return { success: true, message: "ok", data: normalized } as StudentApiResponse<StudentProfile>;
+    const res = await studentApiRequest<BackendProfile>("/v1/profile", { method: "GET" });
+    const raw = (res as ApiResponse<BackendProfile>).data as BackendProfile;
+    const normalized: StudentProfile = {
+      id: raw?.id || raw?._id || "",
+      name: raw?.name || "",
+      email: raw?.email || "",
+      phoneNumber: raw?.contactNumber,
+      profilePicture: raw?.profilePicture,
+      birthday: raw?.birthday,
+    };
+    return { success: true, message: "ok", data: normalized };
   },
 
   // Fetch all visible courses (public endpoint - no auth required)
@@ -143,7 +153,7 @@ export const studentDashboardAPI = {
 export const studentOnboardingAPI = {
   createStudent: async (
     payload: CreateStudentPayload
-  ): Promise<StudentApiResponse<any>> => {
+  ): Promise<StudentApiResponse<unknown>> => {
     return studentApiRequest("/v1/students", {
       method: "POST",
       body: JSON.stringify(payload),
@@ -151,10 +161,9 @@ export const studentOnboardingAPI = {
   },
 
   updateAcademicProfile: async (
-    studentId: string,
     payload: UpdateAcademicProfilePayload
-  ): Promise<StudentApiResponse<any>> => {
-    return studentApiRequest(`/v1/students/${encodeURIComponent(studentId)}/academic-profile`, {
+  ): Promise<StudentApiResponse<unknown>> => {
+    return studentApiRequest(`/v1/students/academic-profile`, {
       method: "PUT",
       body: JSON.stringify(payload),
     });

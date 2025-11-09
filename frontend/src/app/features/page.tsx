@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import SignUpDialog from "@/components/auth/SignUpDialog";
 import LoginDialogBox from "@/components/auth/LoginDialogBox";
-import { useAuth } from "@/lib/auth-context";
+// import { useAuth } from "@/lib/auth-context";
 
 // NOTE: Please adjust the import paths for these components to match your project structure.
 import StaticDashboardCard from "@/components/LandingPage/DashboardCard";
@@ -197,8 +197,8 @@ const FeaturesPage = () => {
       </div>
 
      <Footer />
-     <SignUpDialog open={isSignUpOpen} onOpenChange={setIsSignUpOpen} />
-    <LoginDialogBox open={isLoginOpen} onOpenChange={setIsLoginOpen}/>
+     <SignUpDialog open={isSignUpOpen} onOpenChange={setIsSignUpOpen} caller="institution" />
+    <LoginDialogBox open={isLoginOpen} onOpenChange={setIsLoginOpen} caller="institution"/>
 
     </>
   );

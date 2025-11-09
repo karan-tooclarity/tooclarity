@@ -5,20 +5,22 @@ import React from "react";
 import { programsAPI } from "@/lib/api";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import Image from "next/image";
 import {
-  Dialog,
-  DialogContent,
-  DialogTitle,
-  DialogDescription,
-  DialogTrigger,
-} from "@/components/ui/levels_dialog";
+  _Dialog,
+  _DialogContent,
+  _DialogHeader,
+  _DialogTitle,
+  _DialogDescription,
+  _DialogTrigger,
+} from "@/components/ui/dialog";
 import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardContent,
-  CardFooter,
+  _Card,
+  _CardHeader,
+  _CardTitle,
+  _CardDescription,
+  _CardContent,
+  _CardFooter,
 } from "@/components/ui/card";
 import InputField from "@/components/ui/InputField";
 import { Upload, Plus, MoreVertical } from "lucide-react";
@@ -30,7 +32,6 @@ import {
   getCoursesGroupsByBranchName,
   updateCoursesGroupInDB,
 } from "@/lib/localDb";
-//import CoachingCourseForm from "./L2DialogBoxParts/Course/CoachingCourseForm";
 
 // ✅ New imports for split forms
 import CoachingCourseForm from "./L2DialogBoxParts/Course/CoachingCourseForm";
@@ -41,15 +42,16 @@ import BasicCourseForm from "./L2DialogBoxParts/Course/BasicCourseForm";
 import FallbackCourseForm from "./L2DialogBoxParts/Course/FallbackCourseForm";
 import StudyAbroadForm from "./L2DialogBoxParts/Course/StudyAbroadForm";
 import BranchForm from "./L2DialogBoxParts/Branch/BranchForm";
-import { error } from "console";
+// import { error } from "console";
 import {
   exportAndUploadInstitutionAndCourses,
-  exportInstitutionAndCoursesToFile,
+  // exportInstitutionAndCoursesToFile,
 } from "@/lib/utility";
 import { L2Schemas } from "@/lib/validations/L2Schema";
-import { createdBranchRule } from "@/lib/validations/ValidationRules";
+// import { createdBranchRule } from "@/lib/validations/ValidationRules";
 import { uploadToS3 } from "@/lib/awsUpload";
 import AppSelect from "@/components/ui/AppSelect";
+import { toast } from "react-toastify";
 
 interface L2DialogBoxProps {
   trigger?: React.ReactNode;
@@ -58,15 +60,16 @@ interface L2DialogBoxProps {
   onSuccess?: () => void;
   onPrevious?: () => void;
   initialSection?: "course" | "branch";
-  // New: render inline (non-dialog) for subscription page usage
-  renderMode?: "dialog" | "inline";
+  // New: render inline (non-_Dialog) for subscription page usage
+  renderMode?: "_Dialog" | "inline";
   // New: subscription mode for Program creation flow on Subscription page
   mode?: "default" | "subscriptionProgram" | "settingsEdit";
   institutionId?: string;
   // New: for editing existing programs in settings
   editMode?: boolean;
-  existingCourseData?: any;
+  existingCourseData?: Partial<Course> & { _id?: string; branch?: string };
   onEditSuccess?: () => void;
+  // Test-only overrides to avoid localStorage dependency
 }
 export interface Course {
   id: number;
@@ -92,6 +95,8 @@ export interface Course {
   classSize: string;
   categoriesType: string;
   domainType: string;
+  subDomainType: string;
+  courseHighlights: string;
   seatingOption: string;
   openingTime: string;
   closingTime: string;
@@ -100,25 +105,25 @@ export interface Course {
   totalSeats: string;
   availableSeats: string;
   pricePerSeat: string;
-  hasWifi: string; // Changed from null
-  hasChargingPoints: string; // Changed from null
-  hasAC: string; // Changed from null
-  hasPersonalLocker: string; // Changed from null
-  eligibilityCriteria: string; // Add this line
+  hasWifi: string;
+  hasChargingPoints: string;
+  hasAC: string;
+  hasPersonalLocker: string;
+  eligibilityCriteria: string;
   tuitionType: string;
   instructorProfile: string;
   subject: string;
   createdBranch: string;
-  consultancyName?: string;
-  studentAdmissions?: string;
-  countriesOffered?: string;
-  academicOfferings?: string;
-  businessProof?: File | null;
-  businessProofUrl?: string;
-  businessProofPreviewUrl?: string;
-  panAadhaar?: File | null;
-  panAadhaarUrl?: string;
-  panAadhaarPreviewUrl?: string;
+  consultancyName: string;
+  studentAdmissions: string;
+  countriesOffered: string;
+  academicOfferings: string;
+  businessProof: File | null;
+  businessProofUrl: string;
+  businessProofPreviewUrl: string;
+  panAadhaar: File | null;
+  panAadhaarUrl: string;
+  panAadhaarPreviewUrl: string;
 }
 
 // Branch shape used locally in this component; dbId tracks IndexedDB id
@@ -139,7 +144,7 @@ export default function L2DialogBox({
   onPrevious,
 
   initialSection: initialSectionProp,
-  renderMode = "dialog",
+  renderMode = "_Dialog",
   mode = "default",
   institutionId,
   editMode = false,
@@ -149,11 +154,8 @@ export default function L2DialogBox({
   const router = useRouter();
   const [isCoursrOrBranch, setIsCourseOrBranch] = useState<string | null>(null);
   const [institutionType, setInstitutionType] = useState<string | null>(null);
-  // const isCoursrOrBranch = localStorage.getItem("selected");
-  // const institutionType = localStorage.getItem("institutionType");
 
   useEffect(() => {
-    // runs only in browser
     setIsCourseOrBranch(localStorage.getItem("selected"));
     setInstitutionType(localStorage.getItem("institutionType"));
   }, []);
@@ -174,13 +176,15 @@ export default function L2DialogBox({
   const shouldSkipL3 = isStudyHall || isTutionCenter;
 
   const [isOpen, setIsOpen] = useState(false);
-  // Remove tab state; we will decide via parent selection
   const [isLoading, setIsLoading] = useState(false);
   const [selectedCourseId, setSelectedCourseId] = useState(1);
   const [showCourseAfterBranch, setShowCourseAfterBranch] = useState(false);
   const [branchOptions, setBranchOptions] = useState<string[]>([]);
-  const [remoteBranches, setRemoteBranches] = useState<Array<{ _id: string; branchName: string }>>([]);
-  const [selectedBranchIdForProgram, setSelectedBranchIdForProgram] = useState<string>("");
+  const [remoteBranches, setRemoteBranches] = useState<
+    Array<{ _id: string; branchName: string }>
+  >([]);
+  const [selectedBranchIdForProgram, setSelectedBranchIdForProgram] =
+    useState<string>("");
   const [programBranchError, setProgramBranchError] = useState<string>("");
 
   const uniqueRemoteBranches = React.useMemo(() => {
@@ -196,160 +200,192 @@ export default function L2DialogBox({
       seenNames.add(keyName);
       result.push({ _id: id, branchName: name });
     }
-    return result.sort((a,b)=> a.branchName.localeCompare(b.branchName));
+    return result.sort((a, b) => a.branchName.localeCompare(b.branchName));
   }, [remoteBranches]);
 
-  // ✅ 1. Add state to hold validation errors for each branch
   const [branchErrors, setBranchErrors] = useState<
     Record<number, Record<string, string>>
   >({});
 
   useEffect(() => {
-    if (!dialogOpen) return;
-
     (async () => {
       try {
         const all = await getAllBranchesFromDB();
         setBranchOptions(all.map((b) => b.branchName).filter(Boolean));
-        if (isSubscriptionProgram) {
-          try {
-            const res: any = await programsAPI.listBranchesForInstitutionAdmin(String(institutionId||''));
-            const branches = (res?.data?.branches || []) as Array<any>;
-            setRemoteBranches(branches.map((b:any)=> ({ _id: String(b._id), branchName: b.branchName || "Branch" })));
-          } catch (e) {}
-        }
       } catch (err) {
         console.error("Failed to load branches from IndexedDB", err);
       }
     })();
   }, []);
 
-  // Get institution type from localStorage
+  // Handle controlled open state
+  const DialogOpen =
+    renderMode === "inline" ? true : open !== undefined ? open : isOpen;
+  const setDialogOpen = onOpenChange || setIsOpen;
+
+  const isSubscriptionProgram =
+    mode === "subscriptionProgram" || mode === "settingsEdit";
+
+  // Load institution type from localStorage when _Dialog opens
+  useEffect(() => {
+    if (DialogOpen) {
+      setIsCourseOrBranch(localStorage.getItem("selected"));
+      setInstitutionType(localStorage.getItem("institutionType"));
+    }
+  }, [DialogOpen, institutionId, isSubscriptionProgram]);
+
+  // Load remote branches for subscription programs
+  useEffect(() => {
+    if (!DialogOpen || !isSubscriptionProgram) return;
+
+    (async () => {
+      try {
+        const res = await programsAPI.listBranchesForInstitutionAdmin(
+          String(institutionId || "")
+        );
+        const branches =
+          (
+            res as {
+              data?: { branches?: Array<{ _id: string; branchName?: string }> };
+            }
+          )?.data?.branches || [];
+        setRemoteBranches(
+          branches.map((b) => ({
+            _id: String(b._id),
+            branchName: b.branchName || "Branch",
+          }))
+        );
+      } catch (e) {
+        console.log("Error loading branches:", e);
+      }
+    })();
+  }, [DialogOpen, institutionId, isSubscriptionProgram]);
+
+  // Auto-select branch for edit mode
+  useEffect(() => {
+    if (editMode && existingCourseData && existingCourseData.branch) {
+      setSelectedBranchIdForProgram(String(existingCourseData.branch));
+    }
+  }, [editMode, existingCourseData]);
+
   const [courses, setCourses] = useState(() => {
     if (editMode && existingCourseData) {
       // Convert existing course data to the expected format
-      return [{
+      return [
+        {
+          id: 1,
+          courseName: existingCourseData.courseName || "",
+          aboutCourse: existingCourseData.aboutCourse || "",
+          courseDuration: existingCourseData.courseDuration || "",
+          startDate: existingCourseData.startDate || "",
+          endDate: existingCourseData.endDate || "",
+          mode: existingCourseData.mode || "Offline",
+          priceOfCourse: existingCourseData.priceOfCourse || "",
+          eligibilityCriteria: existingCourseData.eligibilityCriteria || "",
+          location: existingCourseData.location || "",
+          image: null as File | null,
+          imageUrl: existingCourseData.imageUrl || "",
+          imagePreviewUrl: "",
+          brochureUrl: existingCourseData.brochureUrl || "",
+          brochure: null as File | null,
+          brochurePreviewUrl: "",
+          graduationType: existingCourseData.graduationType || "",
+          streamType: existingCourseData.streamType || "",
+          selectBranch: existingCourseData.selectBranch || "",
+          aboutBranch: existingCourseData.aboutBranch || "",
+          educationType: existingCourseData.educationType || "Full time",
+          classSize: existingCourseData.classSize || "",
+          categoriesType: existingCourseData.categoriesType || "",
+          domainType: existingCourseData.domainType || "",
+          subDomainType: existingCourseData.subDomainType || "",
+          courseHighlights: existingCourseData.courseHighlights || "",
+          seatingOption: existingCourseData.seatingOption || "",
+          openingTime: existingCourseData.openingTime || "",
+          closingTime: existingCourseData.closingTime || "",
+          operationalDays: existingCourseData.operationalDays || [],
+          totalSeats: existingCourseData.totalSeats || "",
+          availableSeats: existingCourseData.availableSeats || "",
+          pricePerSeat: existingCourseData.pricePerSeat || "",
+          hasWifi: existingCourseData.hasWifi || "",
+          hasChargingPoints: existingCourseData.hasChargingPoints || "",
+          hasAC: existingCourseData.hasAC || "",
+          hasPersonalLocker: existingCourseData.hasPersonalLocker || "",
+          tuitionType: existingCourseData.tuitionType || "",
+          instructorProfile: existingCourseData.instructorProfile || "",
+          subject: existingCourseData.subject || "",
+          createdBranch: existingCourseData.createdBranch || "",
+          consultancyName: existingCourseData.consultancyName || "",
+          studentAdmissions: existingCourseData.studentAdmissions || "",
+          countriesOffered: existingCourseData.countriesOffered || "",
+          academicOfferings: existingCourseData.academicOfferings || "",
+          businessProof: null as File | null,
+          businessProofUrl: existingCourseData.businessProofUrl || "",
+          businessProofPreviewUrl: "",
+          panAadhaar: null as File | null,
+          panAadhaarUrl: existingCourseData.panAadhaarUrl || "",
+          panAadhaarPreviewUrl: "",
+        },
+      ];
+    }
+
+    // Default initialization for new courses
+    return [
+      {
         id: 1,
-        courseName: existingCourseData.courseName || "",
-        aboutCourse: existingCourseData.aboutCourse || "",
-        courseDuration: existingCourseData.courseDuration || "",
-        startDate: existingCourseData.startDate || "",
-        endDate: existingCourseData.endDate || "",
-        mode: existingCourseData.mode || "Offline",
-        priceOfCourse: existingCourseData.priceOfCourse || "",
-        eligibilityCriteria: existingCourseData.eligibilityCriteria || "",
-        location: existingCourseData.location || "",
+        courseName: "",
+        aboutCourse: "",
+        courseDuration: "",
+        startDate: "",
+        endDate: "",
+        mode: "Offline",
+        priceOfCourse: "",
+        eligibilityCriteria: "",
+        location: "",
         image: null as File | null,
-        imageUrl: existingCourseData.imageUrl || "",
+        imageUrl: "",
         imagePreviewUrl: "",
-        brochureUrl: existingCourseData.brochureUrl || "",
+        brochureUrl: "",
         brochure: null as File | null,
         brochurePreviewUrl: "",
-        // Additional fields for Under Graduate/Post graduate
-        graduationType: existingCourseData.graduationType || "",
-        streamType: existingCourseData.streamType || "",
-        selectBranch: existingCourseData.selectBranch || "",
-        aboutBranch: existingCourseData.aboutBranch || "",
-        educationType: existingCourseData.educationType || "Full time",
-        classSize: existingCourseData.classSize || "",
-        // Additional fields for Coaching centers
-        categoriesType: existingCourseData.categoriesType || "",
-        domainType: existingCourseData.domainType || "",
-        // Additional fields for Study Hall
-        seatingOption: existingCourseData.seatingOption || "",
-        openingTime: existingCourseData.openingTime || "",
-        closingTime: existingCourseData.closingTime || "",
-        operationalDays: existingCourseData.operationalDays || [],
-        totalSeats: existingCourseData.totalSeats || "",
-        availableSeats: existingCourseData.availableSeats || "",
-        pricePerSeat: existingCourseData.pricePerSeat || "",
-        hasWifi: existingCourseData.hasWifi || "",
-        hasChargingPoints: existingCourseData.hasChargingPoints || "",
-        hasAC: existingCourseData.hasAC || "",
-        hasPersonalLocker: existingCourseData.hasPersonalLocker || "",
-        // Additional fields for Tuition Centers
-        tuitionType: existingCourseData.tuitionType || "",
-        instructorProfile: existingCourseData.instructorProfile || "",
-        subject: existingCourseData.subject || "",
-        createdBranch: existingCourseData.createdBranch || "",
-        // Study Abroad fields
-        consultancyName: existingCourseData.consultancyName || "",
-        studentAdmissions: existingCourseData.studentAdmissions || "",
-        countriesOffered: existingCourseData.countriesOffered || "",
-        academicOfferings: existingCourseData.academicOfferings || "",
+        graduationType: "",
+        streamType: "",
+        selectBranch: "",
+        aboutBranch: "",
+        educationType: "Full time",
+        classSize: "",
+        categoriesType: "",
+        domainType: "",
+        subDomainType: "",
+        courseHighlights: "",
+        seatingOption: "",
+        openingTime: "",
+        closingTime: "",
+        operationalDays: [] as string[],
+        totalSeats: "",
+        availableSeats: "",
+        pricePerSeat: "",
+        hasWifi: "",
+        hasChargingPoints: "",
+        hasAC: "",
+        hasPersonalLocker: "",
+        tuitionType: "",
+        instructorProfile: "",
+        subject: "",
+        createdBranch: "",
+        consultancyName: "",
+        studentAdmissions: "",
+        countriesOffered: "",
+        academicOfferings: "",
         businessProof: null as File | null,
-        businessProofUrl: existingCourseData.businessProofUrl || "",
+        businessProofUrl: "",
         businessProofPreviewUrl: "",
         panAadhaar: null as File | null,
-        panAadhaarUrl: existingCourseData.panAadhaarUrl || "",
+        panAadhaarUrl: "",
         panAadhaarPreviewUrl: "",
-      }];
-    }
-    
-    // Default initialization for new courses
-    return [{
-      id: 1,
-      courseName: "",
-      aboutCourse: "",
-      courseDuration: "",
-      startDate: "",
-      endDate: "",
-      mode: "Offline",
-      priceOfCourse: "",
-      eligibilityCriteria: "",
-      location: "",
-      image: null as File | null,
-      imageUrl: "",
-      imagePreviewUrl: "",
-      brochureUrl: "",
-      brochure: null as File | null,
-      brochurePreviewUrl: "",
-      // Additional fields for Under Graduate/Post graduate
-      graduationType: "",
-      streamType: "",
-      selectBranch: "",
-      aboutBranch: "",
-      educationType: "Full time",
-      classSize: "",
-      // Additional fields for Coaching centers
-      categoriesType: "",
-      domainType: "",
-      // Additional fields for Study Hall
-      seatingOption: "",
-      openingTime: "",
-      closingTime: "",
-      operationalDays: [] as string[],
-      totalSeats: "",
-      availableSeats: "",
-      pricePerSeat: "",
-      hasWifi: "",
-      hasChargingPoints: "",
-      hasAC: "",
-      hasPersonalLocker: "",
-      // Additional fields for Tuition Centers
-      tuitionType: "",
-      instructorProfile: "",
-      subject: "",
-      createdBranch: "",
-      // Study Abroad fields
-      consultancyName: "",
-      studentAdmissions: "",
-      countriesOffered: "",
-      academicOfferings: "",
-      businessProof: null as File | null,
-      businessProofUrl: "",
-      businessProofPreviewUrl: "",
-      panAadhaar: null as File | null,
-      panAadhaarUrl: "",
-      panAadhaarPreviewUrl: "",
-    }];
+      },
+    ];
   });
 
-  // Handle controlled open state; in inline mode we treat it as always open
-  const dialogOpen = renderMode === "inline" ? true : (open !== undefined ? open : isOpen);
-  const setDialogOpen = onOpenChange || setIsOpen;
-
-  // Get current course
   const currentCourse =
     courses.find((c) => c.id === selectedCourseId) || courses[0];
 
@@ -366,11 +402,6 @@ export default function L2DialogBox({
     },
   ]);
 
-  // Get current branch
-  const currentBranch =
-    branches.find((b) => b.id === selectedBranchId) || branches[0];
-
-  // Which section to show: "course" or "branch"; prioritize localStorage 'selected', fallback to prop, then 'course'
   const initialSection: "course" | "branch" =
     isCoursrOrBranch === "course" || isCoursrOrBranch === "branch"
       ? (isCoursrOrBranch as "course" | "branch")
@@ -386,9 +417,6 @@ export default function L2DialogBox({
     { label: "Add Image", type: "image", accept: "image/*" },
     { label: "Add Brochure", type: "brochure", accept: "application/pdf" },
   ];
-
-  // Handlers
-  // L2DialogBox.tsx
 
   const handleCourseChange = (
     e: React.ChangeEvent<
@@ -418,22 +446,17 @@ export default function L2DialogBox({
 
     const fieldError = error?.details.find((detail) => detail.path[0] === name);
 
-    // ✅ CORRECTED ERROR HANDLING TO FIX TYPESCRIPT ERROR
     setCourseErrorsById((prevErrors) => {
-      // Get a copy of the errors for the current course
       const updatedErrorsForCourse = {
         ...(prevErrors[selectedCourseId] || {}),
       };
 
       if (fieldError) {
-        // If there's a new error, add or update it
         updatedErrorsForCourse[name] = fieldError.message;
       } else {
-        // If the field is now valid, remove the error key from the object
         delete updatedErrorsForCourse[name];
       }
 
-      // Return the updated state
       return {
         ...prevErrors,
         [selectedCourseId]: updatedErrorsForCourse,
@@ -451,29 +474,28 @@ export default function L2DialogBox({
     const selectedFile = files[0];
     const courseId = selectedCourseId;
 
-    // Allowed file types
     const allowedImageTypes = ["image/png", "image/jpg", "image/jpeg"];
-    const allowedBrochureTypes = ["application/pdf"];
+    const allowedPdfTypes = ["application/pdf"];
 
     let errorMessage = "";
 
-    // 🔍 File type validation
-    if ((type === "image" || type === "businessProof") && !allowedImageTypes.includes(selectedFile.type)) {
+    if (
+      (type === "image" || type === "businessProof") &&
+      !allowedImageTypes.includes(selectedFile.type)
+    ) {
       errorMessage = "Only PNG, JPG, or JPEG images are allowed.";
     } else if (
       (type === "brochure" || type === "panAadhaar") &&
-      !allowedBrochureTypes.includes(selectedFile.type)
+      !allowedPdfTypes.includes(selectedFile.type)
     ) {
       errorMessage = "Only PDF files are allowed.";
     }
 
-    // 📏 File size validation (max 4 MB)
     const MAX_FILE_SIZE = 4 * 1024 * 1024; // 4 MB
     if (selectedFile.size > MAX_FILE_SIZE) {
       errorMessage = "File size must be 4 MB or less.";
     }
 
-    // ❌ If validation failed → show error inline & stop further execution
     if (errorMessage) {
       setCourseErrorsById((prev) => ({
         ...prev,
@@ -485,17 +507,14 @@ export default function L2DialogBox({
       return;
     }
 
-    // ✅ If valid → clear previous error for this file type
     setCourseErrorsById((prev) => {
       const updated = { ...(prev[courseId] || {}) };
       delete updated[`${type}Url`];
       return { ...prev, [courseId]: updated };
     });
 
-    // ✅ Create a local preview URL
     const previewUrl = URL.createObjectURL(selectedFile);
 
-    // ✅ Update selected course state
     setCourses((prevCourses) =>
       prevCourses.map((course) =>
         course.id === courseId
@@ -509,19 +528,14 @@ export default function L2DialogBox({
     );
   };
 
-  // L2DialogBox.tsx
-
   const handleOperationalDayChange = (day: string) => {
-    // Find the current course to get its existing days
     const courseToUpdate = courses.find((c) => c.id === selectedCourseId);
     if (!courseToUpdate) return;
 
-    // Calculate the new array of operational days
     const newOperationalDays = courseToUpdate.operationalDays.includes(day)
       ? courseToUpdate.operationalDays.filter((d: string) => d !== day)
       : [...courseToUpdate.operationalDays, day];
 
-    // 1. Update the state for the UI
     setCourses(
       courses.map((course) =>
         course.id === selectedCourseId
@@ -530,11 +544,9 @@ export default function L2DialogBox({
       )
     );
 
-    // 2. Get the correct Joi schema (works for both Study Hall and Tuition Center)
     const schema = L2Schemas[getSchemaKey()];
     let validationError = "";
 
-    // 3. Validate just the operationalDays field with the new value
     if (schema && schema.extract("operationalDays")) {
       const { error } = schema
         .extract("operationalDays")
@@ -544,29 +556,14 @@ export default function L2DialogBox({
       }
     }
 
-    // 4. Update the error state for this specific field
     setCourseErrorsById((prevErrors) => ({
       ...prevErrors,
       [selectedCourseId]: {
         ...(prevErrors[selectedCourseId] || {}),
-        operationalDays: validationError, // If validation passed, this will be empty
+        operationalDays: validationError,
       },
     }));
   };
-  // const handleOperationalDayChange = (day: string) => {
-  //   setCourses(
-  //     courses.map((course) =>
-  //       course.id === selectedCourseId
-  //         ? {
-  //             ...course,
-  //             operationalDays: course.operationalDays.includes(day)
-  //               ? course.operationalDays.filter((d) => d !== day)
-  //               : [...course.operationalDays, day],
-  //           }
-  //         : course
-  //     )
-  //   );
-  // };
 
   const addNewCourse = () => {
     const newId = Math.max(...courses.map((c) => c.id)) + 1;
@@ -586,18 +583,17 @@ export default function L2DialogBox({
       brochureUrl: "",
       brochurePreviewUrl: "",
       brochure: null as File | null,
-      // Additional fields for Under Graduate/Post graduate
       graduationType: "",
       streamType: "",
       selectBranch: "",
       aboutBranch: "",
       educationType: "Full time",
       classSize: "",
-      // Additional fields for Coaching centers
       categoriesType: "",
       domainType: "",
       eligibilityCriteria: "",
-      // Additional fields for Study Hall
+      subDomainType: "",
+      courseHighlights: "",
       seatingOption: "",
       openingTime: "",
       closingTime: "",
@@ -605,16 +601,14 @@ export default function L2DialogBox({
       totalSeats: "",
       availableSeats: "",
       pricePerSeat: "",
-      hasWifi: "", // Changed from null
-      hasChargingPoints: "", // Changed from null
-      hasAC: "", // Changed from null
-      hasPersonalLocker: "", // Changed from null
-      // Additional fields for Tuition Centers
+      hasWifi: "",
+      hasChargingPoints: "",
+      hasAC: "",
+      hasPersonalLocker: "",
       tuitionType: "",
       instructorProfile: "",
       subject: "",
       createdBranch: "",
-      // Study Abroad fields
       consultancyName: "",
       studentAdmissions: "",
       countriesOffered: "",
@@ -652,7 +646,6 @@ export default function L2DialogBox({
         locationUrl: "",
         dbId: undefined,
       };
-      // Select the newly added branch
       setSelectedBranchId(newId);
       return [...prev, newBranch];
     });
@@ -660,7 +653,7 @@ export default function L2DialogBox({
 
   const deleteBranch = (branchId: number) => {
     setBranches((prev) => {
-      if (prev.length <= 1) return prev; // keep at least one branch
+      if (prev.length <= 1) return prev;
       const updated = prev.filter((b) => b.id !== branchId);
       if (selectedBranchId === branchId) {
         setSelectedBranchId(updated[0].id);
@@ -669,18 +662,93 @@ export default function L2DialogBox({
     });
   };
 
-  // const [selectedCourseId, setSelectedCourseId] = useState(1);
   const [courseErrorsById, setCourseErrorsById] = useState<
     Record<number, Record<string, string>>
-  >({}); // ✅ ADD THIS LINE
-  const validateCourses = () => {
-    const requiredFields = [
-      "courseName",
-      "courseDuration",
-      "priceOfCourse",
-      "location",
-    ];
+  >({});
 
+  const getRequiredFields = () => {
+    switch (true) {
+      case isBasicCourseForm:
+        return [
+          "courseName",
+          "aboutCourse",
+          "courseDuration",
+          "priceOfCourse",
+          "location",
+          "startDate",
+          "endDate",
+        ];
+      case isUnderPostGraduate:
+        return [
+          "graduationType",
+          "streamType",
+          "selectBranch",
+          "aboutBranch",
+          "courseDuration",
+          "startDate",
+          "endDate",
+          "priceOfCourse",
+          "classSize",
+          "eligibilityCriteria",
+        ];
+      case isCoachingCenter:
+        return [
+          "categoriesType",
+          "domainType",
+          "subDomainType",
+          "startDate",
+          "endDate",
+          "courseName",
+          "courseDuration",
+          "priceOfCourse",
+          "classSize",
+          "location",
+        ];
+      case isTutionCenter:
+        return [
+          "tuitionType",
+          "instructorProfile",
+          "subject",
+          "openingTime",
+          "closingTime",
+          "totalSeats",
+          "availableSeats",
+          "operationalDays",
+          "startDate",
+          "endDate",
+          "pricePerSeat",
+        ];
+      case isStudyHall:
+        return [
+          "hallName",
+          "seatingOption",
+          "openingTime",
+          "closingTime",
+          "operationalDays",
+          "startDate",
+          "endDate",
+          "totalSeats",
+          "availableSeats",
+          "pricePerSeat",
+          "hasPersonalLocker",
+          "hasWifi",
+          "hasChargingPoints",
+          "hasAC",
+        ];
+      case isStudyAbroad:
+        return [
+          "consultancyName",
+          "studentAdmissions",
+          "countriesOffered",
+          "academicOfferings",
+        ];
+      default:
+        return ["courseName", "courseDuration", "priceOfCourse", "location"];
+    }
+  };
+
+  const validateCourses = () => {
+    const requiredFields = getRequiredFields();
     for (const course of courses) {
       for (const field of requiredFields) {
         if (
@@ -692,70 +760,9 @@ export default function L2DialogBox({
           }`;
         }
       }
-
-      // Additional validation for specific institution types
-      if (isUnderPostGraduate) {
-        if (
-          !course.graduationType ||
-          !course.streamType ||
-          !course.selectBranch
-        ) {
-          return; //Please fill in all graduation details for course: ${course.courseName};
-        }
-      }
-
-      if (isCoachingCenter) {
-        if (!course.categoriesType || !course.domainType) {
-          return; //Please fill in all coaching details for course: ${course.courseName};
-        }
-      }
-
-      if (isStudyHall) {
-        if (
-          !course.openingTime ||
-          !course.closingTime ||
-          !course.totalSeats ||
-          !course.availableSeats
-        ) {
-          return; // Please fill in all study hall details for: ${course.courseName};
-        }
-      }
-
-      if (isTutionCenter) {
-        if (
-          !course.tuitionType ||
-          !course.instructorProfile ||
-          !course.subject ||
-          !course.openingTime ||
-          !course.closingTime ||
-          !course.totalSeats ||
-          !course.availableSeats
-        ) {
-          return; // Please fill in all tuition center details for: ${course.courseName};
-        }
-      }
-
-      // Basic course form types (Kindergarten, School, Intermediate college) only need common fields
-      // No additional validation needed for these types
     }
-
     return null;
   };
-  useEffect(() => {
-    if (dialogOpen) {
-      setIsCourseOrBranch(localStorage.getItem("selected"));
-      setInstitutionType(localStorage.getItem("institutionType"));
-    }
-  }, [dialogOpen]); // Dependency on dialogOpen is the key.
-
-  // Auto-select branch for edit mode
-  useEffect(() => {
-    if (editMode && existingCourseData && existingCourseData.branch) {
-      setSelectedBranchIdForProgram(String(existingCourseData.branch));
-    }
-  }, [editMode, existingCourseData]);
-
-  // Inside L2DialogBox.tsx
 
   const getSchemaKey = (): keyof typeof L2Schemas => {
     if (isStudyAbroad) {
@@ -773,13 +780,19 @@ export default function L2DialogBox({
     if (isUnderPostGraduate) {
       return "ugpg";
     }
-    // Default for Kindergarten, School, etc.
     return "basic";
   };
 
   const handleCourseSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsLoading(true);
+
+    const validationMessage = validateCourses();
+    if (validationMessage) {
+      toast.error(validationMessage);
+      setIsLoading(false);
+      return;
+    }
 
     try {
       console.log("🚀 Starting course submission...");
@@ -788,119 +801,30 @@ export default function L2DialogBox({
         courses.map(async (course) => {
           const updated = { ...course };
 
-          // --- 🖼️ Image Upload ---
           if (course.image instanceof File) {
-            const isNewLocalFile =
-              !course.imageUrl || course.imageUrl.startsWith("blob:");
-            if (isNewLocalFile) {
-              console.log(`🪣 Uploading new image for: ${course.courseName}`);
-              try {
-                const uploadImage = await uploadToS3(course.image);
-                if (uploadImage.success && uploadImage.fileUrl) {
-                  updated.imageUrl = uploadImage.fileUrl;
-                  updated.imagePreviewUrl = URL.createObjectURL(course.image);
-                  console.log(`✅ Image uploaded for: ${course.courseName}`);
-                }
-              } catch (err) {
-                console.error(
-                  `❌ Failed to upload image for ${course.courseName}:`,
-                  err
-                );
-              }
-            } else {
-              console.log(
-                `⚡ Skipping image upload (already uploaded): ${course.courseName}`
-              );
+            const uploadImage = await uploadToS3(course.image);
+            if (uploadImage.success && uploadImage.fileUrl) {
+              updated.imageUrl = uploadImage.fileUrl;
             }
           }
 
-          // --- 📘 Brochure Upload ---
           if (course.brochure instanceof File) {
-            const isNewLocalFile =
-              !course.brochureUrl || course.brochureUrl.startsWith("blob:");
-            if (isNewLocalFile) {
-              console.log(
-                `🪣 Uploading new brochure for: ${course.courseName}`
-              );
-              try {
-                const uploadBrochure = await uploadToS3(course.brochure);
-                if (uploadBrochure.success && uploadBrochure.fileUrl) {
-                  updated.brochureUrl = uploadBrochure.fileUrl;
-                  updated.brochurePreviewUrl = URL.createObjectURL(
-                    course.brochure
-                  );
-                  console.log(`✅ Brochure uploaded for: ${course.courseName}`);
-                }
-              } catch (err) {
-                console.error(
-                  `❌ Failed to upload brochure for ${course.courseName}:`,
-                  err
-                );
-              }
-            } else {
-              console.log(
-                `⚡ Skipping brochure upload (already uploaded): ${course.courseName}`
-              );
+            const uploadBrochure = await uploadToS3(course.brochure);
+            if (uploadBrochure.success && uploadBrochure.fileUrl) {
+              updated.brochureUrl = uploadBrochure.fileUrl;
             }
           }
-
-          // --- 🏢 Business Proof Upload (for Study Abroad) ---
           if (course.businessProof instanceof File) {
-            const isNewLocalFile =
-              !course.businessProofUrl || course.businessProofUrl.startsWith("blob:");
-            if (isNewLocalFile) {
-              console.log(
-                `🪣 Uploading new business proof for: ${course.courseName}`
-              );
-              try {
-                const uploadBusinessProof = await uploadToS3(course.businessProof);
-                if (uploadBusinessProof.success && uploadBusinessProof.fileUrl) {
-                  updated.businessProofUrl = uploadBusinessProof.fileUrl;
-                  updated.businessProofPreviewUrl = URL.createObjectURL(
-                    course.businessProof
-                  );
-                  console.log(`✅ Business proof uploaded for: ${course.courseName}`);
-                }
-              } catch (err) {
-                console.error(
-                  `❌ Failed to upload business proof for ${course.courseName}:`,
-                  err
-                );
-              }
-            } else {
-              console.log(
-                `⚡ Skipping business proof upload (already uploaded): ${course.courseName}`
-              );
+            const uploadBusinessProof = await uploadToS3(course.businessProof);
+            if (uploadBusinessProof.success && uploadBusinessProof.fileUrl) {
+              updated.businessProofUrl = uploadBusinessProof.fileUrl;
             }
           }
 
-          // --- 📄 PAN/Aadhaar Upload (for Study Abroad) ---
           if (course.panAadhaar instanceof File) {
-            const isNewLocalFile =
-              !course.panAadhaarUrl || course.panAadhaarUrl.startsWith("blob:");
-            if (isNewLocalFile) {
-              console.log(
-                `🪣 Uploading new PAN/Aadhaar for: ${course.courseName}`
-              );
-              try {
-                const uploadPanAadhaar = await uploadToS3(course.panAadhaar);
-                if (uploadPanAadhaar.success && uploadPanAadhaar.fileUrl) {
-                  updated.panAadhaarUrl = uploadPanAadhaar.fileUrl;
-                  updated.panAadhaarPreviewUrl = URL.createObjectURL(
-                    course.panAadhaar
-                  );
-                  console.log(`✅ PAN/Aadhaar uploaded for: ${course.courseName}`);
-                }
-              } catch (err) {
-                console.error(
-                  `❌ Failed to upload PAN/Aadhaar for ${course.courseName}:`,
-                  err
-                );
-              }
-            } else {
-              console.log(
-                `⚡ Skipping PAN/Aadhaar upload (already uploaded): ${course.courseName}`
-              );
+            const uploadPanAadhaar = await uploadToS3(course.panAadhaar);
+            if (uploadPanAadhaar.success && uploadPanAadhaar.fileUrl) {
+              updated.panAadhaarUrl = uploadPanAadhaar.fileUrl;
             }
           }
 
@@ -911,11 +835,9 @@ export default function L2DialogBox({
       setCourses(uploadedCourses);
       console.log("🪣 All uploads completed successfully.");
 
-      // --- 2️⃣ Check missing branch selection ---
       if (showCourseAfterBranch) {
         const initialErrors: Record<number, Record<string, string>> = {};
         let hasMissingBranch = false;
-
         for (const course of uploadedCourses) {
           if (!course.createdBranch) {
             hasMissingBranch = true;
@@ -924,79 +846,44 @@ export default function L2DialogBox({
             };
           }
         }
-
         if (hasMissingBranch) {
           setCourseErrorsById(initialErrors);
-          console.warn("⛔ Submission stopped: Missing branch selection.");
           setIsLoading(false);
           return;
         }
       }
 
-      // --- 3️⃣ Custom Date Validation ---
       const allCourseErrors: Record<number, Record<string, string>> = {};
       let hasErrors = false;
-
-      // Custom date validation before Joi validation
-      // Only apply if the active schema actually defines startDate/endDate
-      const baseSchema = L2Schemas[getSchemaKey()];
-      const schemaKeys: string[] = (baseSchema as any)?.$_terms?.keys?.map((k: any) => k.key) || [];
-      const schemaHasStartDate = schemaKeys.includes("startDate");
-      const schemaHasEndDate = schemaKeys.includes("endDate");
-
       for (const course of uploadedCourses) {
         const courseErrors: Record<string, string> = {};
-
-        if (schemaHasStartDate) {
-          if (!course.startDate || course.startDate.trim() === "") {
-            courseErrors.startDate = "Start date is required";
-            hasErrors = true;
-          } else {
-            const startDate = new Date(course.startDate);
-            if (isNaN(startDate.getTime())) {
-              courseErrors.startDate = "Start date must be a valid date";
-              hasErrors = true;
-            }
-          }
+        if (!course.startDate) {
+          courseErrors.startDate = "Start date is required";
+          hasErrors = true;
         }
-
-        if (schemaHasEndDate) {
-          if (!course.endDate || course.endDate.trim() === "") {
-            courseErrors.endDate = "End date is required";
-            hasErrors = true;
-          } else {
-            const endDate = new Date(course.endDate);
-            if (isNaN(endDate.getTime())) {
-              courseErrors.endDate = "End date must be a valid date";
-              hasErrors = true;
-            } else if (schemaHasStartDate && course.startDate && course.startDate.trim() !== "") {
-              const startDate = new Date(course.startDate);
-              if (!isNaN(startDate.getTime()) && endDate <= startDate) {
-                courseErrors.endDate = "End date must be after start date";
-                hasErrors = true;
-              }
-            }
-          }
+        if (!course.endDate) {
+          courseErrors.endDate = "End date is required";
+          hasErrors = true;
+        } else if (
+          course.startDate &&
+          new Date(course.endDate) <= new Date(course.startDate)
+        ) {
+          courseErrors.endDate = "End date must be after start date";
+          hasErrors = true;
         }
-
         if (Object.keys(courseErrors).length > 0) {
-          allCourseErrors[course.id] = { ...(allCourseErrors[course.id] || {}), ...courseErrors };
+          allCourseErrors[course.id] = courseErrors;
         }
       }
 
-      // --- 4️⃣ Joi Validation ---
-      // Prepare the base schema and then (optionally) fork it for createdBranch rule
-      let schema = baseSchema;
+      let schema = L2Schemas[getSchemaKey()];
       if (!showCourseAfterBranch) {
-        schema = schema.fork("createdBranch", (field) => field.optional().allow(""));
+        schema = schema.fork("createdBranch", (field) =>
+          field.optional().allow("")
+        );
       }
 
       for (const course of uploadedCourses) {
-        console.group(
-          `🔍 Validating course: ${course.courseName} (ID: ${course.id})`
-        );
-        console.log("📦 Course data before validation:", course);
-
         const { error } = schema.validate(course, {
           abortEarly: false,
           allowUnknown: true,
@@ -1009,215 +896,201 @@ export default function L2DialogBox({
             acc[key] = detail.message;
             return acc;
           }, {} as Record<string, string>);
-
-          // Merge with existing custom date errors
           const existingErrors = allCourseErrors[course.id] || {};
           allCourseErrors[course.id] = { ...existingErrors, ...fieldErrors };
-          console.warn("❌ Validation errors:", allCourseErrors[course.id]);
-        } else {
-          console.log("✅ Course passed validation!");
         }
-
-        console.groupEnd();
       }
 
       setCourseErrorsById(allCourseErrors);
 
       if (hasErrors) {
-        console.error("🚫 Validation failed for one or more courses.");
         setIsLoading(false);
         return;
       }
 
-      console.log("✅ All courses validated successfully.");
-
-      // --- 4️⃣ Prepare and Save in IndexedDB ---
-    // Subscription Program mode: create PROGRAMs via backend and exit
-    if (isSubscriptionProgram) {
-      if (!institutionId) {
-        throw new Error("institutionId required for subscription program mode");
-      }
-      if (uniqueRemoteBranches.length > 0 && !selectedBranchIdForProgram) {
-        setProgramBranchError("Please select a branch");
-        setIsLoading(false);
-        return;
-      }
-      const toCreate = courses.map((c) => {
-        const programName = (c.courseName || "").trim();
-        const programSlug = programName
-          .toLowerCase()
-          .replace(/[^a-z0-9]+/g, "-")
-          .replace(/^-+|-+$/g, "");
-        return {
-          institution: String(institutionId),
-          branch: selectedBranchIdForProgram || null, // Allow null for new users without branches
-          // Program-style fields
-          mode: c.mode || "Offline",
-          classSize: c.classSize || "",
-          location: c.location || "",
-          // Unified Course model expectations for type PROGRAM
-          type: 'PROGRAM',
-          courseName: programName,
-          aboutCourse: c.aboutCourse || "",
-          courseDuration: c.courseDuration || "",
-          startDate: c.startDate || undefined,
-          endDate: c.endDate || undefined,
-          priceOfCourse: c.priceOfCourse ? Number(c.priceOfCourse) : undefined,
-          // keep location for Course model too
-          // additional optional mirrors
-          graduationType: c.graduationType || undefined,
-          streamType: c.streamType || undefined,
-          selectBranch: c.selectBranch || undefined,
-        } as any;
-      }).filter((p) => p.courseName && p.courseName.length > 0);
-
-      for (const payload of toCreate) {
-        if (editMode && existingCourseData) {
-          // Update existing course
-          await programsAPI.update(existingCourseData._id, payload);
-        } else {
-          // Create new course
-          await programsAPI.create(payload);
+      if (isSubscriptionProgram) {
+        if (!institutionId) {
+          throw new Error(
+            "institutionId required for subscription program mode"
+          );
         }
-      }
+        if (uniqueRemoteBranches.length > 0 && !selectedBranchIdForProgram) {
+          setProgramBranchError("Please select a branch");
+          setIsLoading(false);
+          return;
+        }
+        type ProgramPayload = {
+          institution: string;
+          branch: string | null;
+          type: "PROGRAM";
+          mode?: string;
+          classSize?: string;
+          location?: string;
+          courseName: string;
+          aboutCourse?: string;
+          courseDuration?: string;
+          startDate?: string;
+          endDate?: string;
+          priceOfCourse?: number;
+          graduationType?: string;
+          streamType?: string;
+          selectBranch?: string;
+        };
 
-      if (editMode) {
-        onEditSuccess?.();
-      } else {
-        onSuccess?.();
+        const toCreate: ProgramPayload[] = courses
+          .map((c) => {
+            const programName = (c.courseName || "").trim();
+            return {
+              institution: String(institutionId),
+              branch: selectedBranchIdForProgram || null,
+              mode: c.mode || "Offline",
+              classSize: c.classSize || "",
+              location: c.location || "",
+              type: "PROGRAM" as const,
+              courseName: programName,
+              aboutCourse: c.aboutCourse || "",
+              courseDuration: c.courseDuration || "",
+              startDate: c.startDate || undefined,
+              endDate: c.endDate || undefined,
+              priceOfCourse: c.priceOfCourse
+                ? Number(c.priceOfCourse)
+                : undefined,
+              graduationType: c.graduationType || undefined,
+              streamType: c.streamType || undefined,
+              selectBranch: c.selectBranch || undefined,
+            };
+          })
+          .filter((p) => p.courseName && p.courseName.length > 0);
+
+        for (const payload of toCreate) {
+          if (editMode && existingCourseData) {
+            await programsAPI.update(
+              String(existingCourseData._id || ""),
+              payload
+            );
+          } else {
+            await programsAPI.create(payload);
+          }
+        }
+
+        if (editMode) {
+          onEditSuccess?.();
+        } else {
+          onSuccess?.();
+        }
+        setIsLoading(false);
+        return;
       }
-      setIsLoading(false);
-      return;
-    }
 
       const allBranches = await getAllBranchesFromDB();
       const branchMap = new Map(
         allBranches.map((b) => [
           b.branchName.trim().toLowerCase(),
-          { ...b, courses: [] as typeof uploadedCourses },
+          { ...b, courses: [] as import("@/lib/localDb").CourseRecord[] },
         ])
       );
 
-      const sanitizeBranch = (branch: any) => {
-        const { createdAt, id, ...rest } = branch;
-        return rest;
-      };
-
-      const sanitizeCourse = (course: any) =>
+      const sanitizeCourse = (
+        course: Record<string, unknown>
+      ): import("@/lib/localDb").CourseRecord =>
         Object.fromEntries(
           Object.entries(course).filter(
-            ([_, value]) =>
+            ([, value]) =>
               value !== null &&
               value !== "" &&
               !(Array.isArray(value) && value.length === 0) &&
               value !== false
           )
-        );
+        ) as import("@/lib/localDb").CourseRecord;
 
-      const unassignedCourses: any[] = [];
+      const unassignedCourses: import("@/lib/localDb").CourseRecord[] = [];
       uploadedCourses.forEach((c) => {
         const key = (c.createdBranch || "").trim().toLowerCase();
         if (!key || !branchMap.has(key)) {
           unassignedCourses.push(sanitizeCourse(c));
         } else {
-          branchMap
-            .get(key)!
-            .courses.push(
-              sanitizeCourse(c) as (typeof uploadedCourses)[number]
-            );
+          branchMap.get(key)!.courses.push(sanitizeCourse(c));
         }
       });
 
       const sanitizedPayload = [
-        ...Array.from(branchMap.values())
-          .filter((b) => b.courses.length > 0)
-          .map(sanitizeBranch),
+        ...Array.from(branchMap.values()).filter((b) => b.courses.length > 0),
       ];
 
       if (unassignedCourses.length > 0) {
-        sanitizedPayload.push({ courses: unassignedCourses } as any);
-      }
+      sanitizedPayload.push({
+        branchName: "Unassigned Branch",
+        branchAddress: "",
+        contactInfo: "",
+        locationUrl: "",
+        courses: unassignedCourses,
+      } satisfies {
+        courses: import("@/lib/localDb").CourseRecord[];
+        id?: number;
+        branchName: string;
+        branchAddress: string;
+        contactInfo: string;
+        locationUrl: string;
+        createdAt?: number;
+      });
+    }
+
 
       if (!sanitizedPayload.length) {
-        alert(
+        toast.error(
           "No valid courses found. Please select a branch or fill valid details."
         );
         setIsLoading(false);
         return;
       }
 
-      console.log("🧾 Final Payload Ready:", sanitizedPayload);
-
-      // --- 5️⃣ Save Courses in DB ---
       for (const entry of sanitizedPayload) {
-        const isUnassigned = !entry.branchName;
         const existingGroups = await getCoursesGroupsByBranchName(
           entry.branchName || ""
         );
-
         if (existingGroups.length) {
           const group = existingGroups[0];
           const existing = group.courses || [];
           const incoming = entry.courses || [];
-
-          const keyOf = (c: any) =>
-            `${(c.courseName || "").trim().toLowerCase()}|${(c.subject || "")
-              .trim()
-              .toLowerCase()}|${(c.mode || "").trim().toLowerCase()}`;
-
+          const keyOf = (c: import("@/lib/localDb").CourseRecord) =>
+            `${(c.courseName || "").trim().toLowerCase()}|${(
+              c.subject || ""
+            ).trim()}|${(c.mode || "").trim()}`;
           const existingSet = new Set(existing.map(keyOf));
           const uniqueIncoming = incoming.filter(
-            (c: any) => !existingSet.has(keyOf(c))
+            (c: import("@/lib/localDb").CourseRecord) =>
+              !existingSet.has(keyOf(c))
           );
-          const merged = {
-            ...group,
-            branchName: entry.branchName || "",
-            branchAddress: entry.branchAddress || "",
-            contactInfo: entry.contactInfo || "",
-            locationUrl: entry.locationUrl || "",            
-            courses: [...existing, ...uniqueIncoming],
-          };
+          const merged = { ...group, courses: [...existing, ...uniqueIncoming] };
           await updateCoursesGroupInDB(merged);
         } else {
-          await addCoursesGroupToDB({
-            branchName: entry.branchName || "",
-            branchAddress: entry.branchAddress || "",
-            contactInfo: entry.contactInfo || "",
-            locationUrl: entry.locationUrl || "",
-            courses: entry.courses || [],
-
-          });
+          await addCoursesGroupToDB(entry);
         }
       }
 
-      console.log("💾 All courses saved successfully.");
-
-      setSelectedCourseId(1);
-
-      // --- 6️⃣ Export if required ---
       if (shouldSkipL3) {
         const response = await exportAndUploadInstitutionAndCourses();
         if (response.success) {
           router.push("/payment");
         } else {
-          alert("Failed to upload data");
+          toast.error(response.message);
+          setDialogOpen(true);
+          localStorage.setItem("signupStep", "2");
         }
       }
 
       onSuccess?.();
     } catch (error) {
       console.error("❌ Error saving courses:", error);
-      alert("Failed to save course details. Please try again.");
+      toast.error("Failed to save course details. Please try again.");
     } finally {
       setIsLoading(false);
     }
   };
 
-  // / Helper function to validate a single field using your Joi schema
   const validateField = (name: string, value: string) => {
-    // Check if the field exists in the branch schema to avoid errors
     const keyExists = L2Schemas.branch.$_terms.keys?.some(
-      (k: any) => k.key === name
+      (k: Record<string, unknown>) => k.key === name
     );
     if (!keyExists) return "";
 
@@ -1225,7 +1098,6 @@ export default function L2DialogBox({
     return error ? error.details[0].message : "";
   };
 
-  // ✅ 2. Update handleBranchChange to validate as the user types
   const handleBranchChange = (
     e: React.ChangeEvent<
       HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
@@ -1233,14 +1105,12 @@ export default function L2DialogBox({
   ) => {
     const { name, value } = e.target;
 
-    // First, update the branch state
     setBranches((prev) =>
       prev.map((branch) =>
         branch.id === selectedBranchId ? { ...branch, [name]: value } : branch
       )
     );
 
-    // Then, validate the changed field and update the error state
     const error = validateField(name, value);
     setBranchErrors((prev) => ({
       ...prev,
@@ -1251,44 +1121,34 @@ export default function L2DialogBox({
     }));
   };
 
-  // ✅ 3. Replace your old handleBranchSubmit with this Joi-powered version
   const handleBranchSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     const currentBranch = branches.find((b) => b.id === selectedBranchId);
     if (!currentBranch) return;
 
-    // Validate the entire form using the Joi schema
     const { error } = L2Schemas.branch.validate(currentBranch, {
       abortEarly: false,
-      allowUnknown: true, // Important to ignore fields like 'id' or 'dbId'
+      allowUnknown: true,
     });
 
-    // If validation fails...
     if (error) {
       const newErrors: Record<string, string> = {};
-      // Collect all error messages
       error.details.forEach((err) => {
         const field = err.path[0] as string;
         newErrors[field] = err.message;
       });
-      // Update the state to display all errors at once
       setBranchErrors((prev) => ({
         ...prev,
         [selectedBranchId]: newErrors,
       }));
-      return; // Stop the submission
+      return;
     }
 
-    // If validation passes, clear any previous errors for this branch
-    setBranchErrors((prev) => ({
-      ...prev,
-      [selectedBranchId]: {},
-    }));
+    setBranchErrors((prev) => ({ ...prev, [selectedBranchId]: {} }));
 
     setIsLoading(true);
     try {
-      // Save branch to backend for subscriptions flow (and general use)
       const payload = {
         branchName: currentBranch.branchName,
         branchAddress: currentBranch.branchAddress,
@@ -1296,722 +1156,676 @@ export default function L2DialogBox({
         locationUrl: currentBranch.locationUrl,
       };
 
-    if ((currentBranch as any).dbId) {
-      await updateBranchInDB({ id: (currentBranch as any).dbId, ...payload });
-    } else {
-      const [newId] = await addBranchesToDB([payload]);
-      setBranches((prev) =>
-        prev.map((b) => (b.id === selectedBranchId ? { ...b, dbId: newId } : b))
-      );
+      if (currentBranch.dbId) {
+        await updateBranchInDB({ id: currentBranch.dbId, ...payload });
+      } else {
+        const [newId] = await addBranchesToDB([payload]);
+        setBranches((prev) =>
+          prev.map((b) =>
+            b.id === selectedBranchId ? { ...b, dbId: newId } : b
+          )
+        );
+      }
+
+      const all = await getAllBranchesFromDB();
+      setBranchOptions(all.map((b) => b.branchName).filter(Boolean));
+      setShowCourseAfterBranch(true);
+    } catch (err) {
+      console.error("Error saving branch:", err);
+    } finally {
+      setIsLoading(false);
     }
-
-    const all = await getAllBranchesFromDB();
-    setBranchOptions(all.map((b) => b.branchName).filter(Boolean));
-    setShowCourseAfterBranch(true);
-    // --- END OF YOUR SAVE LOGIC ---
-  } catch (err) {
-    console.error("Error saving branch:", err);
-  } finally {
-    setIsLoading(false);
-  }
-};
-
-  const isSubscriptionProgram = mode === "subscriptionProgram" || mode === "settingsEdit";
+  };
 
   const content = (
-    <Card className="w-full sm:p-6 rounded-[24px] bg-white border-0 shadow-none">
-      <CardContent className="space-y-6">
-              {/* Render based on initialSection */}
-              {initialSection === "course" ? (
-                <div className="space-y-6">
-                  <div className="space-y-2">
-                    <h3 className="text-xl md:text-2xl font-bold">
-                      {isStudyHall
-                        ? "Study Hall"
-                        : isTutionCenter
-                        ? "Tuition Hall"
-                        : isSubscriptionProgram
-                        ? "Program Details"
-                        : "Course Details"}
-                    </h3>
-                    <p className="text-[#697282] text-sm">
-                      {isStudyHall
-                        ? "Enter the details of the study hall."
-                        : isTutionCenter
-                        ? "Enter the details of the tuition hall."
-                        : isSubscriptionProgram
-                        ? "Enter the programs your institution offers."
-                        : "Enter the courses your institution offers."}
-                    </p>
-                  </div>
+    <_Card className="w-full sm:p-6 rounded-[24px] bg-white dark:bg-gray-900 border-0 shadow-none">
+      <_CardContent className="space-y-6 text-gray-900 dark:text-gray-100">
+        {initialSection === "course" ? (
+          <div className="space-y-6">
+            <div className="space-y-2">
+              <h3 className="text-xl md:text-2xl font-bold dark:text-gray-50">
+                {isStudyHall
+                  ? "Study Hall"
+                  : isTutionCenter
+                  ? "Tuition Hall"
+                  : isSubscriptionProgram
+                  ? "Program Details"
+                  : "Course Details"}
+              </h3>
+              <p className="text-[#697282] dark:text-gray-300 text-sm">
+                {isStudyHall
+                  ? "Enter the details of the study hall."
+                  : isTutionCenter
+                  ? "Enter the details of the tuition hall."
+                  : isSubscriptionProgram
+                  ? "Enter the programs your institution offers."
+                  : "Enter the courses your institution offers."}
+              </p>
+            </div>
 
-                  {/* Course items switching */}
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      {courses.map((course) => (
-                        <div key={course.id} className="flex items-center">
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            onClick={() => setSelectedCourseId(course.id)}
-                            className={`px-3 py-2 rounded-lg text-sm border transition-colors flex items-center gap-2 ${
-                              selectedCourseId === course.id
-                                ? "bg-blue-50 border-blue-200 text-blue-700"
-                                : "bg-gray-50 border-gray-200 text-gray-700 hover:bg-gray-100"
-                            }`}
-                          >
-                            <span>
-                              {course.courseName ||
-                                (isStudyHall
-                                  ? `Hall ${course.id}`
-                                  : isTutionCenter
-                                  ? `Hall ${course.id}`
-                                  : isSubscriptionProgram
-                                  ? `Program ${course.id}`
-                                  : `Course ${course.id}`)}
-                            </span>
-                            {courses.length > 1 && (
-                              <MoreVertical
-                                size={14}
-                                className="text-gray-400 hover:text-gray-600"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  deleteCourse(course.id);
-                                }}
-                              />
-                            )}
-                          </Button>
-                        </div>
-                      ))}
-                    </div>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 flex-wrap">
+                {courses.map((course) => (
+                  <div key={course.id} className="flex items-center">
                     <Button
                       type="button"
-                      onClick={addNewCourse}
-                      className="bg-[#0222D7] hover:bg-[#0222D7]/90 text-white px-4 py-2 rounded-lg text-sm flex items-center gap-2"
+                      variant="ghost"
+                      onClick={() => setSelectedCourseId(course.id)}
+                      className={`px-3 py-2 rounded-lg text-sm border transition-colors flex items-center gap-2 ${
+                        selectedCourseId === course.id
+                          ? "bg-blue-50 border-blue-200 text-blue-700"
+                          : "bg-gray-50 border-gray-200 text-gray-700 hover:bg-gray-100 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-700"
+                      }`}
                     >
-                      <Plus size={16} />
-                      {isStudyHall
-                        ? "Add Hall"
-                        : isTutionCenter
-                        ? "Add Hall"
-                        : isSubscriptionProgram
-                        ? "Add Program"
-                        : "Add Course"}
+                      <span>
+                        {course.courseName ||
+                          (isStudyHall
+                            ? `Hall ${course.id}`
+                            : isTutionCenter
+                            ? `Hall ${course.id}`
+                            : isSubscriptionProgram
+                            ? `Program ${course.id}`
+                            : `Course ${course.id}`)}
+                      </span>
+                      {courses.length > 1 && (
+                        <MoreVertical
+                          size={14}
+                          className="text-gray-400 hover:text-gray-600"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            deleteCourse(course.id);
+                          }}
+                        />
+                      )}
                     </Button>
                   </div>
+                ))}
+              </div>
+              <Button
+                type="button"
+                onClick={addNewCourse}
+                className="bg-[#0222D7] hover:bg-[#0222D7]/90 text-white px-4 py-2 rounded-lg text-sm flex items-center gap-2"
+              >
+                <Plus size={16} />
+                {isStudyHall
+                  ? "Add Hall"
+                  : isTutionCenter
+                  ? "Add Hall"
+                  : isSubscriptionProgram
+                  ? "Add Program"
+                  : "Add Course"}
+              </Button>
+            </div>
 
-                  <form onSubmit={handleCourseSubmit} className="space-y-6">
-                    {/* Branch Selection - Only show for subscription programs and when branches exist */}
-                    {isSubscriptionProgram && uniqueRemoteBranches.length > 0 && (
-                      <div className="mb-4">
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Select Branch</label>
-                        <AppSelect
-                          value={selectedBranchIdForProgram}
-                          onChange={(val)=> { setSelectedBranchIdForProgram(val); setProgramBranchError(""); }}
-                          options={uniqueRemoteBranches.map(b=> ({ label: b.branchName, value: b._id }))}
-                          placeholder="Select Branch"
-                          variant="white"
-                          size="md"
-                          rounded="lg"
-                          className="w-full"
-                        />
-                        {programBranchError && <p className="text-red-600 text-xs mt-1">{programBranchError}</p>}
-                      </div>
-                    )}
-                    {/*isSubscriptionProgram && uniqueRemoteBranches.length === 0 && (
-                      <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                        <p className="text-sm text-blue-700">
-                          <strong>Note:</strong> You don't have any branches yet. You can add a branch first, or the program will be added to your main institution.
-                        </p>
-                      </div>
-                    )}*/}
-                    
-                    {isStudyAbroad ? (
-                      <StudyAbroadForm
-                        currentCourse={currentCourse}
-                        handleCourseChange={handleCourseChange}
-                        handleFileChange={handleFileChange}
-                        setCourses={setCourses}
-                        courses={courses}
-                        selectedCourseId={selectedCourseId}
-                        courseErrors={courseErrorsById[currentCourse.id] || {}}
-                      />
-                    ) : isCoachingCenter ? (
-                      <CoachingCourseForm
-                        currentCourse={currentCourse}
-                        handleCourseChange={handleCourseChange}
-                        setCourses={setCourses}
-                        courses={courses}
-                        selectedCourseId={selectedCourseId}
-                        // ✅ Add this line to pass down the errors
-                        courseErrors={courseErrorsById[currentCourse.id] || {}}
-                      />
-                    ) : isStudyHall ? (
-                      <StudyHallForm
-                        currentCourse={currentCourse}
-                        handleCourseChange={handleCourseChange}
-                        handleOperationalDayChange={handleOperationalDayChange}
-                        handleFileChange={handleFileChange}
-                        setCourses={setCourses}
-                        courses={courses}
-                        selectedCourseId={selectedCourseId}
-                        courseErrors={courseErrorsById[currentCourse.id] || {}}
-                        labelVariant={isSubscriptionProgram ? 'program' : 'course'}
-                      />
-                    ) : isTutionCenter ? (
-                      <TuitionCenterForm
-                        currentCourse={currentCourse}
-                        handleCourseChange={handleCourseChange}
-                        handleOperationalDayChange={handleOperationalDayChange}
-                        handleFileChange={handleFileChange}
-                        setCourses={setCourses}
-                        courses={courses}
-                        selectedCourseId={selectedCourseId}
-                        // ✅ Pass errors to TuitionCenterForm
-                        courseErrors={courseErrorsById[currentCourse.id] || {}}
-            labelVariant={isSubscriptionProgram ? 'program' : 'course'}
-                      />
-                    ) : isUnderPostGraduate ? (
-                      <UnderPostGraduateForm
-                        currentCourse={currentCourse}
-                        handleCourseChange={handleCourseChange}
-                        setCourses={setCourses}
-                        courses={courses}
-                        selectedCourseId={selectedCourseId}
-                        // ✅ Add this prop to pass the errors down
-                        courseErrors={courseErrorsById[currentCourse.id] || {}}
-        labelVariant={isSubscriptionProgram ? 'program' : 'course'}
-                      />
-                    ) : isBasicCourseForm ? (
-                      <BasicCourseForm
-                        currentCourse={currentCourse}
-                        handleCourseChange={handleCourseChange}
-                        setCourses={setCourses}
-                        courses={courses}
-                        selectedCourseId={selectedCourseId}
-                        // ✅ This line passes the validation errors for the currently selected course
-                        // to the child component. The `|| {}` ensures it's always an object.
-                            courseErrors={courseErrorsById[currentCourse.id] || {}}
-        labelVariant={isSubscriptionProgram ? 'program' : 'course'}
-                      />
-                    ) : (
-                      <FallbackCourseForm
-                        currentCourse={currentCourse}
-                        handleCourseChange={handleCourseChange}
-                        setCourses={setCourses}
-                        courses={courses}
-                        selectedCourseId={selectedCourseId}
-                        courseErrors={courseErrorsById[currentCourse.id] || {}}
-                        labelVariant={isSubscriptionProgram ? 'program' : 'course'}
-                      />
-                    )}
-                    {!isStudyHall && !isTutionCenter && !isStudyAbroad && (
-                      <div className="grid md:grid-cols-2 gap-6">
-                        {uploadFields.map((f) => (
-                          <div key={f.type} className="flex flex-col gap-2">
-                            <label className="font-medium text-[16px]">
-                              {f.label} <span className="text-red-500">*</span>
-                            </label>
-
-                            <label className="relative w-full h-[180px] rounded-[12px] border-2 border-dashed border-[#DADADD] bg-[#F8F9FA] flex flex-col items-center justify-center cursor-pointer hover:bg-[#F0F1F2] transition-colors overflow-hidden">
-                              {/* ✅ Determine which URL to show first */}
-                              {(() => {
-                                const previewUrl = currentCourse[
-                                  `${f.type}PreviewUrl`
-                                ] as string;
-                                const uploadedUrl = currentCourse[
-                                  `${f.type}Url`
-                                ] as string;
-
-                                if (previewUrl) {
-                                  if (f.type === "image") {
-                                    // 🖼️ Show image (preview first, then uploaded)
-                                    return (
-                                      <img
-                                        src={previewUrl}
-                                        alt={`${f.label} Preview`}
-                                        // className="object-cover w-full h-full rounded-[12px]"
-                                        className="w-[100px] h-[100px] object-cover rounded-md"
-                                      />
-                                    );
-                                  } else {
-                                    // 📄 Show brochure (PDF) preview
-                                    return (
-                                      <div className="flex flex-col items-center justify-center gap-2 p-4 w-full h-full">
-                                        <span className="text-sm text-gray-500 truncate">
-                                          {(currentCourse[f.type] as File).name}
-                                        </span>
-                                      </div>
-                                    );
-                                  }
-                                }
-
-                                // 🆕 Default placeholder
-                                return (
-                                  <>
-                                    <Upload
-                                      size={24}
-                                      className="text-gray-400 mb-2"
-                                    />
-                                    <span className="text-sm text-gray-500">
-                                      {f.type === "image"
-                                        ? (isSubscriptionProgram ? "Upload Program Image (jpg / jpeg)" : "Upload Course Image (jpg / jpeg / png)")
-                                        : (isSubscriptionProgram ? "Upload Program Brochure (pdf)" : "Upload Course Brochure (pdf)")}
-                                    </span>
-                                  </>
-                                );
-                              })()}
-
-                              {/* Hidden file input */}
-                              <input
-                                type="file"
-                                accept={f.accept}
-                                className="absolute inset-0 opacity-0 cursor-pointer"
-                                onChange={(e) => handleFileChange(e, f.type)}
-                              />
-                            </label>
-
-                            {/* Show validation error if required */}
-                            {courseErrorsById[currentCourse.id]?.[
-                              `${f.type}Url`
-                            ] && (
-                              <p className="text-red-500 text-sm mt-1">
-                                {
-                                  courseErrorsById[currentCourse.id][
-                                    `${f.type}Url`
-                                  ]
-                                }
-                              </p>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-
-                    <div className="flex justify-center gap-10">
-                      <button
-                        type="button"
-                        onClick={onPrevious}
-                        className="w-[314px] h-[48px] border border-[#697282] text-[#697282] rounded-[12px] font-semibold text-[18px] leading-[22px] flex items-center justify-center shadow-inner"
-                      >
-                        Previous
-                      </button>
-
-                      <button
-                        type="submit"
-                        disabled={isLoading}
-                        className={`w-[314px] h-[48px] rounded-[12px] font-semibold transition-colors 
-            ${
-              isLoading
-                ? "opacity-50 cursor-not-allowed bg-gray-600"
-                : "bg-[#6B7280] hover:bg-[#6B7280]/90"
-            } 
-            text-white flex items-center justify-center`}
-                      >
-                        {isLoading ? "Saving..." : "Save & Next"}
-                      </button>
-                    </div>
-                  </form>
-                </div>
-              ) : (
-                // Branch section
-                <div className="space-y-6">
-                  <div className="space-y-2">
-                    <h3 className="text-xl md:text-2xl font-bold">
-                      Branch Details
-                    </h3>
-                    <p className="text-[#697282] text-sm">
-                      here information about your institution's branches.
+            <form onSubmit={handleCourseSubmit} className="space-y-6">
+              {isSubscriptionProgram && uniqueRemoteBranches.length > 0 && (
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Select Branch
+                  </label>
+                  <AppSelect
+                    value={selectedBranchIdForProgram}
+                    onChange={(val) => {
+                      setSelectedBranchIdForProgram(val);
+                      setProgramBranchError("");
+                    }}
+                    options={uniqueRemoteBranches.map((b) => ({
+                      label: b.branchName,
+                      value: b._id,
+                    }))}
+                    placeholder="Select Branch"
+                    variant="white"
+                    size="md"
+                    rounded="lg"
+                    className="w-full"
+                  />
+                  {programBranchError && (
+                    <p className="text-red-600 text-xs mt-1">
+                      {programBranchError}
                     </p>
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      {branches.map((branch) => (
-                        <div key={branch.id} className="flex items-center">
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            onClick={() => setSelectedBranchId(branch.id)}
-                            className={`px-3 py-2 rounded-lg text-sm border transition-colors flex items-center gap-2 ${
-                              selectedBranchId === branch.id
-                                ? "bg-blue-50 border-blue-200 text-blue-700"
-                                : "bg-gray-50 border-gray-200 text-gray-700 hover:bg-gray-100"
-                            }`}
-                          >
-                            <span>
-                              {branch.branchName || `Branch ${branch.id}`}
-                            </span>
-                            {branches.length > 1 && (
-                              <MoreVertical
-                                size={14}
-                                className="text-gray-400 hover:text-gray-600"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  deleteBranch(branch.id);
-                                }}
-                              />
-                            )}
-                          </Button>
-                        </div>
-                      ))}
-                    </div>
-                    <Button
-                      type="button"
-                      onClick={addNewBranch}
-                      className="bg-[#0222D7] hover:bg-[#0222D7]/90 text-white px-4 py-2 rounded-lg text-sm flex items-center gap-2"
-                    >
-                      <Plus size={16} />
-                      Add Branch
-                    </Button>
-                  </div>
-
-                  <div className="b p-4 rounded-md">
-                    <BranchForm
-                      branches={branches}
-                      selectedBranchId={selectedBranchId}
-                      handleBranchChange={handleBranchChange}
-                      handleBranchSubmit={handleBranchSubmit}
-                      handlePreviousClick={onPrevious}
-                      isLoading={isLoading}
-                      errors={branchErrors[selectedBranchId] || {}} // Pass the errors for the selected branch
-                      // Pass other necessary props like setBranches, setSelectedBranchId etc.
-                    />
-                  </div>
-
-                  {showCourseAfterBranch && (
-                    <div className="space-y-6">
-                      <div className="space-y-2">
-                        <h3 className="text-xl md:text-2xl font-bold">
-                        {isStudyHall
-                            ? "Study Hall"
-                            : isTutionCenter
-                            ? "Tuition Hall"
-                            : isSubscriptionProgram
-                            ? "Program Details"
-                            : "Course Details"}
-                        </h3>
-                        <p className="text-[#697282] text-sm">
-                          {isStudyHall
-                            ? "Enter the details of the study hall."
-                            : isTutionCenter
-                            ? "Enter the details of the tuition hall."
-                            : isSubscriptionProgram
-                            ? "Enter the programs your institution offers."
-                            : "Enter the courses your institution offers."}
-                        </p>
-                      </div>
-
-                      {/* Course items switching */}
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          {courses.map((course) => (
-                            <div key={course.id} className="flex items-center">
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                onClick={() => setSelectedCourseId(course.id)}
-                                className={`px-3 py-2 rounded-lg text-sm border transition-colors flex items-center gap-2 ${
-                                  selectedCourseId === course.id
-                                    ? "bg-blue-50 border-blue-200 text-blue-700"
-                                    : "bg-gray-50 border-gray-200 text-gray-700 hover:bg-gray-100"
-                                }`}
-                              >
-                                <span>
-                                  {course.courseName ||
-                                    (isStudyHall
-                                      ? `Hall ${course.id}`
-                                      : isTutionCenter
-                                      ? `Hall ${course.id}`
-                                      : isSubscriptionProgram
-                                      ? `Program ${course.id}`
-                                      : `Course ${course.id}`)}
-                                </span>
-                                {courses.length > 1 && (
-                                  <MoreVertical
-                                    size={14}
-                                    className="text-gray-400 hover:text-gray-600"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      deleteCourse(course.id);
-                                    }}
-                                  />
-                                )}
-                              </Button>
-                            </div>
-                          ))}
-                        </div>
-                        <Button
-                          type="button"
-                          onClick={addNewCourse}
-                          className="bg-[#0222D7] hover:bg-[#0222D7]/90 text-white px-4 py-2 rounded-lg text-sm flex items-center gap-2"
-                        >
-                          <Plus size={16} />
-                          {isStudyHall
-                            ? "Add Hall"
-                            : isTutionCenter
-                            ? "Add Hall"
-                            : isSubscriptionProgram
-                            ? "Add Program"
-                            : "Add Course"}
-                        </Button>
-                      </div>
-
-                      <form onSubmit={handleCourseSubmit} className="space-y-6">
-                        <InputField
-                          label="Branch"
-                          name="createdBranch"
-                          value={currentCourse.createdBranch}
-                          onChange={handleCourseChange}
-                          isSelect={true}
-                          options={
-                            branchOptions.length
-                              ? branchOptions
-                              : ["No branches saved yet"]
-                          }
-                          placeholder="Select branch"
-                          // ✅ ADD THIS PROP TO DISPLAY THE ERROR
-                          error={
-                            courseErrorsById[currentCourse.id]?.createdBranch
-                          }
-                        />
-                        
-                        {/* Branch Selection for Subscription Programs - Only show when branches exist */}
-                        {isSubscriptionProgram && uniqueRemoteBranches.length > 0 && (
-                          <div className="mb-4">
-                            <label className="block text-sm font-medium text-gray-700 mb-2">Select Branch</label>
-                            <AppSelect
-                              value={selectedBranchIdForProgram}
-                              onChange={(val)=> { setSelectedBranchIdForProgram(val); setProgramBranchError(""); }}
-                              options={uniqueRemoteBranches.map(b=> ({ label: b.branchName, value: b._id }))}
-                              placeholder="Select Branch"
-                              variant="white"
-                              size="md"
-                              rounded="lg"
-                              className="w-full"
-                            />
-                            {programBranchError && <p className="text-red-600 text-xs mt-1">{programBranchError}</p>}
-                          </div>
-                        )}
-                        {isSubscriptionProgram && (
-                          <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                            <p className="text-sm text-blue-700">
-                              <strong>Note:</strong> You don't have any branches yet. You can add a branch first, or the program will be added to your main institution.
-                            </p>
-                          </div>
-                        )}
-                        
-                        {isStudyAbroad ? (
-                          <StudyAbroadForm
-                            currentCourse={currentCourse}
-                            handleCourseChange={handleCourseChange}
-                            handleFileChange={handleFileChange}
-                            setCourses={setCourses}
-                            courses={courses}
-                            selectedCourseId={selectedCourseId}
-                            courseErrors={courseErrorsById[currentCourse.id] || {}}
-                          />
-                        ) : isCoachingCenter ? (
-                          <CoachingCourseForm
-                            currentCourse={currentCourse}
-                            handleCourseChange={handleCourseChange}
-                            setCourses={setCourses}
-                            courses={courses}
-                            selectedCourseId={selectedCourseId}
-                            // ✅ Add this line to pass down the errors
-                            courseErrors={
-                              courseErrorsById[currentCourse.id] || {}
-                            }
-                          />
-                        ) : isStudyHall ? (
-                          <StudyHallForm
-                            currentCourse={currentCourse}
-                            handleCourseChange={handleCourseChange}
-                            handleOperationalDayChange={
-                              handleOperationalDayChange
-                            }
-                            handleFileChange={handleFileChange}
-                            setCourses={setCourses}
-                            courses={courses}
-                            selectedCourseId={selectedCourseId}
-                            courseErrors={
-                              courseErrorsById[currentCourse.id] || {}
-                            }
-                            labelVariant={isSubscriptionProgram ? 'program' : 'course'}
-                          />
-                        ) : isTutionCenter ? (
-                          <TuitionCenterForm
-                            currentCourse={currentCourse}
-                            handleCourseChange={handleCourseChange}
-                            handleOperationalDayChange={
-                              handleOperationalDayChange
-                            }
-                            handleFileChange={handleFileChange}
-                            setCourses={setCourses}
-                            courses={courses}
-                            selectedCourseId={selectedCourseId}
-                            // ✅ Pass errors to TuitionCenterForm
-                            courseErrors={
-                              courseErrorsById[currentCourse.id] || {}
-                            }
-            labelVariant={isSubscriptionProgram ? 'program' : 'course'}
-                          />
-                        ) : isUnderPostGraduate ? (
-                          <UnderPostGraduateForm
-                            currentCourse={currentCourse}
-                            handleCourseChange={handleCourseChange}
-                            setCourses={setCourses}
-                            courses={courses}
-                            selectedCourseId={selectedCourseId}
-                            // ✅ Add this prop to pass the errors down
-                            courseErrors={
-                              courseErrorsById[currentCourse.id] || {}
-                            }
-        labelVariant={isSubscriptionProgram ? 'program' : 'course'}
-                          />
-                        ) : isBasicCourseForm ? (
-                          <BasicCourseForm
-                            currentCourse={currentCourse}
-                            handleCourseChange={handleCourseChange}
-                            setCourses={setCourses}
-                            courses={courses}
-                            selectedCourseId={selectedCourseId}
-                            // ✅ This line passes the validation errors for the currently selected course
-                            // to the child component. The `|| {}` ensures it's always an object.
-                                courseErrors={
-                              courseErrorsById[currentCourse.id] || {}
-                            }
-        labelVariant={isSubscriptionProgram ? 'program' : 'course'}
-                          />
-                        ) : (
-                          <FallbackCourseForm
-                            currentCourse={currentCourse}
-                            handleCourseChange={handleCourseChange}
-                            setCourses={setCourses}
-                            courses={courses}
-                            selectedCourseId={selectedCourseId}
-                            courseErrors={courseErrorsById[currentCourse.id] || {}}
-                            labelVariant={isSubscriptionProgram ? 'program' : 'course'}
-                          />
-                        )}
-                        {!isStudyHall && !isTutionCenter && !isStudyAbroad && (
-                          <div className="grid md:grid-cols-2 gap-6">
-                            {uploadFields.map((f) => (
-                              <div key={f.type} className="flex flex-col gap-2">
-                                <label className="font-medium text-[16px]">
-                                  {f.label}{" "}
-                                  <span className="text-red-500">*</span>
-                                </label>
-
-                                <label className="relative w-full h-[180px] rounded-[12px] border-2 border-dashed border-[#DADADD] bg-[#F8F9FA] flex flex-col items-center justify-center cursor-pointer hover:bg-[#F0F1F2] transition-colors overflow-hidden">
-                                  {/* ✅ Determine which URL to show first */}
-                                  {(() => {
-                                    const previewUrl = currentCourse[
-                                      `${f.type}PreviewUrl`
-                                    ] as string;
-                                    const uploadedUrl = currentCourse[
-                                      `${f.type}Url`
-                                    ] as string;
-
-                                    if (previewUrl || uploadedUrl) {
-                                      if (f.type === "image") {
-                                        // 🖼️ Show image (preview first, then uploaded)
-                                        return (
-                                          <img
-                                            src={previewUrl || uploadedUrl}
-                                            alt={`${f.label} Preview`}
-                                            className="object-cover w-full h-full rounded-[12px]"
-                                          />
-                                        );
-                                      } else {
-                                        // 📄 Show brochure (PDF) preview
-                                        return (
-                                          <div className="flex flex-col items-center justify-center gap-2 p-4 w-full h-full">
-                                            <span className="text-sm text-gray-500 truncate">
-                                              {
-                                                (currentCourse[f.type] as File)
-                                                  .name
-                                              }
-                                            </span>
-                                          </div>
-                                        );
-                                      }
-                                    }
-
-                                    // 🆕 Default placeholder
-                                    return (
-                                      <>
-                                        <Upload
-                                          size={24}
-                                          className="text-gray-400 mb-2"
-                                        />
-                                        <span className="text-sm text-gray-500">
-                                          {f.type === "image"
-                                            ? "Upload Course Image (jpg / jpeg / png)"
-                                            : "Upload Course Brochure (pdf)"}
-                                        </span>
-                                      </>
-                                    );
-                                  })()}
-
-                                  {/* Hidden file input */}
-                                  <input
-                                    type="file"
-                                    accept={f.accept}
-                                    className="absolute inset-0 opacity-0 cursor-pointer"
-                                    onChange={(e) =>
-                                      handleFileChange(e, f.type)
-                                    }
-                                  />
-                                </label>
-
-                                {/* Show validation error if required */}
-                                {courseErrorsById[currentCourse.id]?.[
-                                  `${f.type}Url`
-                                ] && (
-                                  <p className="text-red-500 text-sm mt-1">
-                                    {
-                                      courseErrorsById[currentCourse.id][
-                                        `${f.type}Url`
-                                      ]
-                                    }
-                                  </p>
-                                )}
-                              </div>
-                            ))}
-                          </div>
-                        )}
-
-                        <div className="flex justify-center gap-10">
-                          <button
-                            type="button"
-                            onClick={onPrevious}
-                            className="w-[314px] h-[48px] border border-[#697282] text-[#697282] rounded-[12px] font-semibold text-[18px] leading-[22px] flex items-center justify-center shadow-inner"
-                          >
-                            Previous
-                          </button>
-
-                          <button
-                            type="submit"
-                            disabled={isLoading}
-                            className={`w-[314px] h-[48px] rounded-[12px] font-semibold transition-colors 
-            ${
-              isLoading
-                ? "opacity-50 cursor-not-allowed bg-gray-600"
-                : "bg-[#6B7280] hover:bg-[#6B7280]/90"
-            } 
-            text-white flex items-center justify-center`}
-                          >
-                            {isLoading ? "Saving..." : "Save & Next"}
-                          </button>
-                        </div>
-                      </form>
-                    </div>
                   )}
                 </div>
               )}
-      </CardContent>
-    </Card>
+
+              {isStudyAbroad ? (
+                <StudyAbroadForm
+                  currentCourse={currentCourse}
+                  handleCourseChange={handleCourseChange}
+                  handleFileChange={handleFileChange}
+                  setCourses={setCourses}
+                  courses={courses}
+                  selectedCourseId={selectedCourseId}
+                  courseErrors={courseErrorsById[currentCourse.id] || {}}
+                />
+              ) : isCoachingCenter ? (
+                <CoachingCourseForm
+                  currentCourse={currentCourse}
+                  handleCourseChange={handleCourseChange}
+                  setCourses={setCourses}
+                  courses={courses}
+                  selectedCourseId={selectedCourseId}
+                  courseErrors={courseErrorsById[currentCourse.id] || {}}
+                />
+              ) : isStudyHall ? (
+                <StudyHallForm
+                  currentCourse={currentCourse}
+                  handleCourseChange={handleCourseChange}
+                  handleOperationalDayChange={handleOperationalDayChange}
+                  handleFileChange={handleFileChange}
+                  setCourses={setCourses}
+                  courses={courses}
+                  selectedCourseId={selectedCourseId}
+                  courseErrors={courseErrorsById[currentCourse.id] || {}}
+                  labelVariant={isSubscriptionProgram ? "program" : "course"}
+                />
+              ) : isTutionCenter ? (
+                <TuitionCenterForm
+                  currentCourse={currentCourse}
+                  handleCourseChange={handleCourseChange}
+                  handleOperationalDayChange={handleOperationalDayChange}
+                  handleFileChange={handleFileChange}
+                  setCourses={setCourses}
+                  courses={courses}
+                  selectedCourseId={selectedCourseId}
+                  courseErrors={courseErrorsById[currentCourse.id] || {}}
+                  labelVariant={isSubscriptionProgram ? "program" : "course"}
+                />
+              ) : isUnderPostGraduate ? (
+                <UnderPostGraduateForm
+                  currentCourse={currentCourse}
+                  handleCourseChange={handleCourseChange}
+                  setCourses={setCourses}
+                  courses={courses}
+                  selectedCourseId={selectedCourseId}
+                  courseErrors={courseErrorsById[currentCourse.id] || {}}
+                  labelVariant={isSubscriptionProgram ? "program" : "course"}
+                />
+              ) : isBasicCourseForm ? (
+                <BasicCourseForm
+                  currentCourse={currentCourse}
+                  handleCourseChange={handleCourseChange}
+                  setCourses={setCourses}
+                  courses={courses}
+                  selectedCourseId={selectedCourseId}
+                  courseErrors={courseErrorsById[currentCourse.id] || {}}
+                  labelVariant={isSubscriptionProgram ? "program" : "course"}
+                />
+              ) : (
+                <FallbackCourseForm
+                  currentCourse={currentCourse}
+                  handleCourseChange={handleCourseChange}
+                  setCourses={setCourses}
+                  courses={courses}
+                  selectedCourseId={selectedCourseId}
+                  courseErrors={courseErrorsById[currentCourse.id] || {}}
+                  labelVariant={isSubscriptionProgram ? "program" : "course"}
+                />
+              )}
+              {!isStudyHall && !isTutionCenter && !isStudyAbroad && (
+                <div className="grid md:grid-cols-2 gap-6">
+                  {uploadFields.map((f) => (
+                    <div key={f.type} className="flex flex-col gap-2">
+                      <label className="font-medium text-[16px]">
+                        {f.label} <span className="text-red-500">*</span>
+                      </label>
+
+                      <label className="relative w-full h-[180px] rounded-[12px] border-2 border-dashed border-[#DADADD] bg-[#F8F9FA] flex flex-col items-center justify-center cursor-pointer hover:bg-[#F0F1F2] transition-colors overflow-hidden">
+                        {(() => {
+                          const previewUrl = currentCourse[
+                            `${f.type}PreviewUrl`
+                          ] as string;
+
+                          if (previewUrl) {
+                            if (f.type === "image") {
+                              return (
+                                <Image
+                                  src={previewUrl}
+                                  width={100}
+                                  height={100}
+                                  alt={`${f.label} Preview`}
+                                  className="w-[100px] h-[100px] object-cover rounded-md"
+                                />
+                              );
+                            } else {
+                              return (
+                                <div className="flex flex-col items-center justify-center gap-2 p-4 w-full h-full">
+                                  <span className="text-sm text-gray-500 truncate">
+                                    {(currentCourse[f.type] as File).name}
+                                  </span>
+                                </div>
+                              );
+                            }
+                          }
+                          return (
+                            <>
+                              <Upload
+                                size={24}
+                                className="text-gray-400 dark:text-gray-300 mb-2"
+                              />
+                              <span className="text-sm text-gray-500 dark:text-gray-300">
+                                {f.type === "image"
+                                  ? isSubscriptionProgram
+                                    ? "Upload Program Image (jpg / jpeg)"
+                                    : "Upload Course Image (jpg / jpeg / png)"
+                                  : isSubscriptionProgram
+                                  ? "Upload Program Brochure (pdf)"
+                                  : "Upload Course Brochure (pdf)"}
+                              </span>
+                            </>
+                          );
+                        })()}
+                        <input
+                          type="file"
+                          accept={f.accept}
+                          className="absolute inset-0 opacity-0 cursor-pointer dark:bg-gray-800"
+                          onChange={(e) => handleFileChange(e, f.type)}
+                        />
+                      </label>
+                      {courseErrorsById[currentCourse.id]?.[`${f.type}Url`] && (
+                        <p className="text-red-500 text-sm mt-1">
+                          {courseErrorsById[currentCourse.id][`${f.type}Url`]}
+                        </p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <div className="flex justify-center gap-10">
+                <button
+                  type="button"
+                  onClick={onPrevious}
+                  className="w-[314px] h-[48px] border border-[#697282] text-[#697282] rounded-[12px] font-semibold text-[18px] leading-[22px] flex items-center justify-center shadow-inner"
+                >
+                  Previous
+                </button>
+
+                <button
+                  type="submit"
+                  disabled={isLoading}
+                  className={`w-[314px] h-[48px] rounded-[12px] font-semibold transition-colors 
+                    ${
+                      isLoading
+                        ? "opacity-50 cursor-not-allowed bg-gray-600"
+                        : "bg-[#6B7280] hover:bg-[#6B7280]/90"
+                    } 
+                    text-white flex items-center justify-center`}
+                >
+                  {isLoading ? "Saving..." : "Save & Next"}
+                </button>
+              </div>
+            </form>
+          </div>
+        ) : (
+          <div className="space-y-6">
+            <div className="space-y-2">
+              <h3 className="text-xl md:text-2xl font-bold">Branch Details</h3>
+              <p className="text-[#697282] text-sm">
+                here information about your institution&apos;s branches.
+              </p>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 flex-wrap">
+                {branches.map((branch) => (
+                  <div key={branch.id} className="flex items-center">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      onClick={() => setSelectedBranchId(branch.id)}
+                      className={`px-3 py-2 rounded-lg text-sm border transition-colors flex items-center gap-2 ${
+                        selectedBranchId === branch.id
+                          ? "bg-blue-50 border-blue-200 text-blue-700"
+                          : "bg-gray-50 border-gray-200 text-gray-700 hover:bg-gray-100"
+                      }`}
+                    >
+                      <span>{branch.branchName || `Branch ${branch.id}`}</span>
+                      {branches.length > 1 && (
+                        <MoreVertical
+                          size={14}
+                          className="text-gray-400 hover:text-gray-600"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            deleteBranch(branch.id);
+                          }}
+                        />
+                      )}
+                    </Button>
+                  </div>
+                ))}
+              </div>
+              <Button
+                type="button"
+                onClick={addNewBranch}
+                className="bg-[#0222D7] hover:bg-[#0222D7]/90 text-white px-4 py-2 rounded-lg text-sm flex items-center gap-2"
+              >
+                <Plus size={16} />
+                Add Branch
+              </Button>
+            </div>
+
+            <div className="b p-4 rounded-md">
+              <BranchForm
+                branches={branches}
+                selectedBranchId={selectedBranchId}
+                handleBranchChange={handleBranchChange}
+                handleBranchSubmit={handleBranchSubmit}
+                handlePreviousClick={onPrevious}
+                isLoading={isLoading}
+                errors={branchErrors[selectedBranchId] || {}}
+              />
+            </div>
+
+            {showCourseAfterBranch && (
+              <div className="space-y-6">
+                <div className="space-y-2">
+                  <h3 className="text-xl md:text-2xl font-bold">
+                    {isStudyHall
+                      ? "Study Hall"
+                      : isTutionCenter
+                      ? "Tuition Hall"
+                      : isSubscriptionProgram
+                      ? "Program Details"
+                      : "Course Details"}
+                  </h3>
+                  <p className="text-[#697282] text-sm">
+                    {isStudyHall
+                      ? "Enter the details of the study hall."
+                      : isTutionCenter
+                      ? "Enter the details of the tuition hall."
+                      : isSubscriptionProgram
+                      ? "Enter the programs your institution offers."
+                      : "Enter the courses your institution offers."}
+                  </p>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {courses.map((course) => (
+                      <div key={course.id} className="flex items-center">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          onClick={() => setSelectedCourseId(course.id)}
+                          className={`px-3 py-2 rounded-lg text-sm border transition-colors flex items-center gap-2 ${
+                            selectedCourseId === course.id
+                              ? "bg-blue-50 border-blue-200 text-blue-700"
+                              : "bg-gray-50 border-gray-200 text-gray-700 hover:bg-gray-100"
+                          }`}
+                        >
+                          <span>
+                            {course.courseName ||
+                              (isStudyHall
+                                ? `Hall ${course.id}`
+                                : isTutionCenter
+                                ? `Hall ${course.id}`
+                                : isSubscriptionProgram
+                                ? `Program ${course.id}`
+                                : `Course ${course.id}`)}
+                          </span>
+                          {courses.length > 1 && (
+                            <MoreVertical
+                              size={14}
+                              className="text-gray-400 hover:text-gray-600"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                deleteCourse(course.id);
+                              }}
+                            />
+                          )}
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                  <Button
+                    type="button"
+                    onClick={addNewCourse}
+                    className="bg-[#0222D7] hover:bg-[#0222D7]/90 text-white px-4 py-2 rounded-lg text-sm flex items-center gap-2"
+                  >
+                    <Plus size={16} />
+                    {isStudyHall
+                      ? "Add Hall"
+                      : isTutionCenter
+                      ? "Add Hall"
+                      : isSubscriptionProgram
+                      ? "Add Program"
+                      : "Add Course"}
+                  </Button>
+                </div>
+
+                <form onSubmit={handleCourseSubmit} className="space-y-6">
+                  <InputField
+                    label="Branch"
+                    name="createdBranch"
+                    value={currentCourse.createdBranch}
+                    onChange={handleCourseChange}
+                    isSelect={true}
+                    options={
+                      branchOptions.length
+                        ? branchOptions
+                        : ["No branches saved yet"]
+                    }
+                    placeholder="Select branch"
+                    error={courseErrorsById[currentCourse.id]?.createdBranch}
+                  />
+
+                  {isSubscriptionProgram && uniqueRemoteBranches.length > 0 && (
+                    <div className="mb-4">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Select Branch
+                      </label>
+                      <AppSelect
+                        value={selectedBranchIdForProgram}
+                        onChange={(val) => {
+                          setSelectedBranchIdForProgram(val);
+                          setProgramBranchError("");
+                        }}
+                        options={uniqueRemoteBranches.map((b) => ({
+                          label: b.branchName,
+                          value: b._id,
+                        }))}
+                        placeholder="Select Branch"
+                        variant="white"
+                        size="md"
+                        rounded="lg"
+                        className="w-full"
+                      />
+                      {programBranchError && (
+                        <p className="text-red-600 text-xs mt-1">
+                          {programBranchError}
+                        </p>
+                      )}
+                    </div>
+                  )}
+
+                  {isStudyAbroad ? (
+                    <StudyAbroadForm
+                      currentCourse={currentCourse}
+                      handleCourseChange={handleCourseChange}
+                      handleFileChange={handleFileChange}
+                      setCourses={setCourses}
+                      courses={courses}
+                      selectedCourseId={selectedCourseId}
+                      courseErrors={courseErrorsById[currentCourse.id] || {}}
+                    />
+                  ) : isCoachingCenter ? (
+                    <CoachingCourseForm
+                      currentCourse={currentCourse}
+                      handleCourseChange={handleCourseChange}
+                      setCourses={setCourses}
+                      courses={courses}
+                      selectedCourseId={selectedCourseId}
+                      courseErrors={courseErrorsById[currentCourse.id] || {}}
+                    />
+                  ) : isStudyHall ? (
+                    <StudyHallForm
+                      currentCourse={currentCourse}
+                      handleCourseChange={handleCourseChange}
+                      handleOperationalDayChange={handleOperationalDayChange}
+                      handleFileChange={handleFileChange}
+                      setCourses={setCourses}
+                      courses={courses}
+                      selectedCourseId={selectedCourseId}
+                      courseErrors={courseErrorsById[currentCourse.id] || {}}
+                      labelVariant={
+                        isSubscriptionProgram ? "program" : "course"
+                      }
+                    />
+                  ) : isTutionCenter ? (
+                    <TuitionCenterForm
+                      currentCourse={currentCourse}
+                      handleCourseChange={handleCourseChange}
+                      handleOperationalDayChange={handleOperationalDayChange}
+                      handleFileChange={handleFileChange}
+                      setCourses={setCourses}
+                      courses={courses}
+                      selectedCourseId={selectedCourseId}
+                      courseErrors={courseErrorsById[currentCourse.id] || {}}
+                      labelVariant={
+                        isSubscriptionProgram ? "program" : "course"
+                      }
+                    />
+                  ) : isUnderPostGraduate ? (
+                    <UnderPostGraduateForm
+                      currentCourse={currentCourse}
+                      handleCourseChange={handleCourseChange}
+                      setCourses={setCourses}
+                      courses={courses}
+                      selectedCourseId={selectedCourseId}
+                      courseErrors={courseErrorsById[currentCourse.id] || {}}
+                      labelVariant={
+                        isSubscriptionProgram ? "program" : "course"
+                      }
+                    />
+                  ) : isBasicCourseForm ? (
+                    <BasicCourseForm
+                      currentCourse={currentCourse}
+                      handleCourseChange={handleCourseChange}
+                      setCourses={setCourses}
+                      courses={courses}
+                      selectedCourseId={selectedCourseId}
+                      courseErrors={courseErrorsById[currentCourse.id] || {}}
+                      labelVariant={
+                        isSubscriptionProgram ? "program" : "course"
+                      }
+                    />
+                  ) : (
+                    <FallbackCourseForm
+                      currentCourse={currentCourse}
+                      handleCourseChange={handleCourseChange}
+                      setCourses={setCourses}
+                      courses={courses}
+                      selectedCourseId={selectedCourseId}
+                      courseErrors={courseErrorsById[currentCourse.id] || {}}
+                      labelVariant={
+                        isSubscriptionProgram ? "program" : "course"
+                      }
+                    />
+                  )}
+                  {!isStudyHall && !isTutionCenter && !isStudyAbroad && (
+                    <div className="grid md:grid-cols-2 gap-6">
+                      {uploadFields.map((f) => (
+                        <div key={f.type} className="flex flex-col gap-2">
+                          <label className="font-medium text-[16px]">
+                            {f.label} <span className="text-red-500">*</span>
+                          </label>
+
+                          <label className="relative w-full h-[180px] rounded-[12px] border-2 border-dashed border-[#DADADD] bg-[#F8F9FA] flex flex-col items-center justify-center cursor-pointer hover:bg-[#F0F1F2] transition-colors overflow-hidden">
+                            {(() => {
+                              const previewUrl = currentCourse[
+                                `${f.type}PreviewUrl`
+                              ] as string;
+
+                              if (previewUrl) {
+                                if (f.type === "image") {
+                                  return (
+                                    <Image
+                                      src={previewUrl}
+                                      alt={`${f.label} Preview`}
+                                      className="object-cover w-full h-full rounded-[12px]"
+                                      width={100}
+                                      height={100}
+                                    />
+                                  );
+                                } else {
+                                  return (
+                                    <div className="flex flex-col items-center justify-center gap-2 p-4 w-full h-full">
+                                      <span className="text-sm text-gray-500 truncate">
+                                        {(currentCourse[f.type] as File).name}
+                                      </span>
+                                    </div>
+                                  );
+                                }
+                              }
+
+                              return (
+                                <>
+                                  <Upload
+                                    size={24}
+                                    className="text-gray-400 dark:text-gray-300 mb-2"
+                                  />
+                                  <span className="text-sm text-gray-500 dark:text-gray-300">
+                                    {f.type === "image"
+                                      ? "Upload Course Image (jpg / jpeg / png)"
+                                      : "Upload Course Brochure (pdf)"}
+                                  </span>
+                                </>
+                              );
+                            })()}
+
+                            <input
+                              type="file"
+                              accept={f.accept}
+                              className="absolute inset-0 opacity-0 cursor-pointer dark:bg-gray-800"
+                              onChange={(e) => handleFileChange(e, f.type)}
+                            />
+                          </label>
+                          {courseErrorsById[currentCourse.id]?.[
+                            `${f.type}Url`
+                          ] && (
+                            <p className="text-red-500 text-sm mt-1">
+                              {
+                                courseErrorsById[currentCourse.id][
+                                  `${f.type}Url`
+                                ]
+                              }
+                            </p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  <div className="flex justify-center gap-10">
+                    <button
+                      type="button"
+                      onClick={onPrevious}
+                      className="w-[314px] h-[48px] border border-[#697282] text-[#697282] rounded-[12px] font-semibold text-[18px] leading-[22px] flex items-center justify-center shadow-inner"
+                    >
+                      Previous
+                    </button>
+
+                    <button
+                      type="submit"
+                      disabled={isLoading}
+                      className={`w-[314px] h-[48px] rounded-[12px] font-semibold transition-colors 
+                        ${
+                          isLoading
+                            ? "opacity-50 cursor-not-allowed bg-gray-600"
+                            : "bg-[#6B7280] hover:bg-[#6B7280]/90"
+                        } 
+                        text-white flex items-center justify-center`}
+                    >
+                      {isLoading ? "Saving..." : "Save & Next"}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            )}
+          </div>
+        )}
+      </_CardContent>
+    </_Card>
   );
 
   if (renderMode === "inline") {
@@ -2020,17 +1834,17 @@ export default function L2DialogBox({
 
   return (
     <>
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
-        <DialogContent
-          className="w-[95vw] sm:w-[90vw] md:w-[800px] lg:w-[900px] xl:max-w-4xl scrollbar-hide"
+      <_Dialog open={DialogOpen} onOpenChange={setDialogOpen}>
+        {trigger && <_DialogTrigger asChild>{trigger}</_DialogTrigger>}
+        <_DialogContent
+          className="w-[95vw] sm:w-[90vw] md:w-[800px] lg:w-[900px] xl:max-w-4xl scrollbar-hide top-[65%]"
           showCloseButton={false}
           onEscapeKeyDown={(e) => e.preventDefault()}
           onInteractOutside={(e) => e.preventDefault()}
         >
           {content}
-        </DialogContent>
-      </Dialog>
+        </_DialogContent>
+      </_Dialog>
     </>
   );
 }

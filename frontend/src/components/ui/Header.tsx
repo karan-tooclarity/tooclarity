@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import SignUpDialog from "../auth/SignUpDialog";
@@ -15,7 +16,7 @@ const Header: React.FC = () => {
   const router = useRouter();
 
   const handleSignUpSuccess = (email: string) => {
-    // Close signup dialog
+    // Close signup _Dialog
     setIsSignUpOpen(false);
 
     // Store email for OTP verification
@@ -28,7 +29,7 @@ const Header: React.FC = () => {
   const handleOtpVerified = () => {
     setIsOtpOpen(false);
     // Optional: show toast, navigate, or refresh user here
-    console.log("✅ OTP verified successfully");
+
   };
 
   return (
@@ -41,7 +42,7 @@ const Header: React.FC = () => {
       <div className="max-w-6xl mx-auto flex justify-between items-center">
         {/* Logo */}
         <div className="flex items-center cursor-pointer" onClick={() => router.push("/")}>
-          <img src="/OO_black_whiteBG (1).png" alt="Logo" className="w-8 h-8 md:w-9 md:h-9" />
+          <Image src="/OO_black_whiteBG (1).png" alt="Logo" width={36} height={36} className="w-8 h-8 md:w-9 md:h-9" />
           <span className="ml-2 text-xl md:text-2xl font-bold text-gray-900">TOO CLARITY</span>
         </div>
 
@@ -63,10 +64,10 @@ const Header: React.FC = () => {
         </div>
       </div>
 
-      {/* Render dialogs at the top level */}
-      {isSignUpOpen && <SignUpDialog open={isSignUpOpen} onOpenChange={setIsSignUpOpen} onSuccess={handleSignUpSuccess} />}
+      {/* Render _Dialogs at the top level */}
+      {isSignUpOpen && <SignUpDialog open={isSignUpOpen} onOpenChange={setIsSignUpOpen} onSuccess={handleSignUpSuccess} caller="institution" />}
       
-      {isLoginOpen && <LoginDialog open={isLoginOpen} onOpenChange={setIsLoginOpen} />}
+      {isLoginOpen && <LoginDialog open={isLoginOpen} onOpenChange={setIsLoginOpen} caller="institution" />}
       {isOtpOpen && ( <OtpDialogBox open={isOtpOpen} setOpen={setIsOtpOpen} email={otpEmail} onVerificationSuccess={handleOtpVerified}/>)}
     </header>
   );

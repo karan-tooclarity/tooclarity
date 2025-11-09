@@ -13,7 +13,7 @@ export default function AdminLoginPage() {
           <LoginDialogBox
             caller="admin"
             onSuccess={() => window.location.assign("/dashboard")}
-            open={false}
+            open={true}
             onOpenChange={() => {}}
           />
           <div className="text-gray-500 text-sm">or</div>

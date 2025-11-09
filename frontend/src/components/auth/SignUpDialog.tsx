@@ -6,18 +6,18 @@ import { useRouter } from "next/navigation";
 import { Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogTrigger,
+  _Dialog,
+  _DialogContent,
+  _DialogHeader,
+  _DialogTitle,
+  _DialogDescription,
 } from "@/components/ui/dialog";
 import InputField from "@/components/ui/InputField";
 import { authAPI } from "../../lib/api";
 import OtpDialogBox from "./OtpDialogBox";
 import { useAuth } from "../../lib/auth-context";
 import { redirectToGoogleOAuth } from "@/lib/google-auth";
+import Image from "next/image";
 
 type SignUpCaller = "admin" | "institution";
 
@@ -31,7 +31,7 @@ interface SignUpDialogProps {
 export default function SignUpDialog({
   open: externalOpen,
   onOpenChange,
-  caller = "institution",
+  caller,
   onSuccess,
 }: SignUpDialogProps = {}) {
   const router = useRouter();
@@ -62,7 +62,7 @@ export default function SignUpDialog({
     /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
 
   const validateForm = () => {
-    let newErrors: { [key: string]: string } = {};
+    const newErrors: { [key: string]: string } = {};
 
     if (!formData.name.trim()) {
       newErrors.name = "Admin Name is required.";
@@ -117,7 +117,7 @@ export default function SignUpDialog({
 
       // Check for successful registration
       if (response.success) {
-        // Close signup dialog
+        // Close signup _Dialog
         setOpen(false);
         if (caller === "admin") {
           await refreshUser();
@@ -131,7 +131,7 @@ export default function SignUpDialog({
           general: response.message || "Sign up failed. Please try again.",
         });
       }
-    } catch (error) {
+    } catch {
       setErrors({ general: "Network error. Please try again." });
     } finally {
       setLoading(false);
@@ -182,19 +182,19 @@ export default function SignUpDialog({
 
   return (
     <>
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent 
+      <_Dialog open={open} onOpenChange={setOpen}>
+        <_DialogContent 
           className="max-w-lg flex flex-col justify-between scrollbar-hide"
           overlayClassName="bg-black/50"
         >
-          <DialogHeader className="flex flex-col items-center gap-2">
-            <DialogTitle className="max-w-xs font-montserrat font-bold text-xl sm:text-[24px] leading-tight text-center">
+          <_DialogHeader className="flex flex-col items-center gap-2">
+            <_DialogTitle className="max-w-xs font-montserrat font-bold text-xl sm:text-[24px] leading-tight text-center">
               Welcome Aboard!
-            </DialogTitle>
-            <DialogDescription className="max-w-xs font-montserrat font-normal text-sm sm:text-[14px] leading-relaxed text-center">
-              Let's finalize your details.
-            </DialogDescription>
-          </DialogHeader>
+            </_DialogTitle>
+            <_DialogDescription className="max-w-xs font-montserrat font-normal text-sm sm:text-[14px] leading-relaxed text-center">
+              Let&apos;s finalize your details.
+            </_DialogDescription>
+          </_DialogHeader>
 
           <div className="grid gap-6 flex-1">
             {/* General Error */}
@@ -227,12 +227,12 @@ export default function SignUpDialog({
               },
               // Only include LinkedIn when not admin
               ...(caller === "admin" ? [] : [{ label: "LinkedIn", id: "linkedin", formKey: "linkedin" }]),
-            ].map((f: any) => (
-              <div key={f.id}>
+            ].map((f: Record<string, unknown>) => (
+              <div key={f.id as string}>
                 {f.id === "phone" ? (
                   <InputField
-                    label={f.label}
-                    name={f.formKey}
+                    label={f.label as string}
+                    name={f.formKey as string}
                     type="tel"
                     placeholder="+91 0000000000"
                     value={formData.contactNumber}
@@ -246,27 +246,29 @@ export default function SignUpDialog({
                       })
                     }
                     required={true}
-                    error={errors[f.formKey]}
+                    error={errors[f.formKey as string]}
                     icon={
-                      <img
+                      <Image
                         src="/India-flag.png"
                         alt="India Flag"
+                        width={24}
+                        height={16}
                         className="w-6 h-4 object-cover rounded-sm"
                       />
                     }
                   />
                 ) : (
                   <InputField
-                    label={f.label}
-                    name={f.formKey}
-                    type={f.type || "text"}
-                    placeholder={`Enter your ${f.label}`}
-                    value={formData[f.formKey as keyof typeof formData]}
+                    label={f.label as string}
+                    name={f.formKey as string}
+                    type={(f.type as string) || "text"}
+                    placeholder={`Enter your ${f.label as string}`}
+                    value={formData[f.formKey as keyof typeof formData] as string}
                     onChange={(e) =>
-                      setFormData({ ...formData, [f.formKey]: e.target.value })
+                      setFormData({ ...formData, [f.formKey as string]: e.target.value })
                     }
                     required={true}
-                    error={errors[f.formKey]}
+                    error={errors[f.formKey as string]}
                   />
                 )}
               </div>
@@ -367,14 +369,14 @@ export default function SignUpDialog({
               onClick={handleGoogleSignUp}
               className="w-full border border-gray-300 rounded py-2 flex items-center justify-center gap-2 hover:bg-gray-100 transition"
             >
-              <img src="/google.png" alt="Google" className="w-5 h-5" />
+              <Image src="/google.png" alt="Google" width={20} height={20} className="w-5 h-5" />
               Sign up with Google
             </button>
           </div>
-        </DialogContent>
-      </Dialog>
+        </_DialogContent>
+      </_Dialog>
 
-      {/* OTP Verification Dialog */}
+      {/* OTP Verification _Dialog */}
       <OtpDialogBox
         open={openVerify}
         setOpen={setOpenVerify}

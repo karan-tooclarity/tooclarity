@@ -2,11 +2,13 @@
 
 import React, { createContext, useContext, useEffect } from "react";
 import { useUserStore, type User } from "./user-store";
+import { LoginData } from "./api";
 
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  login: (email: string, password: string, type?: "admin" | "institution") => Promise<boolean>;
+  // login: (email: string, password: string, type?: "admin" | "institution" | "student") => Promise<boolean>;
+  login: (loginData: LoginData) => Promise<boolean>;
   logout: () => void;
   refreshUser: () => Promise<void>;
   isAuthenticated: boolean;
@@ -30,16 +32,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setProfileCompleted,
   } = useUserStore();
 
-  // Initialize user on app start
+  // Initialize user on app start (skip on /test routes)
   useEffect(() => {
-    // Try to get user profile - if backend has valid cookie, it will succeed
+    /*try {
+      if (typeof window !== 'undefined' && window.location.pathname.startsWith('/test')) {
+        return;
+      }
+    } catch {}*/
     refreshUser();
   }, [refreshUser]);
 
   const value: AuthContextType = {
     user,
     loading,
-    login: (email, password, type) => login(email, password, type),
+    // login: (email, password, type) => login(email, password, type),
+    login: (loginData) => login(loginData),
     logout,
     refreshUser,
     isAuthenticated,

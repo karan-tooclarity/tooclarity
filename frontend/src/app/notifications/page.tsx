@@ -5,7 +5,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faBell } from "@fortawesome/free-regular-svg-icons";
 import { faCheckDouble, faTrash, faInbox, faEnvelopeOpenText, faFilter, faArrowLeft } from "@fortawesome/free-solid-svg-icons";
 import { useRouter } from "next/navigation";
-import { useNotifications, useNotificationActions, type NotificationItem } from "@/lib/hooks/notifications-hooks";
+import { useNotifications, useNotificationActions } from "@/lib/hooks/notifications-hooks";
 
 function timeAgo(ts: number): string {
   const diff = Date.now() - ts;

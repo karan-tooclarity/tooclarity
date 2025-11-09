@@ -37,7 +37,8 @@ publicRouter.post("/register", validateRegistration, authController.register);
 // 📧 Email OTP verification
 publicRouter.post(
   "/verify-email",
-  body("email").isEmail().normalizeEmail(),
+  body("email"),
+  // .isEmail().normalizeEmail(),
   body("otp").isString().isLength({ min: 6, max: 6 }).trim(),
   authController.verifyEmailOtp
 );
@@ -46,5 +47,6 @@ protectedRouter.post("/logout", authController.logout);
 
 publicRouter.post("/forgot-password", authController.forgotPassword);
 publicRouter.patch("/reset-password/:token", authController.resetPassword);
+publicRouter.post("/resend-otp", authController.resendOtp);
 
 module.exports = { publicRouter, protectedRouter };

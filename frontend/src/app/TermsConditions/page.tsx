@@ -1,7 +1,5 @@
-
 import React from 'react';
 import Image from 'next/image';
-
 const TermsConditionsPage: React.FC = () => {
   return (
     <>
@@ -50,11 +48,11 @@ const TermsConditionsPage: React.FC = () => {
       </h1>
       
       <p className="text-sm mb-4">
-        The following terms and conditions, along with all other terms and legal notices located on www.tooclarity.com (collectively, "Terms"), govern Your use of www.tooclarity.com (the "Website"). The Website is owned and operated by Info Edge (India) Limited (hereinafter referred to as "Company").
+        The following terms and conditions, along with all other terms and legal notices located on www.tooclarity.com (collectively, &quot;Terms&quot;), govern Your use of www.tooclarity.com (the &quot;Website&quot;). The Website is owned and operated by Info Edge (India) Limited (hereinafter referred to as &quot;Company&quot;).
       </p>
       
       <p className="text-sm mb-4">
-        These Terms of Use ("Terms") constitute a legally binding agreement ("Agreement") between the user who visits the Website in connection with use of our services, or whose information Company otherwise receives in connection with the services provided through its education business ("You") and the Company governing Your access to and use of the Platform, including any subdomains thereof, and any other websites through which the Website makes its services available (collectively, "Site"), our mobile, tablet and other smart device applications, and application program interfaces (collectively, "Application"). The Application and Site are collectively termed as "Platform".
+        These Terms of Use (&quot;Terms&quot;) constitute a legally binding agreement (&quot;Agreement&quot;) between the user who visits the Website in connection with use of our services, or whose information Company otherwise receives in connection with the services provided through its education business (&quot;You&quot;) and the Company governing Your access to and use of the Platform, including any subdomains thereof, and any other websites through which the Website makes its services available (collectively, &quot;Site&quot;), our mobile, tablet and other smart device applications, and application program interfaces (collectively, &quot;Application&quot;). The Application and Site are collectively termed as &quot;Platform&quot;.
       </p>
       
       <p className="text-sm mb-4">
@@ -135,9 +133,9 @@ const TermsConditionsPage: React.FC = () => {
           By accessing or using the Platform You represent and warrant that You fulfil the requirement of minimum age and have the legal capacity and authority to enter into a contract as per the applicable laws.
         </p>
         <p className="text-sm mb-4">
-          You are not under any legal or other disability which limits Your ability to comply with these Terms or to install and use the products You purchase with minimal risk of harm to You or others. You further represent that You are not purchasing the products/services for resale to others and will not do so without the Company's prior written consent.
+          You are not under any legal or other disability which limits Your ability to comply with these Terms or to install and use the products You purchase with minimal risk of harm to You or others. You further represent that You are not purchasing the products/services for resale to others and will not do so without the Company&apos;s prior written consent.
         </p>
-        <li>You are eligible to conduct the purpose "hereinafter defined" lawfully</li>
+        <li>You are eligible to conduct the purpose &quot;hereinafter defined&quot; lawfully</li>
       </ol>
       
       <h2 
@@ -156,7 +154,7 @@ const TermsConditionsPage: React.FC = () => {
       </p>
       <ul className="list-disc list-inside text-sm space-y-2 pl-4">
         <li>Make Your contact details available to partners/business associates of the Platform, You may be contacted by Platform or its partners for additional information and registration process through email, telephone and SMS.</li>
-        <li>Receive promotional mails/special offers from Platform or any of its partner websites/applications. If You do not wish to be contacted by Platform, please modify the settings at the time of registration or in the "Accounts & Settings" section on the Platform.</li>
+        <li>Receive promotional mails/special offers from Platform or any of its partner websites/applications. If You do not wish to be contacted by Platform, please modify the settings at the time of registration or in the &quot;Accounts & Settings&quot; section on the Platform.</li>
         <li>Be contacted by Info Edge (India) Limited in accordance with the settings set by You.</li>
       </ul>
       
@@ -172,7 +170,7 @@ const TermsConditionsPage: React.FC = () => {
         Purpose
       </h2>
       <p className="text-sm mb-4">
-        The Platform is made available for use to help students get details, discover & research on colleges, courses and exams of their interest and for allied services related thereto. Platform also helps connect colleges/educational institutes/coaching centres etc. with prospective students who may be of interest to them. User's contactable information will be shared with Colleges/Educational Institutes/coaching centres etc either if they have shown interest in that Colleges/Educational Institutes/coaching centres etc or they have shortlisted the user as potential candidate for admission.
+        The Platform is made available for use to help students get details, discover & research on colleges, courses and exams of their interest and for allied services related thereto. Platform also helps connect colleges/educational institutes/coaching centres etc. with prospective students who may be of interest to them. User&apos;s contactable information will be shared with Colleges/Educational Institutes/coaching centres etc either if they have shown interest in that Colleges/Educational Institutes/coaching centres etc or they have shortlisted the user as potential candidate for admission.
       </p>
       <p className="text-sm mb-4">
         Study Abroad section of Platform also assists students in completing and submitting their applications to universities abroad. (“Purpose”).
@@ -248,7 +246,7 @@ const TermsConditionsPage: React.FC = () => {
                 <li>Belongs to another person and to which You have no right;</li>
                 <li>Infringes, breaches or otherwise contravenes the rights of the Company or any third party, including any copyright, trademark, patent, rights of privacy or publicity or any other proprietary rights;</li>
                 <li>Contains computer viruses, or other computer code, files or programs designed to disrupt, destroy or interfere with or limit the functioning of the Platform, or any other computer system or resource;</li>
-                <li>Is grossly harmful, harassing, invasive of another's privacy, hateful, disparaging, relating to or encouraging money laundering or gambling in any manner, any content which is or may potentially be perceived as being harmful, threatening, abusive, harassing, defamatory, libelous, blasphemous, vulgar, pornographic, paedophilic, obscene, or racially, ethnically, or otherwise unlawful in any manner whatsoever;</li>
+                <li>Is grossly harmful, harassing, invasive of another&apos;s privacy, hateful, disparaging, relating to or encouraging money laundering or gambling in any manner, any content which is or may potentially be perceived as being harmful, threatening, abusive, harassing, defamatory, libelous, blasphemous, vulgar, pornographic, paedophilic, obscene, or racially, ethnically, or otherwise unlawful in any manner whatsoever;</li>
                 <li>Which constitutes or encourages conduct that would constitute a criminal offence, give rise to other liability, or otherwise violate applicable law;</li>
                 <li>That deceives or misleads the addressee about the origin of such messages or communicates any information which is grossly offensive or menacing in nature;</li>
                 <li>That harms minors in any way;</li>
@@ -271,10 +269,10 @@ const TermsConditionsPage: React.FC = () => {
         Restrictions Regarding Materials
       </h2>
       <ol className="list-decimal list-inside text-sm space-y-2 pl-4">
-        <li>All information, documents, software, images, photographs, text, services and other similar materials (collectively, "Materials") contained in this Platform if provided by Company or its third party authors, developers and vendors ("Third Party Providers") and are capable of being so protected are the copyrighted work of Company and/or the Third Party Providers. Except as stated herein, none of the Materials may be copied, reproduced, distributed, republished, downloaded, displayed, posted or transmitted in any form or by any means, including, but not limited to, electronic, mechanical, photocopying, recording, or otherwise, without the prior express written permission of Company or the Third Party Provider. No part of the Platform, including logos, graphics, sounds or images, may be reproduced or retransmitted in any way, or by any means, without the prior express written permission of Company. You also may not, without TooClarity Search Private Limited prior express written permission, "mirror" any Materials contained on this Platform on any other server.</li>
-        <li>Nothing on this Platform shall be construed as conferring any license under any of TooClarity Search Private Limited or any Third Party Provider's intellectual property rights, whether by estoppels, implication, or otherwise. You acknowledge sole responsibility for obtaining any such licenses.</li>
+        <li>All information, documents, software, images, photographs, text, services and other similar materials (collectively, &quot;Materials&quot;) contained in this Platform if provided by Company or its third party authors, developers and vendors (&quot;Third Party Providers&quot;) and are capable of being so protected are the copyrighted work of Company and/or the Third Party Providers. Except as stated herein, none of the Materials may be copied, reproduced, distributed, republished, downloaded, displayed, posted or transmitted in any form or by any means, including, but not limited to, electronic, mechanical, photocopying, recording, or otherwise, without the prior express written permission of Company or the Third Party Provider. No part of the Platform, including logos, graphics, sounds or images, may be reproduced or retransmitted in any way, or by any means, without the prior express written permission of Company. You also may not, without TooClarity Search Private Limited prior express written permission, &quot;mirror&quot; any Materials contained on this Platform on any other server.</li>
+        <li>Nothing on this Platform shall be construed as conferring any license under any of TooClarity Search Private Limited or any Third Party Provider&apos;s intellectual property rights, whether by estoppels, implication, or otherwise. You acknowledge sole responsibility for obtaining any such licenses.</li>
         <li>Permission is granted to display, copy, distribute and download TooClarity Search Private Limited Materials on this Platform provided that: (1) both the copyright notice identified below and this permission notice appear in the Materials, (2) the use of such Materials is solely for personal, non-commercial and informational use and will not be copied or posted on any networked computer or broadcast in any media, and (3) no modifications of any of the Materials are made. This permission terminates automatically without notice if You breach any of these Terms. Upon termination, You will immediately destroy any downloaded or printed Materials. Any unauthorized use of any Materials contained on this Platform may violate copyright laws, trademark laws, and other related laws and may have various legal consequences.</li>
-        <li>Materials provided by Third Party Providers have not been independently authenticated in whole or in part by Company. The Platform does not provide, sell, license, or lease any of the Materials other than those specifically identified as being provided by Company. Company is committed to respecting others' intellectual property rights, and we ask our users to do the same. Company (hereinafter referred to as "We") may, in its sole discretion, terminate or restrict the access rights of users who infringe or otherwise violate others' intellectual property rights Your personal information is retained for as long as necessary to provide services or comply with legal obligations. Post this period, information may be archived or securely deleted.</li>
+        <li>Materials provided by Third Party Providers have not been independently authenticated in whole or in part by Company. The Platform does not provide, sell, license, or lease any of the Materials other than those specifically identified as being provided by Company. Company is committed to respecting others&apos; intellectual property rights, and we ask our users to do the same. Company (hereinafter referred to as &quot;We&quot;) may, in its sole discretion, terminate or restrict the access rights of users who infringe or otherwise violate others&apos; intellectual property rights Your personal information is retained for as long as necessary to provide services or comply with legal obligations. Post this period, information may be archived or securely deleted.</li>
       </ol>
       
       <h2 
@@ -294,7 +292,7 @@ const TermsConditionsPage: React.FC = () => {
       <ul className="list-disc list-inside text-sm space-y-2 pl-4">
         <li>the websites/apps we select for inclusion in the Platform work, and continue to work properly;</li>
         <li>their content remains acceptable and useful; and</li>
-        <li>their operation will not be injurious to our users' devices.</li>
+        <li>their operation will not be injurious to our users&apos; devices.</li>
       </ul>
       <p className="text-sm mb-4">
         We explicitly disclaim, and will not accept any responsibility for any of the following in respect of the sites that we link to:
@@ -378,7 +376,7 @@ const TermsConditionsPage: React.FC = () => {
         A User through his user identification and shall be solely responsible for carrying out any online or off-line transaction involving credit cards / debit cards or such other forms of instruments or documents for making such transactions and Company assumes no responsibility or liability for their improper use of information relating to such usage of credit cards / debit cards used by the subscriber online / off-line.
       </p>
       <p className="text-sm mb-4">
-        The Company shall not be liable for any loss or damage sustained by reason of any disclosure (inadvertent or otherwise) of any information concerning the user's account and / or information relating to or regarding online transactions using credit cards / debit cards and / or their verification process and particulars nor for any error, omission or inaccuracy with respect to any information so disclosed and used whether or not in pursuance of a legal process or otherwise
+        The Company shall not be liable for any loss or damage sustained by reason of any disclosure (inadvertent or otherwise) of any information concerning the user&apos;s account and / or information relating to or regarding online transactions using credit cards / debit cards and / or their verification process and particulars nor for any error, omission or inaccuracy with respect to any information so disclosed and used whether or not in pursuance of a legal process or otherwise
       </p>
       
       <h2 
@@ -393,7 +391,7 @@ const TermsConditionsPage: React.FC = () => {
         Disclaimer of warranty
       </h2>
       <p className="text-sm mb-4">
-        The Company expressly disclaims warranties of any kind for any use of or any access to the Platform, to any material, information, links, or content presented on the web pages at the Platform, to any external website linked thereto, and to any external material, information, links, or content linked thereto. The Platform, and any material, information, links, and content presented on the web pages at the Platform, as well as any external website and any external material, information, links, and content linked thereto, are provided on an "as is" basis, without warranty of any kind, either express or implied, including, without limitation, the implied warranties of merchantability or fitness for a particular purpose, or non-infringement. The Company has no control over any external website or over any external material, information, links, and content linked to the Platform. Certain jurisdictions do not permit the exclusion of implied warranties and the foregoing exclusions of implied warranties may not apply to You. The Platform and its internal web pages may be unavailable for online access from time to time and at anytime; there are no guarantees and no warranties of online availability, impressions, and click-throughs. The entire risk as to the performance of, or non-performance of, or arising out of the use of, or the access of, or the lack of access to the Platform, to any material, information, links, or content presented on the web pages at the Platform, to any external website linked thereto, or to any external material, information, links, or content linked thereto, is borne by the user, visitor, customer, or other person.
+        The Company expressly disclaims warranties of any kind for any use of or any access to the Platform, to any material, information, links, or content presented on the web pages at the Platform, to any external website linked thereto, and to any external material, information, links, or content linked thereto. The Platform, and any material, information, links, and content presented on the web pages at the Platform, as well as any external website and any external material, information, links, and content linked thereto, are provided on an &quot;as is&quot; basis, without warranty of any kind, either express or implied, including, without limitation, the implied warranties of merchantability or fitness for a particular purpose, or non-infringement. The Company has no control over any external website or over any external material, information, links, and content linked to the Platform. Certain jurisdictions do not permit the exclusion of implied warranties and the foregoing exclusions of implied warranties may not apply to You. The Platform and its internal web pages may be unavailable for online access from time to time and at anytime; there are no guarantees and no warranties of online availability, impressions, and click-throughs. The entire risk as to the performance of, or non-performance of, or arising out of the use of, or the access of, or the lack of access to the Platform, to any material, information, links, or content presented on the web pages at the Platform, to any external website linked thereto, or to any external material, information, links, or content linked thereto, is borne by the user, visitor, customer, or other person.
       </p>
       
       <h2 
@@ -411,7 +409,7 @@ const TermsConditionsPage: React.FC = () => {
         Platform is an intermediary as defined under sub-clause (w) of Section 2 of the Information Technology Act, 2000.
       </p>
       <p className="text-sm mb-4">
-        Company shall not be responsible for any errors or omissions contained on any Company website, and reserves the right to make changes anytime without notice. Mention of non-Info Edge (India) Limited products or services is provided for informational purposes only and constitutes neither an endorsement nor a recommendation by Company. References to [top], [recommended], [trending] or [popular], are not in the nature of an endorsement but generated based on user feedback, algorithmic matching of your interests and preferences (such as age, subject matters of interest, location, your activity on the platform), offerings made by third parties on the platform, etc. All Company and third-party information provided on any Company Platform is provided on an "as is" basis.
+        Company shall not be responsible for any errors or omissions contained on any Company website, and reserves the right to make changes anytime without notice. Mention of non-Info Edge (India) Limited products or services is provided for informational purposes only and constitutes neither an endorsement nor a recommendation by Company. References to [top], [recommended], [trending] or [popular], are not in the nature of an endorsement but generated based on user feedback, algorithmic matching of your interests and preferences (such as age, subject matters of interest, location, your activity on the platform), offerings made by third parties on the platform, etc. All Company and third-party information provided on any Company Platform is provided on an &quot;as is&quot; basis.
       </p>
       <p className="text-sm mb-4">
         Views expressed by the users are their own, Info Edge (India) Limited does not endorse the same. No claim as to the accuracy and correctness of the information on the site is made although every attempt is made to ensure that the content is not misleading. In case any inaccuracy is or otherwise improper content is sighted on the Platform, please report it to report abuse
@@ -435,10 +433,10 @@ const TermsConditionsPage: React.FC = () => {
         License disclaimer
       </h2>
       <p className="text-sm mb-4">
-        Nothing on any Company website shall be construed as conferring any license under any of TooClarity Search Private Limited or any third party's intellectual property rights, whether by estoppel, implication, or otherwise.
+        Nothing on any Company website shall be construed as conferring any license under any of TooClarity Search Private Limited or any third party&apos;s intellectual property rights, whether by estoppel, implication, or otherwise.
       </p>
       <p className="text-sm mb-4 font-bold">
-        'INFO EDGE (INDIA) LIMITED' DISCLAIMS ALL WARRANTIES, EXPRESSED OR IMPLIED, WITH REGARD TO ANY INFORMATION (INCLUDING ANY SOFTWARE, PRODUCTS, OR SERVICES) PROVIDED ON ANY 'INFO EDGE (INDIA) LIMITED' PLATFORM, INCLUDING THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT.
+        &apos;INFO EDGE (INDIA) LIMITED&apos; DISCLAIMS ALL WARRANTIES, EXPRESSED OR IMPLIED, WITH REGARD TO ANY INFORMATION (INCLUDING ANY SOFTWARE, PRODUCTS, OR SERVICES) PROVIDED ON ANY &apos;INFO EDGE (INDIA) LIMITED&apos; PLATFORM, INCLUDING THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT.
       </p>
       
       <h2 
@@ -471,7 +469,7 @@ const TermsConditionsPage: React.FC = () => {
         Make Your own decisions:
       </p>
       <p className="text-sm mb-4">
-        If You are making or planning to make any decision, whether personal or business decisions, based on the content on the site, You should conduct an independent verification before making Your important decision. In the case of any listings or banners displaying any content related to any educational products, You may contact the institution/individual directly. All decisions made would be entirely Your prerogative and Company does not claim to offer any advice, either legal or financial. Company doesn't take any ownership, directly or indirectly towards any person whatsoever, with respect to banners hosted on its Platform by its customers, which are strictly in the nature of sale of space by Platform & it has not carried out any independent verification on the authenticity or compliance requirements, as may have been required under any law for the time being in force, of such images/ banners/ listings.
+        If You are making or planning to make any decision, whether personal or business decisions, based on the content on the site, You should conduct an independent verification before making Your important decision. In the case of any listings or banners displaying any content related to any educational products, You may contact the institution/individual directly. All decisions made would be entirely Your prerogative and Company does not claim to offer any advice, either legal or financial. Company doesn&apos;t take any ownership, directly or indirectly towards any person whatsoever, with respect to banners hosted on its Platform by its customers, which are strictly in the nature of sale of space by Platform & it has not carried out any independent verification on the authenticity or compliance requirements, as may have been required under any law for the time being in force, of such images/ banners/ listings.
       </p>
       <p className="text-sm mb-4 font-bold">
         READ THESE TERMS. IN PURCHASING/SUBSCRIBING TO A PRODUCT/SERVICE OFFERED ON THIS PLATFORM YOU ARE ADVISED TO READ THESE TERMS CAREFULLY BEFORE PROCEEDING FURTHER. YOU HEREBY UNDERSTAND AND AGREE TO THE TERMS BELOW. IF YOU DO NOT UNDERSTAND AND AGREE WITH THESE TERMS THEN DO NOT PLACE AN ORDER FOR A PRODUCT/SERVICE.
@@ -480,7 +478,7 @@ const TermsConditionsPage: React.FC = () => {
         PRICING. ALL PRICES ARE SUBJECT TO CHANGE WITHOUT NOTICE. EVERY EFFORT HAS BEEN MADE TO ENSURE ACCURATE PRICING OF THE PRODUCTS/SERVICES FEATURED ON OUR PLATFORM. IN THE EVENT A PART OR ACCESSORY IS ORDERED AND THE LISTED PRICE HAS CHANGED, YOU WILL BE NOTIFIED PRIOR TO OUR PROCESSING YOUR ORDER.
       </p>
       <p className="text-sm mb-4 font-bold">
-        PURCHASE "AS IS." ALL PRODUCTS/SERVICES ARE PROVIDED BY THE COMPANY ON "AS IS" BASIS WITH NO REPRESENTATIONS OR WARRANTIES OF ANY KIND FROM THE COMPANY, INCLUDING WITHOUT LIMITATION NO WARRANTIES AS TO THE NATURE AND QUANTUM OF RESPONSES TO ANY BANNER OR LISTING DISPLAYED ON THE PLATFORM.
+        PURCHASE &quot;AS IS.&quot; ALL PRODUCTS/SERVICES ARE PROVIDED BY THE COMPANY ON &quot;AS IS&quot; BASIS WITH NO REPRESENTATIONS OR WARRANTIES OF ANY KIND FROM THE COMPANY, INCLUDING WITHOUT LIMITATION NO WARRANTIES AS TO THE NATURE AND QUANTUM OF RESPONSES TO ANY BANNER OR LISTING DISPLAYED ON THE PLATFORM.
       </p>
       
       <h2 
@@ -586,7 +584,7 @@ const TermsConditionsPage: React.FC = () => {
       >
         Amendment to these Terms
       </h3>
-      <p className="text-sm mb-4 font-bold">
+      <p className="text-sm mb-4 font-bold">  
         COMPANY RESERVES ITS RIGHT TO AMEND / ALTER OR CHANGE ALL OR ANY DISCLAIMERS OR TERM(S) OR CONDITION(S) OF AGREEMENTS AT ANY TIME WITHOUT ANY PRIOR NOTICE.
       </p>
       <p className="text-sm mb-4">
@@ -640,7 +638,7 @@ const TermsConditionsPage: React.FC = () => {
       >
         Governing Law and Jurisdiction
       </h3>
-      <p className="text-sm mb-4">
+      <p className="text-sm mb-4"> 
         These Terms shall be governed by the laws of Republic of India. The exclusive forum for any disputes arising out of or relating to these Terms shall be a court of law located in Delhi, India.
       </p>
       

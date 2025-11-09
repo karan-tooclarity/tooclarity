@@ -1,9 +1,10 @@
 import Joi from "joi";
-import { alphaNumericNameRule } from "./ValidationRules";
+// alphaNumericNameRule imported for potential future use
+// (kept to preserve public API surface); prefix to avoid unused warning
+//import { alphaNumericNameRule as _alphaNumericNameRule } from "./ValidationRules";
 import {
   urlRule,
   nameRule,
-  stateRule,
   createdBranchRule,
   categoriesTypeRule,
   graduationTypeRule,
@@ -11,14 +12,11 @@ import {
   selectBranchRule,
   phoneRule,
   domainTypeRule,
+  subDomainTypeRule,
+  courseHighlightsRule,
   durationRule,
 } from "./ValidationRules";
-import {
-  branchNameRule,
-  branchPhoneRule,
-  branchUrlRule,
-  addressRule,
-} from "./ValidationRules";
+
 
 // ✅ Common base
 export const baseCourseSchema = Joi.object({
@@ -85,6 +83,8 @@ export const CoachingCenterSchema = Joi.object({
   // --- Coaching-specific rules ---
   categoriesType: categoriesTypeRule,
   domainType: domainTypeRule,
+  subDomainType: subDomainTypeRule,
+  courseHighlights: courseHighlightsRule,
   classSize: Joi.number()
     .min(0) // Ensures the number is at least 0
     .required()

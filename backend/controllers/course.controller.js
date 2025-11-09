@@ -278,25 +278,161 @@ exports.getAllCoursesForInstitution = asyncHandler(async (req, res, next) => {
   });
 });
 
-exports.getCourseById = asyncHandler(async (req, res, next) => {
-  const { institutionId, courseId } = req.params;
-  await checkOwnership(institutionId, req.userId);
+exports.getCourseById = asyncHandler(async (req, res) => {
+  const { courseId } = req.params;
+  const userId = req.userId;
 
-  const course = await Course.findById(courseId);
+  console.log("📘 [getCourseById] Request received for Course ID: ${courseId}");
 
-  if (!course || course.institution.toString() !== institutionId) {
-    return next(
-      new AppError(
-        "Course not found or does not belong to this institution",
-        404
-      )
-    );
+  try {
+    // 1️⃣ Check course cache first
+    const cachedCourse = await RedisUtil.getCachedCourses(courseId);
+
+    if (cachedCourse) {
+      const course = JSON.parse(cachedCourse);
+      console.log("✅ Course cache hit");
+
+      // Check subscription cache (by institution)
+      if (course?.institution) {
+        const cachedSubscription = await RedisUtil.getCachedSubscription(course.institution);
+        console.log(cachedSubscription);
+
+        if (cachedSubscription) {
+          const subscription = JSON.parse(cachedSubscription);
+
+          // Validate subscription dates and status
+          const now = new Date();
+          const isActive =
+            subscription.status === "active" &&
+            new Date(subscription.startDate) <= now &&
+            new Date(subscription.endDate) > now;
+
+          if (isActive) {
+            console.log("✅ Valid subscription cache hit — returning cached course data only");
+
+            // Add analytics job asynchronously
+            if (userId) {
+              await addAnalyticsJob({
+                userId,
+                institutionId: course.institution,
+                courseId,
+                timestamp: new Date().toISOString(),
+              });
+            }
+
+            // ⚡ Return only course and institution
+            return res.status(200).json({
+              success: true,
+              data: {
+                course,
+                institution: course.institutionDetails || null,
+              },
+              source: "cache",
+            });
+          } else {
+            console.log("⚠ Cached subscription invalid or expired — will refresh from DB");
+          }
+        } else {
+          console.log("⚠ No subscription cache found — will refresh from DB");
+        }
+      } else {
+        console.warn("⚠ Cached course missing institution reference");
+      }
+    } else {
+      console.log("⚙ Course not in cache — will fetch from MongoDB");
+    }
+
+    // 2️⃣ Fetch from MongoDB
+    const courseData = await Course.aggregate([
+      { $match: { _id: new mongoose.Types.ObjectId(courseId) } },
+      {
+        $lookup: {
+          from: "subscriptions",
+          let: { institutionId: "$institution" },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    { $eq: ["$institution", "$$institutionId"] },
+                    { $eq: ["$status", "active"] },
+                    { $lte: ["$startDate", new Date()] },
+                    { $gt: ["$endDate", new Date()] },
+                  ],
+                },
+              },
+            },
+          ],
+          as: "validSubscription",
+        },
+      },
+      { $match: { validSubscription: { $ne: [] } } },
+      {
+        $lookup: {
+          from: "institutions",
+          localField: "institution",
+          foreignField: "_id",
+          as: "institutionDetails",
+        },
+      },
+      { $unwind: "$institutionDetails" },
+      {
+        $project: {
+          "institutionDetails.callbackRollups": 0,
+          "institutionDetails.demoRollups": 0,
+        },
+      },
+    ]);
+
+    console.log(courseData);
+
+    if (!courseData || courseData.length === 0) {
+      console.warn("⚠ No valid course found or inactive subscription");
+      return res.status(404).json({
+        success: false,
+        message: "Course not found or institution subscription inactive",
+      });
+    }
+
+    const course = courseData[0];
+    const subscription = course.validSubscription?.[0] || null;
+    delete course.validSubscription;
+
+    // 3️⃣ Cache course + subscription separately
+    console.log("💾 Caching course + subscription data...");
+    await Promise.all([
+      RedisUtil.cacheCourse(courseId, course, 600), // 10 minutes
+      subscription && RedisUtil.cacheSubscription(course.institution, subscription, 300), // 5 minutes TTL
+    ]);
+
+    // 4️⃣ Add analytics job
+    if (userId && course?.institution) {
+      await addAnalyticsJob({
+        userId,
+        institutionId: course.institution,
+        courseId,
+        timestamp: new Date().toISOString(),
+      });
+    }
+
+    // 5️⃣ Send response (only course + institution)
+    console.log("✅ Returning course data from MongoDB");
+    return res.status(200).json({
+      success: true,
+      data: {
+        course,
+        institution: course.institutionDetails || null,
+      },
+      source: "mongo",
+    });
+  } catch (error) {
+    console.error("❌ [getCourseById] Error fetching course:", error);
+    return res.status(500).json({
+      success: false,
+      message: "An error occurred while fetching course data.",
+      error: error.message,
+    });
   }
-
-  res.status(200).json({
-    success: true,
-    data: course,
-  });
 });
 
 exports.updateCourse = asyncHandler(async (req, res, next) => {

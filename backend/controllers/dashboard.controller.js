@@ -64,7 +64,7 @@ exports.sendPasswordChangeOtp = async (req, res, next) => {
       return next(new AppError("OTP service function missing.", 500));
     }
 
-    await otpService.sendPasswordChangeToken(user.email);
+    await otpService.sendPasswordChangeToken(user.email, user.name);
     console.log("✅ OTP sent to email:", user.email);
 
     res.status(200).json({ success: true, message: "A verification code has been sent to your email." });

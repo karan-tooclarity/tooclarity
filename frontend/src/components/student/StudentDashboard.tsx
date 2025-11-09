@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import HomeHeader from "./home/HomeHeader";
 import CourseCard from "./home/CourseCard";
 import FilterSidebar from "./home/FilterSidebar";
@@ -18,6 +18,7 @@ import { studentDashboardAPI, type CourseForStudent } from "@/lib/students-api";
 import { useAuth } from "@/lib/auth-context";
 import { useNotifications } from "@/lib/hooks/notifications-hooks";
 import { useRouter } from "next/navigation";
+import { debounce } from "lodash";
 
 interface Course {
   id: string;
@@ -159,8 +160,9 @@ const StudentDashboard: React.FC = () => {
       // Notify other components in the same window that wishlist changed
       try {
         window.dispatchEvent(new CustomEvent('wishlistUpdated'));
-      } catch (e) {
+      } catch (_e) {
         // ignore if dispatch fails in some environments
+        console.error("Error dispatching wishlistUpdated event:", _e);
       }
     }
   };
@@ -232,12 +234,128 @@ const StudentDashboard: React.FC = () => {
     setActivePane(null);
   };
 
+  const filterCourses = useCallback(
+    (query: string, filters: typeof activeFilters, sourceCourses: Course[]) => {
+      let result = sourceCourses;
+
+      // Search filter
+      if (query) {
+        result = result.filter(
+          (course) =>
+            course.title.toLowerCase().includes(query.toLowerCase()) ||
+            course.institution.toLowerCase().includes(query.toLowerCase())
+        );
+      }
+
+      // Institute Type filter (mutually exclusive - only one selected or none)
+      if (filters.instituteType) {
+        result = result.filter(
+          (course) => course.instituteType === filters.instituteType
+        );
+      }
+
+      // Kindergarten Level filter (only for Kindergarten institute type)
+      if (filters.kindergartenLevels.length > 0) {
+        result = result.filter((course) =>
+          filters.kindergartenLevels.includes(course.level)
+        );
+      }
+
+      // School Level filter (only for School's institute type)
+      if (filters.schoolLevels.length > 0) {
+        result = result.filter((course) =>
+          filters.schoolLevels.includes(course.level)
+        );
+      }
+
+      // Mode filter
+      if (filters.modes.length > 0) {
+        result = result.filter((course) => filters.modes.includes(course.mode));
+      }
+
+      // Age Group filter
+      if (filters.ageGroup.length > 0) {
+        result = result.filter((course) =>
+          filters.ageGroup.includes(course.ageGroup || "3 - 4 Yrs")
+        );
+      }
+
+      // Program Duration filter
+      if (filters.programDuration.length > 0) {
+        result = result.filter((course) =>
+          filters.programDuration.includes(
+            course.programDuration || "Academic Year"
+          )
+        );
+      }
+
+      // Price Range filter
+      if (filters.priceRange.length > 0) {
+        result = result.filter((course) =>
+          filters.priceRange.includes(course.priceRange || "")
+        );
+      }
+
+      // Board Type filter
+      if (filters.boardType.length > 0) {
+        result = result.filter((course) =>
+          filters.boardType.includes(course.boardType || "CBSE")
+        );
+      }
+
+      // Graduation Type filter
+      if (filters.graduationType.length > 0) {
+        result = result.filter((course) =>
+          filters.graduationType.includes(
+            course.graduationType || "Under Graduation"
+          )
+        );
+      }
+
+      // Stream Type filter
+      if (filters.streamType.length > 0) {
+        result = result.filter((course) =>
+          filters.streamType.includes(
+            course.streamType || "Engineering and Technology (B.E./B.Tech.)"
+          )
+        );
+      }
+
+      // Education Type filter
+      if (filters.educationType.length > 0) {
+        result = result.filter((course) =>
+          filters.educationType.includes(course.educationType || "Full time")
+        );
+      }
+
+      setFilteredCourses(result);
+      setCurrentPage(1);
+    },
+    []
+  );
+
+  const debouncedSearch = useCallback(
+    debounce(
+      (query: string, filters: typeof activeFilters, sourceCourses: Course[]) => {
+        // In a real Elasticsearch integration, you would make an API call here
+        // For now, we will continue to filter the existing course list
+        filterCourses(query, filters, sourceCourses);
+      },
+      300
+    ),
+    [filterCourses]
+  );
+
   const handleSearch = (query: string) => {
     setSearchQuery(query);
-    filterCourses(query, activeFilters, courses);
+    debouncedSearch(query, activeFilters, courses);
   };
 
-  const handleFilterChange = (filterType: string, value: string, isChecked: boolean) => {
+  const handleFilterChange = (
+    filterType: string,
+    value: string,
+    isChecked: boolean
+  ) => {
     const updatedFilters = { ...activeFilters };
 
     // Handle mutually exclusive institute type
@@ -284,103 +402,6 @@ const StudentDashboard: React.FC = () => {
     filterCourses(searchQuery, updatedFilters, courses);
   };
 
-  const filterCourses = (
-    query: string,
-    filters: typeof activeFilters,
-    sourceCourses: Course[]
-  ) => {
-    let result = sourceCourses;
-
-    // Search filter
-    if (query) {
-      result = result.filter(
-        (course) =>
-          course.title.toLowerCase().includes(query.toLowerCase()) ||
-          course.institution.toLowerCase().includes(query.toLowerCase())
-      );
-    }
-
-    // Institute Type filter (mutually exclusive - only one selected or none)
-    if (filters.instituteType) {
-      result = result.filter((course) =>
-        course.instituteType === filters.instituteType
-      );
-    }
-
-    // Kindergarten Level filter (only for Kindergarten institute type)
-    if (filters.kindergartenLevels.length > 0) {
-      result = result.filter((course) =>
-        filters.kindergartenLevels.includes(course.level)
-      );
-    }
-
-    // School Level filter (only for School's institute type)
-    if (filters.schoolLevels.length > 0) {
-      result = result.filter((course) =>
-        filters.schoolLevels.includes(course.level)
-      );
-    }
-
-    // Mode filter
-    if (filters.modes.length > 0) {
-      result = result.filter((course) =>
-        filters.modes.includes(course.mode)
-      );
-    }
-
-    // Age Group filter
-    if (filters.ageGroup.length > 0) {
-      result = result.filter((course) =>
-        filters.ageGroup.includes(course.ageGroup || "3 - 4 Yrs")
-      );
-    }
-
-    // Program Duration filter
-    if (filters.programDuration.length > 0) {
-      result = result.filter((course) =>
-        filters.programDuration.includes(course.programDuration || "Academic Year")
-      );
-    }
-
-    // Price Range filter
-    if (filters.priceRange.length > 0) {
-      result = result.filter((course) =>
-        filters.priceRange.includes(course.priceRange || "")
-      );
-    }
-
-    // Board Type filter
-    if (filters.boardType.length > 0) {
-      result = result.filter((course) =>
-        filters.boardType.includes(course.boardType || "CBSE")
-      );
-    }
-
-    // Graduation Type filter
-    if (filters.graduationType.length > 0) {
-      result = result.filter((course) =>
-        filters.graduationType.includes(course.graduationType || "Under Graduation")
-      );
-    }
-
-    // Stream Type filter
-    if (filters.streamType.length > 0) {
-      result = result.filter((course) =>
-        filters.streamType.includes(course.streamType || "Engineering and Technology (B.E./B.Tech.)")
-      );
-    }
-
-    // Education Type filter
-    if (filters.educationType.length > 0) {
-      result = result.filter((course) =>
-        filters.educationType.includes(course.educationType || "Full time")
-      );
-    }
-
-    setFilteredCourses(result);
-    setCurrentPage(1);
-  };
-
   const handleWishlistToggle = (courseId: string) => {
     // Get current wishlist
     const wishlistedIds = getWishlistedCourseIds();
@@ -423,6 +444,13 @@ const StudentDashboard: React.FC = () => {
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
+
+  useEffect(() => {
+    // This is to cancel any pending debounced searches when the component unmounts
+    return () => {
+      debouncedSearch.cancel();
+    };
+  }, [debouncedSearch]);
 
   const wishlistCourses = courses.filter((course) => course.wishlisted);
   const totalPages = Math.max(1, Math.ceil(filteredCourses.length / PAGE_SIZE));

@@ -3,6 +3,29 @@ import React from "react";
 import { Button } from "@/components/ui/button";
 import InputField from "@/components/ui/InputField";
 
+interface CollegeFormDataProps {
+  collegeType: string;
+  collegeCategory: string;
+  curriculumType: string;
+  operationalDays: string[];
+  otherActivities: string;
+  hostelFacility: string;
+  playground: string;
+  busService: string;
+}
+
+interface CollegeFormProps {
+  collegeFormData: CollegeFormDataProps;
+  collegeFormErrors: Partial<Record<keyof CollegeFormDataProps | 'operationalDays', string>>;
+  handleCollegeFieldChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => void;
+  handleCollegeRadioChangeWithValidation: (name: keyof CollegeFormDataProps, value: string) => void;
+  handleCollegeOperationalDayToggle: (day: string) => void;
+  operationalDaysOptions: string[];
+  handleCollegeSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
+  isLoading: boolean;
+  onPrevious?: () => void;
+}
+
 export default function CollegeForm({
   collegeFormData,
   collegeFormErrors,
@@ -13,7 +36,7 @@ export default function CollegeForm({
   handleCollegeSubmit,
   isLoading,
   onPrevious,
-}: any) {
+}: CollegeFormProps) {
   return (
     <>
       <div className="space-y-2">
@@ -86,7 +109,7 @@ export default function CollegeForm({
 
           <div className="flex flex-col gap-2">
             <label className="font-[Montserrat] font-medium text-[16px] md:text-[18px] text-black">
-              Operational Day's <span className="text-red-500 ml-1">*</span>
+              Operational Day&apos;s <span className="text-red-500 ml-1">*</span>
             </label>
             <div className="grid grid-cols-6 gap-2">
               {operationalDaysOptions.map((day: string) => (

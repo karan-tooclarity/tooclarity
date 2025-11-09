@@ -46,7 +46,7 @@ export async function uploadToS3(file: File): Promise<UploadResult> {
   try {
     // Step 1: Get presigned URL from backend
     const uploadURL = await getPresignedUrl(file.name, file.type);
-    console.log('upload url', uploadURL);
+
 
     // Step 2: Upload the file to S3
     const uploadResponse = await fetch(uploadURL, {
@@ -67,8 +67,9 @@ export async function uploadToS3(file: File): Promise<UploadResult> {
       success: true,
       fileUrl,
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("S3 upload failed:", error);
-    return { success: false, error: error.message };
+    const message = (error && typeof error === 'object' && 'message' in error) ? String((error as { message: unknown }).message) : 'Upload failed';
+    return { success: false, error: message };
   }
 }

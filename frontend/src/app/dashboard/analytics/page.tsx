@@ -1,11 +1,11 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { Card, CardContent } from "@/components/ui/card";
+import { _Card, _CardContent } from "@/components/ui/card";
 import AnalyticsTable, { CoursePerformanceRow } from "@/components/dashboard/AnalyticsTable";
 import CourseReachChart from "@/components/dashboard/CourseReachChart";
 import LeadTypeAnalytics, { LeadTypeData } from "@/components/dashboard/LeadTypeAnalytics";
-import { analyticsAPI, metricsAPI, enquiriesAPI, authAPI, programsAPI } from "@/lib/api";
+import { metricsAPI, enquiriesAPI, authAPI, programsAPI } from "@/lib/api";
 import { getSocket } from "@/lib/socket";
 import { withAuth } from "@/lib/auth-context";
 import Loading from "@/components/ui/loading";
@@ -37,7 +37,7 @@ function AnalyticsPage() {
 	// Program views KPI via backend summary (range-based)
 	const programViewsRange = analyticsRange.toLowerCase() as 'weekly'|'monthly'|'yearly';
 	const { data: programViewsData } = useProgramViews(programViewsRange);
-	const kpiProgramViews = Array.isArray(programViewsData) ? programViewsData.reduce((sum, p:any) => sum + (Number(p.inRangeViews)||0), 0) : 0;
+	const kpiProgramViews = Array.isArray(programViewsData) ? programViewsData.reduce((sum, p: Record<string, unknown>) => sum + (Number(p.inRangeViews)||0), 0) : 0;
 
 	// Data for Program Performance Table
 	const { data: programsList } = useProgramsList();
@@ -52,8 +52,8 @@ function AnalyticsPage() {
 				setIsKpiLoading(true);
 				const range = analyticsRange.toLowerCase() as 'weekly'|'monthly'|'yearly';
 				const [viewsRange, leadsRange] = await Promise.all([
-					metricsAPI.getInstitutionAdminByRange('views', range) as any,
-					metricsAPI.getInstitutionAdminByRange('leads', range) as any,
+					metricsAPI.getInstitutionAdminByRange('views', range) as { success?: boolean; data?: { totalViews?: number; trend?: { value: number; isPositive: boolean } } },
+					metricsAPI.getInstitutionAdminByRange('leads', range) as { success?: boolean; data?: { totalLeads?: number; trend?: { value: number; isPositive: boolean } } },
 				]);
 				if (!mounted) return;
 				if (viewsRange?.success) {
@@ -64,7 +64,9 @@ function AnalyticsPage() {
 					setKpiLeads(leadsRange.data?.totalLeads || 0);
 					if (leadsRange.data?.trend) setKpiLeadsDelta(leadsRange.data.trend);
 				}
-			} catch (err) { console.error('Analytics: KPI fetch failed', err); } finally {
+			} catch {
+			console.error('Analytics: KPI fetch failed');
+		} finally {
 				setIsKpiLoading(false);
 			}
 		})();
@@ -80,8 +82,8 @@ function AnalyticsPage() {
                 setIsTrendLoading(true);
                 const year = new Date().getFullYear();
                 const [viewsSeries, leadsSeries] = await Promise.all([
-                    programsAPI.viewsSeries(String(institution._id), year) as any,
-                    metricsAPI.getInstitutionAdminSeries('leads', year) as any,
+                    programsAPI.viewsSeries(String(institution._id), year) as { success?: boolean; data?: { series?: number[] } },
+                    metricsAPI.getInstitutionAdminSeries('leads', year) as { success?: boolean; data?: { series?: number[] } },
                 ]);
                 if (!mounted) return;
 				const viewsArr = new Array(12).fill(0);
@@ -91,7 +93,7 @@ function AnalyticsPage() {
 				}
 				// Fallback to course views if program series is empty
 				if (viewsArr.every(n => !n)) {
-					const courseSeries = await metricsAPI.getInstitutionAdminSeries('views', year) as any;
+					const courseSeries = await metricsAPI.getInstitutionAdminSeries('views', year) as { success?: boolean; data?: { series?: number[] } };
 					if (courseSeries?.success && Array.isArray(courseSeries.data?.series)) {
 						courseSeries.data.series.forEach((n: number, i: number) => { if (i>=0 && i<12) viewsArr[i] = n || 0; });
 					}
@@ -100,12 +102,14 @@ function AnalyticsPage() {
 					leadsSeries.data.series.forEach((n: number, i: number) => { if (i>=0 && i<12) leadsArr[i] = n || 0; });
 				}
 				setViewLeadTrends({ views: viewsArr, leads: leadsArr });
-			} catch (err) { console.error('Analytics: trends fetch failed', err); } finally {
+			} catch {
+				console.error('Analytics: trends fetch failed');
+			} finally {
 				setIsTrendLoading(false);
 			}
 		})();
 		return () => { mounted = false; };
-    }, [institution]);
+    }, [institution?._id]);
 
 	// Effect 2.5: Fetch identifiers for socket rooms
 	useEffect(() => {
@@ -113,17 +117,19 @@ function AnalyticsPage() {
 		(async () => {
 			try {
 				const [prof] = await Promise.all([
-					authAPI.getProfile() as any,
+					authAPI.getProfile() as { data?: { id?: string; _id?: string } },
 				]);
 				if (!mounted) return;
 				const iid = institution?._id || null;
 				const oid = prof?.data?.id || prof?.data?._id || null;
 				setInstitutionId(iid);
 				setInstitutionAdminId(oid);
-			} catch (err) { console.error('Analytics: identifiers fetch failed', err); }
+			} catch {
+			console.error('Analytics: identifiers fetch failed');
+		}
 		})();
 		return () => { mounted = false; };
-	}, [institution]);
+	}, [institution?._id]);
 
 
 	// Build Program Performance Table from programs list + program views summary + recent enquiries
@@ -132,17 +138,17 @@ function AnalyticsPage() {
 			setIsPerfLoading(true);
 			const programs = Array.isArray(programsList) ? programsList : [];
 			const viewsMap = new Map<string, number>();
-			(Array.isArray(programViewsData) ? programViewsData : []).forEach((p: any) => {
+			(Array.isArray(programViewsData) ? programViewsData : []).forEach((p: Record<string, unknown>) => {
 				viewsMap.set(String(p.programName), Number(p.inRangeViews || 0));
 			});
 			const leadCounts = new Map<string, { leads: number; lastTs: number | null }>();
-			(Array.isArray(recentEnquiries) ? recentEnquiries : []).forEach((e: any) => {
+			(Array.isArray(recentEnquiries) ? recentEnquiries : []).forEach((e: Record<string, unknown>) => {
 				const p = e.programInterest || 'Unknown Program';
-				const ts = e.createdAt ? new Date(e.createdAt).getTime() : Date.now();
-				const prev = leadCounts.get(p) || { leads: 0, lastTs: null };
+				const ts = e.createdAt ? new Date((e.createdAt as string | number)).getTime() : Date.now();
+				const prev = leadCounts.get((p as string)) || { leads: 0, lastTs: null };
 				prev.leads += 1;
 				prev.lastTs = Math.max(prev.lastTs || 0, ts);
-				leadCounts.set(p, prev);
+				leadCounts.set((p as string), prev);
 			});
 			const NOW = Date.now();
 			const WINDOW_MS = 30 * 24 * 60 * 60 * 1000;
@@ -193,49 +199,51 @@ function AnalyticsPage() {
 		(async () => {
             try {
 				const [callbacksDemos, comparisons] = await Promise.all([
-                    enquiriesAPI.getTypeSummaryRollups('yearly') as any,
+                    enquiriesAPI.getTypeSummaryRollups('yearly') as { data?: { callbacks?: number; demos?: number } },
                     // Prefer program comparisons sum; fallback to existing
-                    programsAPI.summaryComparisons(String(institution?._id || ''), 'yearly').catch(()=>null) as any
+                    programsAPI.summaryComparisons(String(institution?._id || ''), 'yearly').catch(()=>null) as { success?: boolean; data?: { programs?: Record<string, unknown>[] } } | null
 				]);
 				if (!mounted) return;
                 let comparisonsTotal = 0;
-                if (comparisons && (comparisons as any).success) {
-                    const arr = (comparisons as any).data?.programs || [];
-                    comparisonsTotal = Array.isArray(arr) ? arr.reduce((s:number,p:any)=> s + (Number(p.inRangeComparisons)||0), 0) : 0;
+                if (comparisons && comparisons.success) {
+                    const arr = comparisons.data?.programs || [];
+                    comparisonsTotal = Array.isArray(arr) ? arr.reduce((s:number,p:Record<string, unknown>)=> s + (Number(p.inRangeComparisons)||0), 0) : 0;
                 }
                 setLeadTypes({
                     callBackRequests: Number(callbacksDemos?.data?.callbacks || 0),
                     demoRequests: Number(callbacksDemos?.data?.demos || 0),
                     courseComparisons: comparisonsTotal
                 });
-			} catch (err) { console.error('Analytics: lead types fetch failed', err); }
+			} catch {
+				console.error('Analytics: lead types fetch failed');
+			}
 		})();
 		return () => { mounted = false; };
-	}, []);
+	}, [institution?._id]);
 
 	// Effect 5: Realtime updates via Socket.IO
 	useEffect(() => {
 		if (!institutionId && !institutionAdminId) return;
-		let s: any;
-		let mounted = true;
+		let s: { on: (event: string, handler: (...args: unknown[]) => void) => void; emit: (event: string, ...args: unknown[]) => void; off: (event: string, handler: (...args: unknown[]) => void) => void } | null;
 		(async () => {
 			try {
 				const apiBase = process.env.NEXT_PUBLIC_API_URL || "";
 				let origin = apiBase.replace('/api','');
 				if (!origin) origin = typeof window !== 'undefined' ? window.location.origin : '';
 				s = await getSocket(origin);
-				s.on('connect', async () => {
-					if (institutionId) s.emit('joinInstitution', institutionId);
-					if (institutionAdminId) s.emit('joinInstitutionAdmin', institutionAdminId);
-				});
+				if (s) {
+					s.on('connect', async () => {
+						if (institutionId) s?.emit('joinInstitution', institutionId);
+						if (institutionAdminId) s?.emit('joinInstitutionAdmin', institutionAdminId);
+					});
 
-				// When views change, refresh views KPI and views series
-				s.on('courseViewsUpdated', async () => {
+					// When views change, refresh views KPI and views series
+					s.on('courseViewsUpdated', async () => {
 					try {
 						const range = (analyticsRange.toLowerCase() as 'weekly'|'monthly'|'yearly');
 						const [viewsRange, viewsSeries] = await Promise.all([
-							metricsAPI.getInstitutionAdminByRange('views', range) as any,
-							metricsAPI.getInstitutionAdminSeries('views', new Date().getFullYear()) as any,
+							metricsAPI.getInstitutionAdminByRange('views', range) as { success?: boolean; data?: { totalViews?: number; trend?: { value: number; isPositive: boolean } } },
+							metricsAPI.getInstitutionAdminSeries('views', new Date().getFullYear()) as { success?: boolean; data?: { series?: number[] } },
 						]);
 						if (viewsRange?.success) {
 							setKpiCourseViews(viewsRange.data?.totalViews || 0);
@@ -271,18 +279,24 @@ function AnalyticsPage() {
 				// When comparisons change, refresh comparisons total inside lead type analysis only
 				s.on('comparisonsUpdated', async () => {
 					try {
-						const cmp = await metricsAPI.getInstitutionAdminSummary('comparisons') as any;
+						const cmp = await metricsAPI.getInstitutionAdminSummary('comparisons') as { success?: boolean; data?: { totalComparisons?: number } };
 						if (cmp?.success) {
 							setLeadTypes(prev => prev ? { ...prev, courseComparisons: Number(cmp.data?.totalComparisons || 0) } : prev);
 						}
-					} catch (err) { console.error('Analytics: realtime comparisons update failed', err); }
+					} catch {
+						console.error('Analytics: realtime comparisons update failed');
+					}
 				});
-			} catch (err) { console.error('Analytics: socket setup failed', err); }
+				}
+			} catch {
+				console.error('Analytics: socket setup failed');
+			}
 		})();
-		return () => { try { mounted = false; s?.off('courseViewsUpdated'); s?.off('enquiryCreated'); s?.off('comparisonsUpdated'); s?.off('programViewsUpdated'); } catch (err) { console.error('Analytics: socket cleanup failed', err); } };
+		return () => { try { if (s) { s.off('courseViewsUpdated', () => {}); s.off('enquiryCreated', () => {}); s.off('comparisonsUpdated', () => {}); s.off('programViewsUpdated', () => {}); } } catch {
+			console.error('Analytics: socket cleanup failed');
+		} };
 	}, [institutionId, institutionAdminId, analyticsRange, queryClient, programViewsRange]);
 
-	const rangeText = analyticsRange.toLowerCase();
 
 	// Navigation function for analytics action button
 	const handleAnalyticsAction = () => {
@@ -291,13 +305,13 @@ function AnalyticsPage() {
 
 	return (
 		<div className="grid grid-cols-1 gap-6 mb-6 p-2 mt-5 rounded-2xl">
-			<Card className="m-5 bg-gray-50 dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl">
-				<CardContent className="p-4 sm:p-6">
+			<_Card className="m-5 bg-gray-50 dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl">
+				<_CardContent className="p-4 sm:p-6">
 					{/* Header with Time Range Toggle to mirror dashboard UI */}
 					<div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-2 mb-4 sm:mb-6 m-0">
 						<div className="text-lg sm:text-sm md:text-2xl font-semibold">Analytics</div>
 						<div className="ml-0 sm:ml-auto flex items-center gap-2 w_full sm:w-auto">
-							<TimeRangeToggle value={analyticsRange as TimeRangeValue} onChange={setAnalyticsRange as any} />
+							<TimeRangeToggle value={analyticsRange as TimeRangeValue} onChange={setAnalyticsRange as (value: TimeRangeValue) => void} />
 						</div>
 					</div>
 
@@ -336,8 +350,8 @@ function AnalyticsPage() {
 							/>
 						</AnimatePresence>
 					</motion.div>
-				</CardContent>
-			</Card>
+				</_CardContent>
+			</_Card>
 
 			{/* Program performance table with inner loading */}
 			<div className="relative">

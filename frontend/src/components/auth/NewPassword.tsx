@@ -59,7 +59,7 @@ export default function NewPassword() {
       } else {
         setErrors({ general: response.message || "Failed to reset password. Please try again." });
       }
-    } catch (error) {
+    } catch (_error) {
       setErrors({ general: "Network error. Please try again." });
     } finally {
       setLoading(false);

@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Search, Calendar, MoreVertical, Edit, Eye, Trash2, Plus } from 'lucide-react';
+import React from 'react';
+import { Search, Calendar, Edit, Eye, Trash2 } from 'lucide-react';
 
 const ListedProgramsCard = () => {
 

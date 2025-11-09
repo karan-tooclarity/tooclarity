@@ -3,6 +3,33 @@ import React from "react";
 import { Button } from "@/components/ui/button";
 import InputField from "@/components/ui/InputField";
 
+type SchoolFormData = {
+  schoolType: string;
+  schoolCategory: string;
+  curriculumType: string;
+  operationalDays: string[];
+  otherActivities: string;
+  hostelFacility: string;
+  playground: string;
+  busService: string;
+};
+
+type SchoolFormErrors = Partial<Record<keyof SchoolFormData, string>> & {
+  operationalDays?: string;
+};
+
+interface SchoolFormProps {
+  schoolFormData: SchoolFormData;
+  schoolFormErrors: SchoolFormErrors;
+  handleSchoolFieldChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => void;
+  handleSchoolRadioChangeWithValidation: (name: keyof SchoolFormData, value: string) => void;
+  handleSchoolOperationalDayToggle: (day: string) => void;
+  operationalDaysOptions: string[];
+  handleSchoolSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
+  isLoading?: boolean;
+  onPrevious?: () => void;
+}
+
 export default function SchoolForm({
   schoolFormData,
   schoolFormErrors,
@@ -13,7 +40,7 @@ export default function SchoolForm({
   handleSchoolSubmit,
   isLoading,
   onPrevious,
-}: any) {
+}: SchoolFormProps) {
   return (
     <>
       <div className="space-y-2">

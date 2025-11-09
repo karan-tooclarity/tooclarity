@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useState } from "react";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import InputField from "@/components/ui/InputField";
 import { Plus } from "lucide-react";
@@ -110,19 +111,13 @@ export default function BranchForm({
                 Contact Info<span className="text-red-500 ml-1">*</span>
             </label>
             <div className={`flex flex-row items-center gap-3 px-4 h-[48px] w-full bg-white border rounded-[12px] ${errors.contactInfo ? 'border-red-500' : 'border-[#DADADD]'}`}>
-                <img
-                    src="/call log icon.png" // Ensure this icon is in your public folder
-                    alt="phone icon"
-                    className="w-[20px] h-[20px] object-cover"
-                />
+                {/* <img src="/call log icon.png" alt="phone icon" className="w-[20px] h-[20px] object-cover" /> */}
+                <Image src="/call log icon.png" alt="phone icon" width={20} height={20} className="w-[20px] h-[20px] object-cover" />
 
                 {/* Flag + Dropdown */}
                 <div className="relative flex items-center gap-2 cursor-pointer" onClick={() => setIsDropdownOpen(!isDropdownOpen)}>
-                    <img
-                        src={selectedCountry.flag}
-                        alt={selectedCountry.code}
-                        className="w-[20px] h-[14px] object-cover rounded-sm"
-                    />
+                    {/* <img src={selectedCountry.flag} alt={selectedCountry.code} className="w-[20px] h-[14px] object-cover rounded-sm" /> */}
+                    <Image src={selectedCountry.flag} alt={selectedCountry.code} width={20} height={14} className="w-[20px] h-[14px] object-cover rounded-sm" />
                     <span className="text-[#060B13]">{selectedCountry.dialCode}</span>
                     <svg className={`w-4 h-4 text-[#060B13] transition-transform ${isDropdownOpen ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />

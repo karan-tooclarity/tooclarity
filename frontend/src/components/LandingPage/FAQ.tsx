@@ -45,7 +45,7 @@ const FAQ = () => {
           Have Questions? We Have <br /> Answers.
         </h2>
         <p className="text-xl text-gray-600">
-          We've compiled answers to the most common questions
+          We&apos;ve compiled answers to the most common questions
           <br /> we get from institutions.
         </p>
       </div>

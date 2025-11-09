@@ -1,13 +1,14 @@
 "use client";
 
 import React, { useMemo, useState } from "react";
-import { Card, CardContent } from "@/components/ui/card";
+import { _Card, _CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useInstitution } from "@/lib/hooks/dashboard-hooks";
 import { programsAPI } from "@/lib/api";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { withAuth } from "@/lib/auth-context";
 import { Input } from "@/components/ui/input";
+import Image from "next/image";
 import AppSelect from "@/components/ui/AppSelect";
 import L2DialogBox from "@/components/auth/L2DialogBox";
 import { getProgramStatus, formatDate } from "@/lib/utility";
@@ -28,8 +29,8 @@ function ProgramsPage() {
     queryKey: ['programs-page-list-institution-admin', institution?._id],
     enabled: !!institution?._id,
     queryFn: async () => {
-      const res = await programsAPI.listForInstitutionAdminWithMetrics(String(institution?._id)) as any;
-      return (res?.data?.programs || []) as Array<any>;
+      const res = await programsAPI.listForInstitutionAdminWithMetrics(String(institution?._id)) as { data?: { programs?: Record<string, unknown>[] } };
+      return (res?.data?.programs || []) as Array<Record<string, unknown>>;
     },
     staleTime: 60*1000,
   });
@@ -39,8 +40,8 @@ function ProgramsPage() {
     queryKey: ['programs-page-branches', institution?._id],
     enabled: !!institution?._id,
     queryFn: async () => {
-      const res = await programsAPI.listBranchesForInstitutionAdmin(String(institution?._id)) as any;
-      return (res?.data?.branches || []) as Array<any>;
+      const res = await programsAPI.listBranchesForInstitutionAdmin(String(institution?._id)) as { data?: { branches?: Record<string, unknown>[] } };
+      return (res?.data?.branches || []) as Array<Record<string, unknown>>;
     },
     staleTime: 5*60*1000,
   });
@@ -49,8 +50,8 @@ function ProgramsPage() {
     queryKey: ['subscription-history', institution?._id],
     enabled: !!institution?._id,
     queryFn: async () => {
-      const res = await programsAPI.subscriptionHistory(String(institution?._id)) as any;
-      return (res?.data?.items || []) as Array<any>;
+      const res = await programsAPI.subscriptionHistory(String(institution?._id)) as { data?: { items?: Record<string, unknown>[] } };
+      return (res?.data?.items || []) as Array<Record<string, unknown>>;
     },
     staleTime: 60*1000,
   });
@@ -69,10 +70,10 @@ function ProgramsPage() {
     const seenIds = new Set<string>();
     const seenNames = new Set<string>();
     const arr: Array<{ value: string; label: string }> = [{ value: '', label: 'All Branches' }];
-    (branchList || []).forEach((b:any) => {
+    (branchList || []).forEach((b: Record<string, unknown>) => {
       const id = String(b?._id || "");
       if (!id || seenIds.has(id)) return;
-      const label = (b.branchName || 'Branch').trim();
+      const label = String(b?.branchName || 'Branch').trim();
       const keyName = label.toLowerCase();
       if (seenNames.has(keyName)) return;
       seenIds.add(id);
@@ -85,12 +86,12 @@ function ProgramsPage() {
   // Reset visible count when filters change
   React.useEffect(()=>{ setVisibleCount(10); }, [search, branchFilter, activeTab]);
 
-  const filteredPrograms = (Array.isArray(programs) ? programs : []).filter((p:any)=>{
+  const filteredPrograms = (Array.isArray(programs) ? programs : []).filter((p: Record<string, unknown>)=>{
     const q = search.trim().toLowerCase();
-    const name = String(p.programName||"").toLowerCase();
-    const branch = String(p.branchName || p.branch?.branchName || p.institution?.name || "").toLowerCase();
+    const name = String(p?.programName||"").toLowerCase();
+    const branch = String(p?.branchName || (p.branch as Record<string, unknown>)?.branchName || (p.institution as Record<string, unknown>)?.name || "").toLowerCase();
     const passSearch = !q || name.includes(q) || branch.includes(q);
-    const branchId = typeof p.branch === 'object' && p.branch !== null ? String(p.branch._id || '') : String(p.branch || '');
+    const branchId = typeof p.branch === 'object' && p.branch !== null ? String((p.branch as Record<string, unknown>)?._id || '') : String(p.branch || '');
     const passBranch = !branchFilter || branchFilter === '' || branchId === branchFilter;
     return passSearch && passBranch;
   });
@@ -98,15 +99,15 @@ function ProgramsPage() {
 
   return (
     <div className="p-2 mt-5 space-y-6">
-      {/* Card 1: Your Listed Programs */}
-      <Card className="bg-gray-50 dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl">
-        <CardContent className="p-4 sm:p-6">
+      {/* _Card 1: Your Listed Programs */}
+      <_Card className="bg-gray-50 dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl">
+        <_CardContent className="p-4 sm:p-6">
           <div className="flex items-center justify-between mb-4">
             <div className="text-2xl font-semibold">Your Listed Programs</div>
           </div>
 
           {/* Tabs header */}
-          <div className="flex items-center gap-6 border-b border-gray-200 dark:border-gray-800 mb-4">
+          <div className="flex items-center gap-6 border-b border-gray-200 dark:border-gray-800 mb-4 text-gray-900 dark:text-gray-100">
             <button onClick={()=>setActiveTab('details')} className={`py-2 px-1 ${activeTab==='details'?'border-b-2 border-blue-600 font-medium':'text-gray-500'}`}>Program Details</button>
             <button onClick={()=>setActiveTab('add')} className={`py-2 px-1 ${activeTab==='add'?'border-b-2 border-blue-600 font-medium':'text-gray-500'}`}>Add Program</button>
           </div>
@@ -115,7 +116,7 @@ function ProgramsPage() {
           {activeTab==='details' && (
           <div className="flex items-center justify-between gap-3 mb-4">
             <div className="flex-1">
-              <Input value={search} onChange={(e)=>setSearch(e.target.value)} placeholder="Search program or branch" className="w-full" />
+              <Input value={search} onChange={(e)=>setSearch(e.target.value)} placeholder="Search program or branch" className="w-full bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border-gray-200 dark:border-gray-700" />
             </div>
             <div className="w-64">
               <AppSelect
@@ -151,18 +152,18 @@ function ProgramsPage() {
                 </tr>
               </thead>
               <tbody>
-                {visiblePrograms.map((p, idx) => (
-                  <tr key={p._id} className="border-t border-gray-100 dark:border-gray-800">
+                {visiblePrograms.map((p: Record<string, unknown>, idx: number) => (
+                  <tr key={String(p._id) || idx} className="border-t border-gray-100 dark:border-gray-800">
                     <td className="py-4 pr-4">{String(idx+1).padStart(2,'0')}</td>
                     <td className="py-4 pr-4">
-                      <div className="font-medium">{p.programName}</div>
+                      <div className="font-medium">{String(p.programName)}</div>
                       <div className="text-xs text-gray-500 flex items-center gap-1">
-                        <span className="opacity-60">◎</span> {p.branchName || p.branch?.branchName || 'Public'}
+                        <span className="opacity-60">◎</span> {String(p.branchName || (p.branch as Record<string, unknown>)?.branchName || 'Public')}
                       </div>
                     </td>
                     <td className="py-4 pr-4">
                       {(() => {
-                        const status = getProgramStatus(p.startDate || '', p.endDate || '');
+                        const status = getProgramStatus(String(p.startDate || ''), String(p.endDate || ''));
                         const statusColors = {
                           active: 'bg-green-100 text-green-700',
                           upcoming: 'bg-blue-100 text-blue-700',
@@ -181,16 +182,16 @@ function ProgramsPage() {
                         );
                       })()}
                     </td>
-                    <td className="py-4 pr-4 text-sm">{formatDate(p.startDate || '')}</td>
-                    <td className="py-4 pr-4 text-sm">{formatDate(p.endDate || '')}</td>
+                    <td className="py-4 pr-4 text-sm">{formatDate(String(p.startDate || ''))}</td>
+                    <td className="py-4 pr-4 text-sm">{formatDate(String(p.endDate || ''))}</td>
                     <td className="py-4 pr-4 text-sm">{typeof p.leadsGenerated==='number' ? p.leadsGenerated : 0}</td>
                     <td className="py-4 pr-4 text-sm">
                       <div className="flex items-center gap-3 text-gray-500">
-                        <button title="Delete" onClick={async()=>{ try{ await programsAPI.remove(String(p._id), String(institution?._id)); queryClient.invalidateQueries({ queryKey: ['programs-page-list-institution-admin', institution?._id] }); }catch(e){} }} className="h-10 w-10 rounded-full border border-gray-200 dark:border-gray-800 flex items-center justify-center">
-                          <img src="/Trash.png" alt="Delete" className="h-5 w-5 object-contain" />
+                        <button title="Delete" onClick={async()=>{ try{ await programsAPI.remove(String(p._id), String(institution?._id)); queryClient.invalidateQueries({ queryKey: ['programs-page-list-institution-admin', institution?._id] }); }catch{}} } className="h-10 w-10 rounded-full border border-gray-200 dark:border-gray-800 flex items-center justify-center">
+                          <Image src="/Trash.png" alt="Delete" width={20} height={20} className="h-5 w-5 object-contain" />
                         </button>
                         <button title="Edit" onClick={() => handleEditProgram(String(p._id))} className="h-10 w-10 rounded-full border border-gray-200 dark:border-gray-800 flex items-center justify-center">
-                          <img src="/Edit.png" alt="Edit" className="h-5 w-5 object-contain" />
+                          <Image src="/Edit.png" alt="Edit" width={20} height={20} className="h-5 w-5 object-contain" />
                         </button>
                       </div>
                     </td>
@@ -240,12 +241,12 @@ function ProgramsPage() {
           </div>
           )}
 
-        </CardContent>
-      </Card>
+        </_CardContent>
+      </_Card>
 
-      {/* Card 2: Transaction History */}
-      <Card className="bg-gray-50 dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl">
-        <CardContent className="p-4 sm:p-6">
+      {/* _Card 2: Transaction History */}
+      <_Card className="bg-gray-50 dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl">
+        <_CardContent className="p-4 sm:p-6">
           <div className="text-2xl font-semibold mb-4">Transaction History</div>
           {/* Header row */}
           <div className="grid grid-cols-12 text-sm text-gray-600 px-3 pb-2">
@@ -260,12 +261,12 @@ function ProgramsPage() {
             {Array.isArray(invoices) && invoices.length === 0 ? (
               <div className="py-6 text-center text-gray-500">No transactions found yet.</div>
             ) : (
-            (invoices||[]).map((inv:any, idx:number)=> (
-              <div key={inv._id || idx} className="grid grid-cols-12 items-center bg-white dark:bg-gray-900 rounded-xl px-3 py-4 shadow-[0_1px_0_rgba(0,0,0,0.03)]">
+            (invoices||[]).map((inv: Record<string, unknown>, idx: number)=> (
+              <div key={String(inv._id) || idx} className="grid grid-cols-12 items-center bg-white dark:bg-gray-900 rounded-xl px-3 py-4 shadow-[0_1px_0_rgba(0,0,0,0.03)]">
                 <div className="col-span-2 sm:col-span-1 text-gray-700">{String(idx+1).padStart(2,'0')}</div>
-                <div className="col-span-4 sm:col-span-3 font-medium text-gray-900">{inv.invoiceId}</div>
-                <div className="col-span-3 sm:col-span-3 text-gray-700">{inv.date ? new Date(inv.date).toLocaleDateString('en-GB') : '—'}</div>
-                <div className="col-span-3 sm:col-span-2 text-gray-700">{inv.planType || '—'}</div>
+                <div className="col-span-4 sm:col-span-3 font-medium text-gray-900">{String(inv.invoiceId)}</div>
+                <div className="col-span-3 sm:col-span-3 text-gray-700">{inv.date ? new Date((inv.date as string | number)).toLocaleDateString('en-GB') : '—'}</div>
+                <div className="col-span-3 sm:col-span-2 text-gray-700">{String(inv.planType || '—')}</div>
                 <div className="hidden sm:block col-span-2 text-gray-900">{typeof inv.amount==='number' ? `₹ ${inv.amount.toFixed(2)}` : '—'}</div>
                 <div className="col-span-1 flex justify-end">
                   <button title="Download" className="h-9 w-9 rounded-full border border-gray-200 dark:border-gray-700 flex items-center justify-center">⬇︎</button>
@@ -274,8 +275,8 @@ function ProgramsPage() {
             ))
             )}
           </div>
-        </CardContent>
-      </Card>
+        </_CardContent>
+      </_Card>
     </div>
   );
 }

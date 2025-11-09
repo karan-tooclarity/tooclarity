@@ -4,7 +4,6 @@ const logger = require("../config/logger");
 const AppError = require("../utils/appError");
 const RedisUtil = require("../utils/redis.util");
 
-
 const sendEmail = async (to, templateId, variables = {}) => {
   try {
     const payload = {
@@ -15,11 +14,11 @@ const sendEmail = async (to, templateId, variables = {}) => {
         },
       ],
       from: {
-        email: process.env.MSG91_EMAIL_FROM, // verified email
+        email: process.env.MSG91_EMAIL_FROM,
         name: process.env.MSG91_EMAIL_NAME || "TooClarity",
       },
-      domain: process.env.MSG91_EMAIL_DOMAIN, // verified domain
-      template_id: templateId, // required for template-based sending
+      domain: process.env.MSG91_EMAIL_DOMAIN,
+      template_id: templateId,
     };
 
     const response = await axios.post(process.env.MSG91_EMAIL_URL, payload, {
@@ -36,7 +35,10 @@ const sendEmail = async (to, templateId, variables = {}) => {
 
     console.error("❌ MSG91 Email Sending Failed:");
     if (errData?.errors) {
-      console.error("Detailed Errors:", JSON.stringify(errData.errors, null, 2));
+      console.error(
+        "Detailed Errors:",
+        JSON.stringify(errData.errors, null, 2)
+      );
     } else if (errData?.message) {
       console.error("Message:", errData.message);
     } else {
@@ -51,6 +53,51 @@ const sendEmail = async (to, templateId, variables = {}) => {
   }
 };
 
+const sendOtpSMSFlow = async (phoneNumber, variables) => {
+  try {
+    const payload = {
+      template_id: process.env.MSG91_SMS_TEMPLATE_ID,
+      mobile: phoneNumber,
+      ...variables,
+    };
+    console.log(payload);
+
+    const response = await axios.post(process.env.MSG91_SMS_URL, payload, {
+      headers: {
+        authkey: process.env.MSG91_API_KEY,
+        "Content-Type": "application/json",
+      },
+    });
+    console.log(response.data);
+
+    logger.info(
+      { event: "msg91_sms_sent", phoneNumber },
+      "MSG91 OTP SMS sent successfully."
+    );
+
+    return response.data;
+  } catch (error) {
+    const errData = error.response?.data;
+
+    console.error("❌ MSG91 SMS Sending Failed:");
+    if (errData?.errors) {
+      console.error(
+        "Detailed Errors:",
+        JSON.stringify(errData.errors, null, 2)
+      );
+    } else if (errData?.message) {
+      console.error("Message:", errData.message);
+    } else {
+      console.error(error.message);
+    }
+
+    logger.error(
+      { err: errData || error.message, event: "msg91_sms_failed", phoneNumber },
+      "❌ MSG91 OTP SMS failed."
+    );
+    throw new AppError("MSG91 SMS sending failed.", 500);
+  }
+};
 
 exports.generateOtp = () => {
   const otpLength = parseInt(process.env.OTP_LENGTH, 10) || 6;
@@ -60,109 +107,249 @@ exports.generateOtp = () => {
     .padStart(otpLength, "0");
 };
 
-exports.sendVerificationToken = async (email) => {
+exports.sendVerificationTokenSMS = async (phoneNumber, name) => {
   try {
-    const templateId = process.env.MSG91_TEMPLATE_ID;
-    const otp = this.generateOtp();
+    const phoneNumberWithCountryCode = `91${phoneNumber}`;
+    const redisKey = `sms:${phoneNumber}`;
+    const expirySeconds = 10 * 60; // 10 minutes
 
-    // Save OTP in Redis for 15 minutes
-    await RedisUtil.saveOtp(email, otp, 900);
-
-    // Define variables to pass to MSG91 template
-    const variables = [
-      { name: "otp", value: otp },
-      { name: "name", value: "User" },          
-      { name: "validity", value: "15 minutes" }
-    ];
-
-    // Send email using MSG91 template
-    await sendEmail(
-      email,
-      templateId,   
-      variables 
+    logger.info(
+      { event: "otp_sms_start", phoneNumber },
+      "🟡 Starting OTP SMS generation process."
     );
 
-    logger.info({ event: "otp_sent", email }, "OTP sent successfully.");
+    // 🔹 1. Check Redis if OTP already exists
+    let otp = await RedisUtil.getOtp(redisKey);
+
+    if (otp) {
+      logger.info(
+        { event: "otp_redis_found", phoneNumber, otp },
+        "🟢 Existing OTP found in Redis. Reusing it."
+      );
+    } else {
+      // 🔹 2. Generate new OTP
+      otp = this.generateOtp();
+
+      logger.info(
+        { event: "otp_generated", phoneNumber, otp },
+        "✅ OTP generated successfully."
+      );
+
+      // 🔹 3. Save new OTP into Redis
+      logger.info(
+        { event: "otp_redis_save_start", redisKey, otp, expirySeconds },
+        "🟡 Saving OTP into Redis."
+      );
+
+      await RedisUtil.saveOtp(redisKey, otp, expirySeconds);
+
+      logger.info(
+        { event: "otp_redis_save_success", redisKey },
+        "✅ OTP successfully saved into Redis."
+      );
+    }
+
+    // 🔹 4. Prepare variables for SMS
+    const variables = {
+      OTP: otp,
+      // name: name || "User",
+      // app_name: appName,
+      // expiry_minutes: expirySeconds / 60,
+    };
+
+    logger.info(
+      { event: "otp_sms_send_start", phoneNumberWithCountryCode, variables },
+      "🟡 Sending OTP via MSG91 flow."
+    );
+
+    // 🔹 5. Send SMS using MSG91 flow
+    await sendOtpSMSFlow(phoneNumberWithCountryCode, variables);
+
+    logger.info(
+      { event: "otp_sms_sent", phoneNumber },
+      "✅ OTP SMS sent successfully (business layer)."
+    );
+
     return true;
   } catch (error) {
-    logger.error({ err: error, event: "otp_failed", email }, "OTP sending failed.");
+    logger.error(
+      { err: error, event: "otp_sms_failed", phoneNumber },
+      "❌ OTP SMS sending failed (business layer)."
+    );
+    throw new AppError("Could not send OTP via SMS.", 500);
+  }
+};
+
+exports.sendVerificationToken = async (email, name) => {
+  try {
+    const templateId = process.env.MSG91_TEMPLATE_ID;
+    const redisKey = `email:${email}`;
+    const expirySeconds = 10 * 60; // 10 minutes
+
+    logger.info(
+      { event: "otp_email_start", email },
+      "🟡 Starting OTP email generation process."
+    );
+
+    // 🔹 1. Check Redis for existing OTP
+    let otp = await RedisUtil.getOtp(redisKey);
+
+    if (otp) {
+      logger.info(
+        { event: "otp_redis_found", email, otp },
+        "🟢 Existing OTP found in Redis. Reusing it."
+      );
+    } else {
+      // 🔹 2. Generate new OTP
+      otp = this.generateOtp();
+
+      logger.info(
+        { event: "otp_generated", email, otp },
+        "✅ New OTP generated successfully."
+      );
+
+      // 🔹 3. Save OTP into Redis
+      await RedisUtil.saveOtp(redisKey, otp, expirySeconds);
+
+      logger.info(
+        { event: "otp_redis_save_success", redisKey },
+        "✅ OTP successfully saved into Redis."
+      );
+    }
+
+    // 🔹 4. Prepare variables for email template
+    const variables = {
+      otp,
+      name,
+      expiry_minutes: expirySeconds / 60,
+      year: new Date().getFullYear(),
+    };
+
+    logger.info(
+      { event: "otp_email_send_start", email, variables },
+      "🟡 Sending OTP via MSG91 email flow."
+    );
+
+    // 🔹 5. Send email using MSG91 template
+    await sendEmail(email, templateId, variables);
+
+    logger.info(
+      { event: "otp_sent", email },
+      "✅ OTP email sent successfully (business layer)."
+    );
+
+    return true;
+  } catch (error) {
+    logger.error(
+      { err: error, event: "otp_failed", email },
+      "❌ OTP email sending failed (business layer)."
+    );
     throw new AppError("Could not send OTP.", 500);
   }
 };
 
-
-exports.checkVerificationToken = async (email, code) => {
+exports.checkVerificationToken = async (email, phoneNumber, code) => {
   try {
-    const isValid = await RedisUtil.validateOtp(email, code);
+    let key;
+    if (email) {
+      key = `email:${email}`;
+    } else if (phoneNumber) {
+      key = `sms:${phoneNumber}`;
+    } else {
+      throw new AppError("Either email or phone number must be provided.", 400);
+    }
+
+    const isValid = await RedisUtil.validateOtp(key, code);
+
     if (isValid) {
-      logger.info({ event: "otp_verified", email }, "OTP verified successfully.");
+      logger.info(
+        { event: "otp_verified", email, phoneNumber },
+        "✅ OTP verified successfully."
+      );
       return true;
     } else {
-      logger.warn({ event: "otp_invalid", email }, "OTP invalid or expired.");
+      logger.warn(
+        { event: "otp_invalid", email, phoneNumber },
+        "⚠️ OTP invalid or expired."
+      );
       return false;
     }
   } catch (error) {
-    logger.error({ err: error, event: "otp_check_error", email }, "OTP check failed.");
+    logger.error(
+      { err: error, event: "otp_check_error", email, phoneNumber },
+      "❌ OTP check failed."
+    );
     return false;
   }
 };
 
-// ✅ Payment Confirmation Email
 exports.sendPaymentSuccessEmail = async (options) => {
-  const { email, planType, amount, orderId, startDate, endDate } = options;
+  const { email, name, amount, orderId, date } = options;
+  const templateId = process.env.MSG91_PAYMENT_TEMPLATE_ID;
+
   try {
-    const formattedStartDate = new Date(startDate).toLocaleDateString("en-US", {
+    // Format date
+    const formattedDate = new Date(date).toLocaleDateString("en-US", {
       year: "numeric",
       month: "long",
       day: "numeric",
     });
-    const formattedEndDate = new Date(endDate).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
-    const formattedAmount = (amount / 100).toFixed(2);
 
-    const content = `Dear User,
+    const year = new Date().getFullYear();
 
-We are happy to inform you that your payment was successful!
+    const variables = {
+      name,
+      amount: (amount / 100).toFixed(2), // convert cents/paise to main currency
+      order_id: orderId,
+      date: formattedDate,
+      year,
+    };
 
-Plan: ${planType.charAt(0).toUpperCase() + planType.slice(1)}
-Amount Paid: ₹${formattedAmount}
-Order ID: ${orderId}
-Start Date: ${formattedStartDate}
-End Date: ${formattedEndDate}
+    // Send email using MSG91 template
+    await sendEmail(email, templateId, variables);
 
-Thank you for choosing TooClarity!`;
+    logger.info(
+      { event: "payment_success_email_sent", email, orderId },
+      "✅ Payment success email sent using template."
+    );
 
-    await sendEmail(email, "Your Subscription is Confirmed!", content);
-    logger.info({ event: "payment_success_email_sent", email, orderId }, "Payment success email sent.");
     return true;
   } catch (error) {
-    logger.error({ err: error, event: "payment_email_failed", email, orderId }, "Payment email failed.");
+    logger.error(
+      { err: error, event: "payment_email_failed", email, orderId },
+      "❌ Payment email sending failed."
+    );
     return false;
   }
 };
 
-// ✅ Password Change OTP
-exports.sendPasswordChangeToken = async (email) => {
+exports.sendPasswordChangeToken = async (email, name) => {
+  const passwordChangeTemplateId =
+    process.env.MSG91_PASSWORD_CHANGE_TEMPLATE_ID;
   try {
     const otp = this.generateOtp();
-    await RedisUtil.saveOtp(`password-change:${email}`, otp, 600); // 10 minutes
+    const expirySeconds = 10 * 60; // 10 minutes
+    await RedisUtil.saveOtp(`password-change:${email}`, otp, expirySeconds);
 
-    const content = `Dear User,
+    const variables = {
+      name,
+      otp,
+      expiry_minutes: expirySeconds / 60, // 10 minutes
+      year: new Date().getFullYear(),
+    };
 
-A password change was requested. Use the verification code below to proceed:
+    await sendEmail(email, passwordChangeTemplateId, variables);
 
-Verification Code: ${otp}
-
-This code is valid for 10 minutes. If you didn’t request this, contact TooClarity Support immediately.`;
-
-    await sendEmail(email, "Password Change Request - Verification Code", content);
-    logger.info({ event: "password_otp_sent", email }, "Password change OTP sent.");
+    logger.info(
+      { event: "password_otp_sent", email },
+      "✅ Password change OTP sent."
+    );
     return true;
   } catch (error) {
-    logger.error({ err: error, event: "password_otp_failed", email }, "Password change OTP failed.");
+    logger.error(
+      { err: error, event: "password_otp_failed", email },
+      "❌ Password change OTP failed."
+    );
     throw new AppError("Could not send verification code.", 500);
   }
 };
@@ -174,50 +361,74 @@ exports.checkPasswordChangeToken = async (email, otp) => {
 
     if (isValid) {
       await RedisUtil.deleteOtp(redisKey);
-      logger.info({ event: "password_otp_verified", email }, "Password OTP verified.");
+      logger.info(
+        { event: "password_otp_verified", email },
+        "Password OTP verified."
+      );
       return true;
     } else {
-      logger.warn({ event: "password_otp_invalid", email }, "Password OTP invalid/expired.");
+      logger.warn(
+        { event: "password_otp_invalid", email },
+        "Password OTP invalid/expired."
+      );
       return false;
     }
   } catch (error) {
-    logger.error({ err: error, event: "password_otp_check_error", email }, "Password OTP check failed.");
+    logger.error(
+      { err: error, event: "password_otp_check_error", email },
+      "Password OTP check failed."
+    );
     return false;
   }
 };
 
-// ✅ Password Reset Link
-exports.sendPasswordResetLink = async (email, resetURL) => {
+exports.sendPasswordResetLink = async (email, name, resetURL) => {
+  const passwordResetTemplateId = process.env.MSG91_PASSWORD_RESET_TEMPLATE_ID;
   try {
-    const content = `Dear User,
+    const expiryMinutes = 15; // Link valid for 15 minutes
 
-You requested to reset your password. Click the link below to proceed:
+    const variables = {
+      name,
+      reset_link: resetURL,
+      expiry_minutes: expiryMinutes,
+      year: new Date().getFullYear(),
+    };
 
-${resetURL}
+    await sendEmail(email, passwordResetTemplateId, variables);
 
-This link is valid for 15 minutes. Please do not share this link with anyone.`;
-
-    await sendEmail(email, "Your Password Reset Link (Valid for 15 Mins)", content);
-    logger.info({ event: "password_reset_link_sent", email }, "Password reset link sent.");
+    logger.info(
+      { event: "password_reset_link_sent", email },
+      "✅ Password reset link sent."
+    );
     return true;
   } catch (error) {
-    logger.error({ err: error, event: "password_reset_link_failed", email }, "Password reset link failed.");
+    logger.error(
+      { err: error, event: "password_reset_link_failed", email },
+      "❌ Password reset link failed."
+    );
     throw new AppError("Could not send password reset link.", 500);
   }
 };
 
-// ✅ Password Changed Confirmation
-exports.sendPasswordChangedConfirmation = async (email) => {
+exports.sendPasswordChangedConfirmation = async (email, name) => {
+  const passwordChangeConfirmTemplateId =
+    process.env.MSG91_PASSWORD_CHANGE_CONFIRM_TEMPLATE_ID;
   try {
-    const content = `Dear User,
+    const variables = {
+      name,
+      year: new Date().getFullYear(),
+    };
 
-Your account password has been changed successfully.
+    await sendEmail(email, passwordChangeConfirmTemplateId, variables);
 
-If you did NOT make this change, please contact our support team immediately.`;
-
-    await sendEmail(email, "Your Password Has Been Changed", content);
-    logger.info({ event: "password_change_confirm_sent", email }, "Password change confirmation sent.");
+    logger.info(
+      { event: "password_change_confirm_sent", email },
+      "✅ Password change confirmation sent."
+    );
   } catch (error) {
-    logger.error({ err: error, event: "password_change_confirm_failed", email }, "Password change confirmation failed.");
+    logger.error(
+      { err: error, event: "password_change_confirm_failed", email },
+      "❌ Password change confirmation failed."
+    );
   }
 };

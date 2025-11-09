@@ -7,7 +7,7 @@ import dynamic from 'next/dynamic';
 
 const Devtools = process.env.NODE_ENV === 'development'
   ? dynamic(() => import('@tanstack/react-query-devtools').then(m => m.ReactQueryDevtools), { ssr: false })
-  : (() => null as any);
+  : (() => null as unknown as React.ReactNode);
 
 interface QueryProviderProps {
   children: React.ReactNode;

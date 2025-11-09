@@ -1,16 +1,14 @@
 import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query';
 import { 
-  authAPI, 
   metricsAPI, 
   enquiriesAPI, 
   getMyInstitution,
-  ApiResponse 
+  //ApiResponse 
 } from '../api';
 import { programsAPI } from '../api';
 import {
   DashboardStatsCache as DashboardStats,
   DashboardStudentCache as StudentItem,
-  DashboardChartCache as ChartData,
   DashboardInstitutionCache as Institution,
   saveDashboardStatsCache as saveDashboardStats,
   getDashboardStatsCache as getDashboardStats,
@@ -20,8 +18,6 @@ import {
   getDashboardChartCache as getChartData,
   saveDashboardInstitutionCache as saveInstitution,
   getDashboardInstitutionCache as getInstitution,
-  getDashboardStudentsPage,
-  prependDashboardStudents,
   CACHE_DURATION,
   replaceDashboardStudentsWithLatestTen,
   prependAndTrimDashboardStudents
@@ -53,14 +49,14 @@ export function useInstitution() {
 
       // Fetch from API
       const response = await getMyInstitution();
-      if (!response || !response._id) {
+      if (!response || !(response as { _id?: string })._id) {
         throw new Error('No institution found');
       }
 
       const institution: Institution = {
-        _id: response._id,
-        instituteName: response.instituteName || '',
-        institutionAdmin: response.institutionAdmin ? String(response.institutionAdmin) : undefined,
+        _id: (response as { _id?: string })._id || '',
+        instituteName: (response as { instituteName?: string }).instituteName || '',
+        institutionAdmin: (response as { institutionAdmin?: { _id?: string } }).institutionAdmin ? String((response as { institutionAdmin: { _id?: string } }).institutionAdmin._id) : undefined,
         lastUpdated: Date.now()
       } as Institution;
 
@@ -98,19 +94,19 @@ export function useDashboardStats(timeRange: 'weekly' | 'monthly' | 'yearly' = '
         metricsAPI.getInstitutionAdminByRange('views', timeRange),
         metricsAPI.getInstitutionAdminByRange('comparisons', timeRange),
         metricsAPI.getInstitutionAdminByRange('leads', timeRange),
-        programsAPI.summaryComparisons(String(institution._id), timeRange) as any,
-        programsAPI.summaryViews(String(institution._id), timeRange) as any
+        programsAPI.summaryComparisons(String(institution._id), timeRange),
+        programsAPI.summaryViews(String(institution._id), timeRange)
       ]);
 
-      const programCmpSum = Array.isArray(programCmp?.data?.programs) ? programCmp.data.programs.reduce((s:number, p:any)=> s + (Number(p.inRangeComparisons)||0), 0) : 0;
-      const programViewsSum = Array.isArray(programViews?.data?.programs) ? programViews.data.programs.reduce((s:number, p:any)=> s + (Number(p.inRangeViews)||0), 0) : 0;
+      const programCmpSum = Array.isArray((programCmp as { data?: { programs?: unknown[] } })?.data?.programs) ? (programCmp as { data: { programs: Record<string, unknown>[] } }).data.programs.reduce((s:number, p:Record<string, unknown>)=> s + (Number(p.inRangeComparisons)||0), 0) : 0;
+      const programViewsSum = Array.isArray((programViews as { data?: { programs?: unknown[] } })?.data?.programs) ? (programViews as { data: { programs: Record<string, unknown>[] } }).data.programs.reduce((s:number, p:Record<string, unknown>)=> s + (Number(p.inRangeViews)||0), 0) : 0;
       const stats: DashboardStats = {
         courseViews: programViewsSum,
         courseComparisons: programCmpSum,
-        contactRequests: (leadsData as any)?.data?.totalLeads || 0,
-        courseViewsTrend: (viewsData as any)?.data?.trend || { value: 0, isPositive: true },
-        courseComparisonsTrend: (comparisonsData as any)?.data?.trend || { value: 0, isPositive: true },
-        contactRequestsTrend: (leadsData as any)?.data?.trend || { value: 0, isPositive: true },
+        contactRequests: (leadsData as { data?: { totalLeads?: number } })?.data?.totalLeads || 0,
+        courseViewsTrend: (viewsData as { data?: { trend?: { value: number; isPositive: boolean } } })?.data?.trend || { value: 0, isPositive: true },
+        courseComparisonsTrend: (comparisonsData as { data?: { trend?: { value: number; isPositive: boolean } } })?.data?.trend || { value: 0, isPositive: true },
+        contactRequestsTrend: (leadsData as { data?: { trend?: { value: number; isPositive: boolean } } })?.data?.trend || { value: 0, isPositive: true },
         timeRange,
         institutionId: institution._id,
         lastUpdated: Date.now()
@@ -136,7 +132,7 @@ export function useProgramViews(range: 'weekly'|'monthly'|'yearly' = 'weekly') {
     queryKey: ['program-views', institution?._id, range],
     enabled: !!institution?._id,
     queryFn: async () => {
-      const res = await programsAPI.summaryViews(String(institution?._id), range) as any;
+      const res = await programsAPI.summaryViews(String(institution?._id), range) as { data?: { programs?: Array<{ programName: string; programViewsTotal: number; inRangeViews: number }> } };
       return (res?.data?.programs || []) as Array<{ programName: string; programViewsTotal: number; inRangeViews: number }>;
     },
     staleTime: 60 * 1000,
@@ -151,14 +147,14 @@ export function useProgramsList() {
     queryKey: ['programs-list', institution?._id],
     enabled: !!institution?._id,
     queryFn: async () => {
-      const res = await programsAPI.list(String(institution?._id)) as any;
+      const res = await programsAPI.list(String(institution?._id)) as { data?: { programs?: Array<Record<string, unknown>> } };
       return (res?.data?.programs || []) as Array<{ 
         _id: string; 
         programName: string; 
         startDate?: string; 
         endDate?: string;
         courseName?: string;
-        branch?: any;
+        branch?: Record<string, unknown>;
         branchName?: string;
       }>;
     },
@@ -174,8 +170,8 @@ export function useRecentEnquiriesAll() {
     queryKey: ['recent-enquiries-all', institution?._id],
     enabled: !!institution?._id,
     queryFn: async () => {
-      const res = await enquiriesAPI.getRecentEnquiries() as any;
-      return (res?.data?.enquiries || []) as Array<any>;
+      const res = await enquiriesAPI.getRecentEnquiries() as { data?: { enquiries?: Array<Record<string, unknown>> } };
+      return (res?.data?.enquiries || []) as Array<Record<string, unknown>>;
     },
     staleTime: 60 * 1000,
     refetchOnWindowFocus: false,
@@ -202,20 +198,20 @@ export function useRecentStudents() {
       // Fetch from API
       const response = await enquiriesAPI.getRecentEnquiries();
       
-      if (!(response as any)?.success || !Array.isArray((response as any).data?.enquiries)) {
+      if (!(response as { success?: boolean; data?: { enquiries?: unknown[] } })?.success || !Array.isArray((response as { success?: boolean; data?: { enquiries?: unknown[] } }).data?.enquiries)) {
         return [];
       }
 
-      const enquiries = (response as any).data.enquiries;
-      const students: StudentItem[] = enquiries.map((enquiry: any, idx: number) => ({
-        date: new Date(enquiry.createdAt || Date.now() - idx * 86400000).toLocaleDateString('en-GB'),
-        name: enquiry.student?.name || `student ${idx + 1}`,
+      const enquiries = (response as { data: { enquiries: Record<string, unknown>[] } }).data.enquiries;
+      const students: StudentItem[] = enquiries.map((enquiry: Record<string, unknown>, idx: number) => ({
+        date: new Date((enquiry.createdAt as string | number) || Date.now() - idx * 86400000).toLocaleDateString('en-GB'),
+        name: (enquiry.student as { name?: string })?.name || `student ${idx + 1}`,
         studentId: String(enquiry._id || idx),
-        status: enquiry.enquiryType || "Requested for callback",
-        programInterests: [enquiry.programInterest || "General Interest"],
-        email: enquiry.student?.email,
-        phone: enquiry.student?.contactNumber,
-        timestampMs: new Date(enquiry.createdAt || Date.now()).getTime(),
+        status: (enquiry.enquiryType as string) || "Requested for callback",
+        programInterests: [(enquiry.programInterest as string) || "General Interest"],
+        email: (enquiry.student as { email?: string })?.email,
+        phone: (enquiry.student as { contactNumber?: string })?.contactNumber,
+        timestampMs: new Date((enquiry.createdAt as string | number) || Date.now()).getTime(),
         institutionId: institution._id,
         lastUpdated: Date.now()
       }));
@@ -260,17 +256,17 @@ export function useChartData(
         ? await programsAPI.viewsSeries(String(institution._id), currentYear)
         : await metricsAPI.getInstitutionAdminSeries(type, currentYear, institution._id);
       
-      if (!(response as any)?.success || !Array.isArray((response as any).data?.series)) {
+      if (!(response as { success?: boolean; data?: { series?: unknown[] } })?.success || !Array.isArray((response as { success?: boolean; data?: { series?: unknown[] } }).data?.series)) {
         return new Array(12).fill(0);
       }
 
-      let series = (response as any).data.series as number[];
+      let series = (response as { data?: { series?: number[] } })?.data?.series as number[];
       if (type === 'views' && options?.fallbackToCourseIfEmpty) {
         const allZero = !series || series.every((n) => !n);
         if (allZero) {
           const courseResp = await metricsAPI.getInstitutionAdminSeries('views', currentYear, institution._id);
-          if ((courseResp as any)?.success && Array.isArray((courseResp as any).data?.series)) {
-            series = (courseResp as any).data.series as number[];
+          if ((courseResp as { success?: boolean; data?: { series?: number[] } })?.success && Array.isArray((courseResp as { success?: boolean; data?: { series?: number[] } }).data?.series)) {
+            series = (courseResp as { data: { series: number[] } }).data.series;
           }
         }
       }
@@ -307,39 +303,31 @@ export function useInfiniteLeads(pageSize: number = 10) {
     queryKey: ['leads-infinite', institution?._id, pageSize],
     enabled: !!institution?._id,
     initialPageParam: 0,
-    getNextPageParam: (lastPage: any[], allPages, lastPageParam: number) => {
+    getNextPageParam: (lastPage: StudentItem[], allPages, lastPageParam: number) => {
       if (!lastPage || lastPage.length < pageSize) return undefined;
       return lastPageParam + 1;
     },
-    queryFn: async ({ pageParam }) => {
+    queryFn: async ({ pageParam }): Promise<StudentItem[]> => {
       const pageIndex = pageParam as number;
       const offset = pageIndex * pageSize;
       
       // Fetch enquiries list for the institution admin's institutions (use /recent for all pages including index 1)
-      const response = await enquiriesAPI.getRecentEnquiriesWithOffset(offset, pageSize) as any;
-      const list = (response?.data?.enquiries || []) as any[];
-      console.log(`[DEBUG] useInfiniteLeads (enquiries) - page ${pageIndex}, offset ${offset}, limit ${pageSize}, got ${list.length} enquiries`);
-      
-      // Debug: Log first enquiry to see student data
-      if (list.length > 0) {
-        console.log(`[DEBUG] Frontend first enquiry student data:`, {
-          studentId: list[0].student?._id,
-          studentName: list[0].student?.name,
-          studentEmail: list[0].student?.email,
-          studentPhone: list[0].student?.contactNumber
-        });
-      }
+      const response = await enquiriesAPI.getRecentEnquiriesWithOffset(offset, pageSize) as { data?: { enquiries?: Record<string, unknown>[] } };
+      const list = (response?.data?.enquiries || []) as Record<string, unknown>[];
 
-      const mapped = list.map((enquiry: any, idx: number) => ({
-        date: new Date(enquiry.createdAt || Date.now() - idx * 86400000).toLocaleDateString('en-GB'),
-        name: enquiry.student?.name || `student ${idx + 1}`,
-        studentId: String(enquiry._id || `${enquiry.createdAt || ''}-${enquiry.student?.email || ''}-${enquiry.student?.name || ''}`),
+      
+
+
+      const mapped = list.map((enquiry: Record<string, unknown>, idx: number) => ({
+        date: new Date((enquiry.createdAt as string | number) || Date.now() - idx * 86400000).toLocaleDateString('en-GB'),
+        name: (enquiry.student as { name?: string })?.name || `student ${idx + 1}`,
+        studentId: String(enquiry._id || `${(enquiry.createdAt as string) || ''}-${(enquiry.student as { email?: string })?.email || ''}-${(enquiry.student as { name?: string })?.name || ''}`),
         // Use enquiry status first, then enquiryType; fallback kept minimal
-        status: enquiry.status || enquiry.enquiryType || 'Requested for callback',
-        programInterests: enquiry.programInterest ? [enquiry.programInterest] : [],
-        email: enquiry.student?.email,
-        phone: enquiry.student?.contactNumber,
-        timestampMs: new Date(enquiry.createdAt || Date.now()).getTime(),
+        status: (enquiry.status as string) || (enquiry.enquiryType as string) || 'Requested for callback',
+        programInterests: enquiry.programInterest ? [enquiry.programInterest as string] : [],
+        email: (enquiry.student as { email?: string })?.email,
+        phone: (enquiry.student as { contactNumber?: string })?.contactNumber,
+        timestampMs: new Date((enquiry.createdAt as string | number) || Date.now()).getTime(),
         institutionId: institution?._id,
         lastUpdated: Date.now()
       }));
@@ -347,19 +335,19 @@ export function useInfiniteLeads(pageSize: number = 10) {
       // Only cache the first page to avoid stale data issues
       if (pageIndex === 0) {
         try {
-          await replaceDashboardStudentsWithLatestTen(mapped as any);
+          await replaceDashboardStudentsWithLatestTen(mapped as StudentItem[]);
         } catch (error) {
           console.warn('Failed to cache leads data:', error);
         }
       }
       
-      return mapped as any[];
+      return mapped as StudentItem[];
     }
   });
 }
 
 export async function appendNewLeadToCache(newLead: StudentItem) {
-  await prependAndTrimDashboardStudents([newLead as any]);
+  await prependAndTrimDashboardStudents([newLead]);
 }
 
 // Mutation for refreshing all data
@@ -373,7 +361,7 @@ export function useRefreshDashboard() {
       return true;
     },
     onSuccess: () => {
-      console.log('Dashboard data refreshed');
+
     },
     onError: (error) => {
       console.error('Failed to refresh dashboard:', error);

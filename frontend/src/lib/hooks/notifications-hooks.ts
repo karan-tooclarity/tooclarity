@@ -27,13 +27,13 @@ export function useNotifications() {
     queryKey: ['notifications', 'list'],
     queryFn: async (): Promise<NotificationItem[]> => {
       // Determine scope and role with a single profile call (cached by react-query)
-      let scopeParams: any = {};
+      const scopeParams: { scope?: 'student'|'institute_admin'|'branch'|'admin'; studentId?: string; institutionId?: string; branchId?: string; institutionAdminId?: string } = {};
       try {
         const prof = await authAPI.getProfile();
-        const role = ((prof as any)?.data?.role || '').toString().toUpperCase();
-        const id = (prof as any)?.data?.id;
+        const role = (((prof as { data?: { role?: string } })?.data?.role) || '').toString().toUpperCase();
+        const id = (prof as { data?: { id?: string } })?.data?.id;
         if (role === 'INSTITUTE_ADMIN' && id) {
-          scopeParams.scope = 'admin';
+          scopeParams.scope = 'institute_admin';
           scopeParams.institutionAdminId = id;
         } else if (role === 'ADMIN' && id) {
           scopeParams.scope = 'admin';
@@ -46,7 +46,7 @@ export function useNotifications() {
         console.error('Notifications hooks: profile fetch failed for scope', err);
       }
 
-      const key = cacheKeyFor(scopeParams);
+      const key = cacheKeyFor(scopeParams as { scope?: "student" | "institution" | "branch" | "admin"; studentId?: string; institutionId?: string; branchId?: string; institutionAdminId?: string });
       // Try cache first per-scope
       const cached = await cacheGet<NotificationItem[]>(key);
       if (Array.isArray(cached) && cached.length) {
@@ -54,14 +54,15 @@ export function useNotifications() {
       }
 
       // Fetch from API
-      const res = await notificationsAPI.listCursor({ ...scopeParams, limit: 100, cursor: null });
-      const mapped: NotificationItem[] = (res?.data?.items || res?.data || []).map((n: any) => ({
-        id: n._id,
-        title: n.title,
-        description: n.description,
-        time: n.createdAt ? new Date(n.createdAt).getTime() : Date.now(),
-        read: !!n.read,
-        category: n.category,
+      const res = await notificationsAPI.listCursor(scopeParams as { scope?: "student" | "institution" | "branch" | "admin"; studentId?: string; institutionId?: string; branchId?: string; institutionAdminId?: string; limit?: number; cursor?: string | null; unread?: boolean; category?: string; });
+      const items = ((res as { data?: { items?: Array<Record<string, unknown>> } })?.data?.items) || ((res as { data?: Array<Record<string, unknown>> })?.data) || [];
+      const mapped: NotificationItem[] = (items as Array<Record<string, unknown>>).map((n) => ({
+        id: String(n._id || n.id || ''),
+        title: String(n.title || ''),
+        description: n.description as string | undefined,
+        time: n.createdAt ? new Date(n.createdAt as string).getTime() : Date.now(),
+        read: Boolean(n.read),
+        category: n.category as NotificationItem['category'],
       })).sort((a: NotificationItem, b: NotificationItem) => b.time - a.time);
 
       // Save to cache per-scope

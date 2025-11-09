@@ -1,5 +1,5 @@
 import React from "react";
-import { Card, CardContent } from "@/components/ui/card";
+import { _Card, _CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faArrowTrendUp, faArrowTrendDown } from "@fortawesome/free-solid-svg-icons";
@@ -41,8 +41,8 @@ const KPIGroup: React.FC<KPIGroupProps> = ({ headerTitle = "Analytics", items, t
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {items.map((k, idx) => (
-          <Card key={idx} className="bg-white border border-gray-100 rounded-2xl dark:bg-gray-900 dark:border-gray-800">
-            <CardContent className="p-5">
+          <_Card key={idx} className="bg-white border border-gray-100 rounded-2xl dark:bg-gray-900 dark:border-gray-800">
+            <_CardContent className="p-5">
               <div className="text-gray-600 md:text-base font-semibold text-sm dark:text-gray-300">{k.title}</div>
               <div className="mt-2">
                 {isLoading ? (
@@ -63,8 +63,8 @@ const KPIGroup: React.FC<KPIGroupProps> = ({ headerTitle = "Analytics", items, t
                   <div className="text-xs text-gray-400">from previous {rangeText}</div>
                 )}
               </div>
-            </CardContent>
-          </Card>
+            </_CardContent>
+          </_Card>
         ))}
       </div>
     </div>

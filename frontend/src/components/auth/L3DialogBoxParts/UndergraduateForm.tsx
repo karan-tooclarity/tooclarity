@@ -3,6 +3,35 @@ import React from "react";
 import { Button } from "@/components/ui/button";
 import InputField from "@/components/ui/InputField";
 
+type UGFormData = {
+  ownershipType: string;
+  collegeCategory: string;
+  affiliationType: string;
+  placementDrives: string;
+  mockInterviews: string;
+  resumeBuilding: string;
+  linkedinOptimization: string;
+  exclusiveJobPortal: string;
+  library: string;
+  hostelFacility: string;
+  entranceExam: string;
+  managementQuota: string;
+  playground: string;
+  busService: string;
+};
+
+type UGFormErrors = Partial<Record<keyof UGFormData, string>>;
+
+interface UndergraduateFormProps {
+  undergraduateFormData: UGFormData;
+  undergraduateFormErrors: UGFormErrors;
+  handleUndergraduateChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => void;
+  handleUndergraduateRadioChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => void;
+  handleUndergraduateSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
+  isLoading?: boolean;
+  onPrevious?: () => void;
+}
+
 export default function UndergraduateForm({
   undergraduateFormData,
   undergraduateFormErrors,
@@ -11,7 +40,7 @@ export default function UndergraduateForm({
   handleUndergraduateSubmit,
   isLoading,
   onPrevious,
-}: any) {
+}: UndergraduateFormProps) {
   return (
     <>
       <div className="space-y-2">

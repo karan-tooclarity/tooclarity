@@ -9,26 +9,22 @@ const { saveRefreshToken } = require("./redis.util");
  * @param {string|number} [expiresIn] - Optional override expiry (e.g. "15m", "7d")
  * @returns {string} JWT token
  */
-const generateToken = (userId, username, type = "access", role, expiresIn) => {
-    if (!userId || !username) {
+const generateToken = (userId, type = "access", role) => {
+  if (!userId) {
     throw new Error("UserId and username are required for token generation");
   }
 
-  if (!expiresIn) {
-    if (type === "access") {
-      expiresIn = process.env.ACCESS_EXPIRES_IN || "15m";
-    } else if (type === "refresh") {
-      expiresIn = process.env.REFRESH_EXPIRES_IN || "7d";
-    } else {
-      throw new Error("Invalid token type. Must be 'access' or 'refresh'.");
-    }
+  if (type === "access") {
+    expiresIn = process.env.ACCESS_EXPIRES_IN || "15m";
+  } else if (type === "refresh") {
+    expiresIn = process.env.REFRESH_EXPIRES_IN || "90d";
+  } else {
+    throw new Error("Invalid token type. Must be 'access' or 'refresh'.");
   }
 
-  return sign(
-    { id: userId, username, type, role },
-    process.env.JWT_SECRET,
-    { expiresIn }
-  );
+  return sign({ id: userId, type, role }, process.env.JWT_SECRET, {
+    expiresIn,
+  });
 };
 
 /**
@@ -68,7 +64,6 @@ const extractUserRole = (token) => {
   }
 };
 
-
 /**
  * Extract access_token from cookies
  * @param {object} req - Express request
@@ -80,8 +75,6 @@ const extractTokenFromCookies = (req) => {
   }
   return null;
 };
-
-
 
 /**
  * Extract username from a cookie (like Spring version)
@@ -153,7 +146,12 @@ const refreshAccessTokenIfNeeded = (req, res, token) => {
 
     // if less than 5 minutes left, refresh it
     if (timeLeft < 5 * 60) {
-      const newAccessToken = generateToken(decoded.id, decoded.username, "access", decoded.role);
+      const newAccessToken = generateToken(
+        decoded.id,
+        decoded.username,
+        "access",
+        decoded.role
+      );
       CookieUtil.setCookie(res, "access_token", newAccessToken);
       console.log("🔄 Access token refreshed automatically");
       return newAccessToken;
@@ -166,7 +164,11 @@ const refreshAccessTokenIfNeeded = (req, res, token) => {
   }
 };
 
-const refreshRefreshTokenIfNeeded = async (userId, username, currentRefreshToken) => {
+const refreshRefreshTokenIfNeeded = async (
+  userId,
+  username,
+  currentRefreshToken
+) => {
   try {
     const decoded = decode(currentRefreshToken);
     if (!decoded?.exp) return null;
@@ -178,9 +180,15 @@ const refreshRefreshTokenIfNeeded = async (userId, username, currentRefreshToken
 
     // if less than 1 day left, refresh it
     if (timeLeft < 24 * 60 * 60) {
-      const newRefreshToken = generateToken(userId, username, "refresh", decoded.role);
+      const newRefreshToken = generateToken(
+        userId,
+        username,
+        "refresh",
+        decoded.role
+      );
       const decodeNewRefreshToken = decodeToken(newRefreshToken);
-      const ttlSeconds = decodeNewRefreshToken.exp - Math.floor(Date.now() / 1000);
+      const ttlSeconds =
+        decodeNewRefreshToken.exp - Math.floor(Date.now() / 1000);
       await saveRefreshToken(userId, newRefreshToken, ttlSeconds);
       console.log("🔄 Refresh token rotated in Redis automatically");
       return newRefreshToken;

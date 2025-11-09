@@ -197,6 +197,7 @@ exports.verifyPayment = asyncHandler(async (req, res, next) => {
       if (adminUser && adminUser.email) {
         // CORRECT: Adding the job to the queue
         await addPaymentSuccessEmailJob({
+          name: adminUser.name,
           email: adminUser.email,
           planType: subscriptionDataForEmail.planType,
           amount: amount,

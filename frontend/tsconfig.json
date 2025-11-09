@@ -21,8 +21,13 @@
     "types": [],
     "paths": {
       "@/*": ["./src/*"]
-    }
+    },
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "exactOptionalPropertyTypes": false
+    //const u2: User = { name: undefined }; // ❌ error (because treats `undefined` ≠ “missing”)
+
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "src/app/student/onboarding"],
-  "exclude": ["node_modules","src/test"]
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
+  "exclude": ["node_modules", "src/test", "**/*.test.ts", "**/*.test.tsx", "**/*.spec.ts", "**/*.spec.tsx"]
 }

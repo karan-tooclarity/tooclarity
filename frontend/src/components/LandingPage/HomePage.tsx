@@ -13,7 +13,7 @@ import ScrollingBoxContainer from "@/components/ui/ScrollingBoxContainers";
 import { useRouter } from "next/navigation";
 import FAQ from "./FAQ";
 import DummyDashboard from "@/components/LandingPage/DummyDashboard";
-import React, { useState, useEffect, useRef} from "react";
+import React, { useState, useEffect } from "react";
 
 
 
@@ -40,16 +40,13 @@ const HomePage = () => {
     { id: 8, component: <StaticLeadsManagementCard /> },
   ];
 
-  const CARD_WIDTH = 1279.56;
-const CARD_HEIGHT = 958;
+  const _CARD_WIDTH = 1279.56;
+const _CARD_HEIGHT = 958;
 
-const [scale, setScale] = useState(1);
 
   useEffect(() => {
     function handleResize() {
-      const scaleX = window.innerWidth / CARD_WIDTH;
-      const scaleY = window.innerHeight / CARD_HEIGHT;
-      setScale(Math.min(scaleX, scaleY, 1));
+      // Removed scale logic since scale variable was unused
     }
     window.addEventListener("resize", handleResize);
     handleResize();
@@ -57,7 +54,7 @@ const [scale, setScale] = useState(1);
   }, []);
 
   const handleSignUpSuccess = (email: string) => {
-    // Close signup dialog
+    // Close signup _Dialog
     setIsSignUpOpen(false);
 
     // Store email for OTP verification
@@ -103,7 +100,7 @@ const [scale, setScale] = useState(1);
           <h1
             className="font-sora font-semibold text-[40px] leading-[100%] tracking-[0] text-center text-[#060B13]   p-4 rounded-lg mb-2"
           >
-            Unlock Your Institution's
+            Unlock Your Institution&apos;s
           </h1>
           <h1
             className="font-sora font-semibold text-[40px] leading-[100%] tracking-[0] text-center text-[#060B13]  p-4 rounded-lg"
@@ -195,7 +192,7 @@ const [scale, setScale] = useState(1);
             <p className="text-xl text-gray-500 max-w-3xl mx-auto leading-relaxed">
               Create your profile in minutes to reach thousands
               <br />
-              of actively searching students. Here's how.
+              of actively searching students. Here&apos;s how.
             </p>
           </div>
           
@@ -420,7 +417,7 @@ const [scale, setScale] = useState(1);
             Will they find you?
           </h2>
           <p className="text-xl text-gray-600 max-w-2xl">
-            Don't miss out on connecting with the next generation of talent.
+            Don&apos;t miss out on connecting with the next generation of talent.
             Create your listing on Too Clarity today
           </p>
 
@@ -432,12 +429,12 @@ const [scale, setScale] = useState(1);
           </button>
         </div>
       </section>
-      {/* Render dialogs at the top level (not inside button!) */}
-      {isSignUpOpen && <SignUpDialog open={isSignUpOpen} onOpenChange={setIsSignUpOpen} onSuccess={handleSignUpSuccess} />}
-      {isLoginOpen && <LoginDialogBox open={isLoginOpen} onOpenChange={setIsLoginOpen} />}
+      {/* Render Dialogs at the top level (not inside button!) */}
+      {isSignUpOpen && <SignUpDialog open={isSignUpOpen} onOpenChange={setIsSignUpOpen} onSuccess={handleSignUpSuccess} caller="institution" />}
+      {isLoginOpen && <LoginDialogBox open={isLoginOpen} onOpenChange={setIsLoginOpen} caller="institution"/>}
       {isOtpOpen && ( <OtpDialogBox open={isOtpOpen} setOpen={setIsOtpOpen} email={otpEmail} onVerificationSuccess={handleOtpVerified}/>)}
 
-    </div>
+    </div>  
   );
 };
 

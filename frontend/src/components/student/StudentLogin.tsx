@@ -1,18 +1,17 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import Image from "next/image";
 import {
   ArrowLeft,
   Loader2,
-  Mail,
+  Smartphone,
   Lock,
-  Apple,
   type LucideIcon,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
-import { authAPI } from "@/lib/api";
+import { authAPI, LoginData } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import {
   initializeGoogleIdentity,
@@ -52,15 +51,17 @@ interface StudentLoginProps {
 
 const StudentLogin: React.FC<StudentLoginProps> = ({ onSuccess }) => {
   const router = useRouter();
-  const { refreshUser } = useAuth();
+  const { login,refreshUser } = useAuth();
 
   const [isScriptLoaded, setIsScriptLoaded] = useState(false);
   const [loadingProvider, setLoadingProvider] = useState<string | null>(null);
   
   // Form state
-  const [formData, setFormData] = useState({
-    email: "",
+  const [formData, setFormData] = useState<LoginData>({
+    contactNumber: "",
     password: "",
+    type: "student",
+
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -126,9 +127,9 @@ const StudentLogin: React.FC<StudentLoginProps> = ({ onSuccess }) => {
     return () => {
       isMounted = false;
     };
-  }, [refreshUser, router]);
+  }, [refreshUser, router, onSuccess]);
 
-  const handleGoogleClick = () => {
+  const handleGoogleClick = useCallback (() => {
     const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ?? "";
     const redirectUri = process.env.NEXT_PUBLIC_GOOGLE_REDIRECT_URI ?? "";
     const state = JSON.stringify({ state: "student", type: "login", device: "web" });
@@ -139,7 +140,7 @@ const StudentLogin: React.FC<StudentLoginProps> = ({ onSuccess }) => {
       state: state,
       type: "login",
     });
-  };
+  }, []);
 
   // Handle input changes
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -159,23 +160,20 @@ const StudentLogin: React.FC<StudentLoginProps> = ({ onSuccess }) => {
     setError(null);
 
     try {
-      const response = await authAPI.login(formData);
+      const response = await login(formData);
       
-      if (!response.success) {
-        setError(response.message || "Login failed");
+      if (!response) {
+        setError(response || "Login failed");
         return;
       }
 
-      // Refresh user context to get latest user data
       await refreshUser();
       
-      // If parent provided a success handler, use it
       if (onSuccess) {
         onSuccess();
         return;
       }
 
-      // Default redirect if no success handler
       router.replace("/student/dashboard");
     } catch (error) {
       console.error("Login error:", error);
@@ -284,17 +282,17 @@ const StudentLogin: React.FC<StudentLoginProps> = ({ onSuccess }) => {
 
           {/* Email field */}
           <label className="block">
-            <span className="sr-only">Email</span>
+            <span className="sr-only">Mobile number</span>
             <div className="relative">
               <span className="absolute inset-y-0 left-3 flex items-center text-gray-400">
-                <Mail className="h-5 w-5" />
+                <Smartphone className="h-5 w-5" />
               </span>
               <input
-                type="email"
-                name="email"
-                value={formData.email}
+                type="tel"
+                name="contactNumber"
+                value={formData.contactNumber}
                 onChange={handleInputChange}
-                placeholder="Enter your email"
+                placeholder="Enter your Mobile Number"
                 required
                 disabled={isLoading}
                 className="w-full rounded-2xl border border-gray-200 bg-gray-50 py-3 pl-12 pr-4 text-base text-gray-900 outline-none transition hover:border-blue-200 focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-100 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -324,7 +322,7 @@ const StudentLogin: React.FC<StudentLoginProps> = ({ onSuccess }) => {
 
           <button
             type="submit"
-            disabled={isLoading || !formData.email || !formData.password}
+            disabled={isLoading || !formData.contactNumber || !formData.password}
             className="w-full rounded-2xl bg-blue-600 py-3 text-base font-semibold text-white shadow-md transition hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
             {isLoading && <Loader2 className="h-5 w-5 animate-spin" />}

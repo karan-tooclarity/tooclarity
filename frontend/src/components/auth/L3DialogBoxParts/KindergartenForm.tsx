@@ -14,7 +14,17 @@ export default function KindergartenForm({
   handleSubmit,
   isLoading,
   onPrevious,
-}: any) {
+}: {
+  formData: Record<string, unknown>;
+  formErrors: Record<string, string>;
+  handleChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => void;
+  handleRadioChange: (name: string, value: string) => void;
+  handleOperationalDayChange: (day: string) => void;
+  operationalDaysOptions: string[];
+  handleSubmit: (e: React.FormEvent) => void;
+  isLoading: boolean;
+  onPrevious: () => void;
+}) {
   return (
     <>
       <div className="space-y-2">
@@ -30,7 +40,7 @@ export default function KindergartenForm({
           <InputField
             label="School type"
             name="schoolType"
-            value={formData.schoolType}
+            value={formData.schoolType as string}
             onChange={handleChange}
             isSelect
             options={[
@@ -48,7 +58,7 @@ export default function KindergartenForm({
           <InputField
             label="Curriculum type"
             name="curriculumType"
-            value={formData.curriculumType}
+            value={formData.curriculumType as string}
             onChange={handleChange}
             placeholder="Enter Curriculum type"
             error={formErrors.curriculumType}
@@ -60,13 +70,13 @@ export default function KindergartenForm({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="flex flex-col gap-2">
             <label className="font-[Montserrat] font-medium text-[16px] md:text-[18px] text-black">
-              Operational Time's <span className="text-red-500 ml-1">*</span>
+              Operational Times <span className="text-red-500 ml-1">*</span>
             </label>
             <div className="grid grid-cols-2 gap-2">
               <InputField
                 label=""
                 name="openingTime"
-                value={formData.openingTime}
+                value={formData.openingTime as string}
                 onChange={handleChange}
                 placeholder="Opening time"
                 className="max-w-none"
@@ -76,7 +86,7 @@ export default function KindergartenForm({
               <InputField
                 label=""
                 name="closingTime"
-                value={formData.closingTime}
+                value={formData.closingTime as string}
                 onChange={handleChange}
                 placeholder="Closing time"
                 className="max-w-none"
@@ -88,7 +98,7 @@ export default function KindergartenForm({
 
           <div className="flex flex-col gap-4">
             <label className="font-[Montserrat] font-medium text-[16px] md:text-[18px] text-black">
-              Operational Day's <span className="text-red-500 ml-1">*</span>
+              Operational Days <span className="text-red-500 ml-1">*</span>
             </label>
             <div className="grid grid-cols-6 gap-2">
               {operationalDaysOptions.map((day: string) => (
@@ -97,7 +107,7 @@ export default function KindergartenForm({
                   type="button"
                   onClick={() => handleOperationalDayChange(day)}
                   className={`h-[48px] px-3 rounded-[8px] border text-sm ${
-                    formData.operationalDays.includes(day)
+                    ((formData.operationalDays as string[]) || []).includes(day)
                       ? "bg-[#0222D7] border-[#0222D7] text-white hover:!bg-[#0222D7]"
                       : "bg-[#F5F6F9] border-[#DADADD] text-[#697282] hover:!bg-[#F5F6F9] hover:!text-[#697282]"
                   }`}
@@ -117,7 +127,7 @@ export default function KindergartenForm({
           <InputField
             label="Extended care ?"
             name="extendedCare"
-            value={formData.extendedCare}
+            value={formData.extendedCare as string}
             onChange={(e) => handleRadioChange("extendedCare", e.target.value)}
             isRadio
             options={["Yes", "No"]}
@@ -128,7 +138,7 @@ export default function KindergartenForm({
           <InputField
             label="Meals Provided?"
             name="mealsProvided"
-            value={formData.mealsProvided}
+            value={formData.mealsProvided as string}
             onChange={(e) => handleRadioChange("mealsProvided", e.target.value)}
             isRadio
             options={["Yes", "No"]}
@@ -140,7 +150,7 @@ export default function KindergartenForm({
         <InputField
           label="Outdoor Play area?"
           name="outdoorPlayArea"
-          value={formData.outdoorPlayArea}
+          value={formData.outdoorPlayArea as string}
           onChange={(e) => handleRadioChange("outdoorPlayArea", e.target.value)}
           isRadio
           options={["Yes", "No"]}

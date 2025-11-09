@@ -4,7 +4,7 @@ import { ChevronLeft, ChevronRight, MoreHorizontal } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 const Pagination = React.forwardRef<
-  HTMLNavElement,
+  HTMLElement,
   React.ComponentPropsWithoutRef<"nav">
 >(({ className, ...props }, ref) => (
   <nav

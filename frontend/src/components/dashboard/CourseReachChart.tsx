@@ -1,8 +1,6 @@
 ﻿import React, { useEffect, useMemo, useRef, useState } from "react";
-import { Card, CardContent } from "../ui/card";
-import { motion, AnimatePresence } from "framer-motion";
-import Kebab from "../ui/Kebab";
-import AppSelect from "../ui/AppSelect";
+import { _Card, _CardContent } from "../ui/card";
+import { motion} from "framer-motion";
 
 interface CourseReachChartProps {
   // Optional: leads data for dual line chart (analytics mode)
@@ -14,7 +12,7 @@ interface CourseReachChartProps {
   onDataPointClick?: (point: { index: number; value: number; timeRange: string }) => void;
   // Optional: external filters
   timeRange?: string;
-  course?: string;
+  _course?: string;
   // Optional real-time stream endpoint (SSE). If not provided, we will poll /api/course-reach
   sseUrl?: string;
   pollMs?: number;
@@ -42,11 +40,11 @@ const niceMax = (maxVal: number): number => {
   return niceMant * base;
 };
 
-const CourseReachChart: React.FC<CourseReachChartProps> = ({ onDataPointClick, timeRange, course, sseUrl, pollMs = 5000, values, leadsValues, title, showLegend = false, yTicksOverride, onRequestYearData }) => {
-  const [selectedTimeRange, setSelectedTimeRange] = useState(timeRange || "Weekly");
+const CourseReachChart: React.FC<CourseReachChartProps> = ({ onDataPointClick, timeRange, _course, sseUrl, pollMs = 5000, values, leadsValues, title, showLegend = false, yTicksOverride, onRequestYearData }) => {
+  const [selectedTimeRange, _setSelectedTimeRange] = useState(timeRange || "Weekly");
   const [chartData, setChartData] = useState<number[]>([15000, 12000, 18000, 14000, 16000, 13000, 17000, 19000, 15000, 18000, 16000, 20000]);
   const [leadsData, setLeadsData] = useState<number[]>([300, 200, 400, 300, 300, 200, 400, 500, 300, 400, 300, 600]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [_isLoading, setIsLoading] = useState(false);
   const [currentYear, setCurrentYear] = useState<number>(new Date().getFullYear());
 
   // If values are provided from backend, use them
@@ -158,7 +156,7 @@ const CourseReachChart: React.FC<CourseReachChartProps> = ({ onDataPointClick, t
   const topPad = 40;
   const bottomPad = 60;
 
-  const { pathD, leadsPathD, points, leadsPoints, width, maxY, yTicks, useEqualSpacing } = useMemo(() => {
+  const { pathD, leadsPathD, points, width, maxY, yTicks, useEqualSpacing } = useMemo(() => {
     const width = Math.max(700, containerWidth); // ensure enough width
     const height = 400;
 
@@ -230,7 +228,7 @@ const CourseReachChart: React.FC<CourseReachChartProps> = ({ onDataPointClick, t
   }, [chartData, leadsData, containerWidth, showLegend, yTicksOverride]);
 
   const currentYearMax = new Date().getFullYear();
-  	const showInfoToast = (message: string) => { import("react-toastify").then(m => m.toast.info(message)); };
+  	const _showInfoToast = (message: string) => { import("react-toastify").then(m => m.toast.info(message)); };
 
   const formatTick = (t: number) => {
     if (yTicksOverride && yTicksOverride.length >= 2) {
@@ -260,15 +258,15 @@ const CourseReachChart: React.FC<CourseReachChartProps> = ({ onDataPointClick, t
             return;
           }
           		  // No data for that year; keep current and show toast
-		  showInfoToast(`No data for ${targetYear}`);
+		  _showInfoToast(`No data for ${targetYear}`);
 		  return;
         		} catch {
-		  showInfoToast(`No data for ${targetYear}`);
+		  _showInfoToast(`No data for ${targetYear}`);
 		  return;
 		}
       } else {
         		// No loader to verify past years; block navigation and show toast
-		showInfoToast("No previous years data available");
+		_showInfoToast("No previous years data available");
 		return;
       }
     }
@@ -314,8 +312,8 @@ const CourseReachChart: React.FC<CourseReachChartProps> = ({ onDataPointClick, t
 
   return (
     <motion.div className="w-full" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-      <Card className="m-5 border-none bg-gray-50 shadow-sm rounded-2xl border border-gray-100 dark:bg-gray-900 dark:border-gray-800">
-        <CardContent className="p-5">
+      <_Card className="m-5 border-none bg-gray-50 shadow-sm rounded-2xl border border-gray-100 dark:bg-gray-900 dark:border-gray-800">
+        <_CardContent className="p-5">
           {/* Header */}
           <div className="flex items-center justify-between mb-3 w-full">
             <div className="text-[22px] font-semibold text-gray-900 dark:text-gray-100">{title || "Program Reach Over Time"}</div>
@@ -453,8 +451,8 @@ const CourseReachChart: React.FC<CourseReachChartProps> = ({ onDataPointClick, t
               </motion.g>
             </svg>
         </div>
-      </CardContent>
-    </Card>
+      </_CardContent>
+    </_Card>
   </motion.div>
   );
 };

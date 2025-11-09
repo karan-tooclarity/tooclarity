@@ -3,6 +3,24 @@ import React from "react";
 import { Button } from "@/components/ui/button";
 import InputField from "@/components/ui/InputField";
 
+interface CoachingFormDataProps {
+  placementDrives: string;
+  mockInterviews: string;
+  resumeBuilding: string;
+  linkedinOptimization: string;
+  exclusiveJobPortal: string;
+  certification: string;
+}
+
+interface CoachingFormProps {
+  coachingFormData: CoachingFormDataProps;
+  coachingFormErrors: Partial<Record<keyof CoachingFormDataProps, string>>;
+  handleCoachingFieldChange: (name: keyof CoachingFormDataProps, value: string) => void;
+  handleCoachingSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
+  isLoading: boolean;
+  onPrevious?: () => void;
+}
+
 export default function CoachingForm({
   coachingFormData,
   coachingFormErrors,
@@ -10,7 +28,7 @@ export default function CoachingForm({
   handleCoachingSubmit,
   isLoading,
   onPrevious,
-}: any) {
+}: CoachingFormProps) {
   return (
     <>
       <div className="space-y-2">

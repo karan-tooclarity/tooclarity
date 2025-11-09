@@ -5,7 +5,7 @@ import { apiRequest, getMyInstitution, getInstitutionBranches, getInstitutionCou
 /**
  * A generic shape for API responses that return JSON.
  */
-export interface ApiResponse<T = any> {
+export interface ApiResponse<T = unknown> {
   success: boolean;
   message?: string;
   data?: T;
@@ -45,7 +45,7 @@ export interface DashboardDetailsResponse {
 
 export interface CourseUpdateData {
   courseId?: string | null;
-  [key: string]: any; 
+  [key: string]: unknown; 
 }
 
 // --- Local API Helper for Files ---
@@ -110,7 +110,7 @@ export const dashboardAPI = {
       // Gracefully handle missing/legacy endpoint by synthesizing from unified course backend
       try {
         // 1) Resolve current institution (unified backend)
-        const institution: any = await getMyInstitution().catch(() => null);
+        const institution = await getMyInstitution().catch(() => null) as { _id?: string } | null;
         if (!institution || !institution._id) {
           const fallback = { institution: null, branchesWithCourses: [] };
           const blob = new Blob([JSON.stringify(fallback)], { type: "application/json" });
@@ -124,13 +124,17 @@ export const dashboardAPI = {
         ]);
 
         // 3) Shape into expected structure
-        const branchesWithCourses = (Array.isArray(branches) ? branches : []).map((b: any) => ({
-          ...b,
-          courses: (Array.isArray(courses) ? courses : []).filter((c: any) => {
-            const branchId = c.branch || c.branch?._id;
-            return branchId && String(branchId) === String(b._id);
-          }),
-        }));
+        const branchesWithCourses = (Array.isArray(branches) ? branches : []).map((b: unknown) => {
+          const branch = b as Record<string, unknown>;
+          return {
+            ...branch,
+            courses: (Array.isArray(courses) ? courses : []).filter((c: unknown) => {
+              const course = c as Record<string, unknown>;
+              const branchId = course.branch || (course.branch as { _id?: string })?._id;
+              return branchId && String(branchId) === String(branch._id);
+            }),
+          };
+        });
 
         const shaped = { institution, branchesWithCourses };
         const blob = new Blob([JSON.stringify(shaped)], { type: "application/json" });

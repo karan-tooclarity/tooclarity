@@ -2,9 +2,13 @@
 // Client-side only. Safely checks for window and existing script.
 
 // Augment window type for Razorpay
+type RazorpayOptions = Record<string, unknown>;
+interface RazorpayInstance { open: () => void }
+type RazorpayConstructor = new (options: RazorpayOptions) => RazorpayInstance;
+
 declare global {
   interface Window {
-    Razorpay?: any;
+    Razorpay?: RazorpayConstructor;
   }
 }
 
@@ -31,7 +35,7 @@ export function loadRazorpayScript(): Promise<boolean> {
  * Usage:
  *   await ensureRazorpayAndOpen(options)
  */
-export async function ensureRazorpayAndOpen(options: any) {
+export async function ensureRazorpayAndOpen(options: RazorpayOptions) {
   const ok = await loadRazorpayScript();
   if (!ok || typeof window === "undefined" || !window.Razorpay) {
     throw new Error("Failed to load Razorpay SDK");

@@ -1,6 +1,7 @@
 "use client"; 
 
 import React from "react";
+import Image from "next/image";
 import Link from "next/link";
 
 const Footer = () => {
@@ -43,9 +44,11 @@ const Footer = () => {
       <section className="w-full max-w-6xl mx-auto flex flex-col items-center justify-center py-8 px-4 overflow-hidden relative opacity-100">
   {/* Logo (OO) */}
   <div className="flex justify-center items-center mb-2">
-  <img
+  <Image
     src="/OO.png"
     alt="Too Clarity Logo"
+    width={200}
+    height={200}
     className="
       w-[58px] h-[58px]                /* Mobile */
       sm:w-[120px] sm:h-[120px]       /* Small screens */
@@ -74,16 +77,16 @@ const Footer = () => {
   <footer className="w-full max-w-md mx-auto flex flex-col items-center justify-center mt-8 opacity-100">
     <div className="flex items-center justify-center flex-wrap gap-4 sm:gap-6 mb-4">
       <a href="https://x.com/tooclarity" target="_blank" rel="noopener noreferrer">
-        <img src="/x.png" alt="X" className="h-8 sm:h-10 object-contain" />
+        <Image src="/x.png" alt="X" width={40} height={40} className="h-8 sm:h-10 object-contain" />
       </a>
       <a href="https://www.instagram.com/tooclarity/#" target="_blank" rel="noopener noreferrer">
-        <img src="/instagram_02.png" alt="Instagram" className="h-8 sm:h-10 object-contain" />
+        <Image src="/instagram_02.png" alt="Instagram" width={40} height={40} className="h-8 sm:h-10 object-contain" />
       </a>
       <a href="https://www.linkedin.com/company/tooclarity/" target="_blank" rel="noopener noreferrer">
-        <img src="/linked.png" alt="LinkedIn" className="h-8 sm:h-10 object-contain" />
+        <Image src="/linked.png" alt="LinkedIn" width={40} height={40} className="h-8 sm:h-10 object-contain" />
       </a>
       <a href="https://www.youtube.com/@tooclarity" target="_blank" rel="noopener noreferrer">
-        <img src="/yt.png" alt="YouTube" className="h-8 sm:h-10 object-contain" />
+        <Image src="/yt.png" alt="YouTube" width={40} height={40} className="h-8 sm:h-10 object-contain" />
       </a>
     </div>
     <div className="text-center text-xs sm:text-sm text-white/60">

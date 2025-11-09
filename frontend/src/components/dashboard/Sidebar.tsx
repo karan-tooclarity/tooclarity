@@ -100,7 +100,7 @@ const Sidebar: React.FC = () => {
     clearHideTimer();
     setIsHovered(true);
   };
-  const hideSoon = () => {
+  const _hideSoon = () => {
     clearHideTimer();
     hideTimerRef.current = window.setTimeout(() => {
       setIsHovered(false);
