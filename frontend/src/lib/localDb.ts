@@ -39,6 +39,8 @@ export type CourseRecord = {
   instructorProfile?: string;
   subject?: string;
   createdBranch?: string; // optional UI field
+  eligibilityCriteria?: string;
+  hallName?: string;
 };
 
 export type BranchCoursesRecord = {
@@ -263,6 +265,98 @@ function openDB(): Promise<IDBDatabase> {
   });
 }
 
+/**
+ * Updates institutionType and removes any extra (non-L1) fields
+ * from the latest institution in IndexedDB.
+ *
+ * @param newInstitutionType - the updated institution type from L1 form
+ * @param currentL1Data - the latest L1 data object (source of truth)
+ */
+export async function updateInstitutionAndTrimExtraFields(
+  newInstitutionType: string,
+  currentL1Data: Record<string, unknown>
+): Promise<void> {
+  const db = await openDB();
+  const tx = db.transaction("institutions", "readwrite");
+  const store = tx.objectStore("institutions");
+
+  // ✅ Properly await getAll() from IndexedDB
+  const allInstitutions: InstitutionRecord[] = await new Promise((resolve, reject) => {
+    const request = store.getAll();
+    request.onsuccess = () => resolve(request.result || []);
+    request.onerror = () => reject(request.error);
+  });
+
+  if (!allInstitutions.length) {
+    console.warn("⚠️ No institution found to update.");
+    return;
+  }
+
+  // 🧩 Get the most recent institution record
+  const latestInstitution = allInstitutions.sort(
+    (a, b) => (b.createdAt || 0) - (a.createdAt || 0)
+  )[0];
+
+  // 🧠 Build the new clean institution object
+  const allowedKeys = Object.keys(currentL1Data);
+  const cleanedInstitution: Record<string, unknown> = {};
+
+  for (const key of allowedKeys) {
+    cleanedInstitution[key] = currentL1Data[key];
+  }
+
+  // Keep essential system/meta fields if they exist
+  if (latestInstitution.id) cleanedInstitution.id = latestInstitution.id;
+  if (latestInstitution.createdAt) cleanedInstitution.createdAt = latestInstitution.createdAt;
+
+  // Update the institutionType
+  cleanedInstitution.institutionType = newInstitutionType;
+
+  // ✅ Replace old record in IndexedDB
+  await new Promise<void>((resolve, reject) => {
+    const putRequest = store.put(cleanedInstitution);
+    putRequest.onsuccess = () => resolve();
+    putRequest.onerror = () => reject(putRequest.error);
+  });
+
+  console.log("✅ Institution updated and extra L3 fields removed:", cleanedInstitution);
+}
+
+export const notifyDBChange = (storeName: string) => {
+  const event = new CustomEvent("indexeddb-updated", { detail: { storeName } });
+  window.dispatchEvent(event);
+};
+
+export async function clearDependentData(): Promise<void> {
+  const db = await openDB();
+
+  const storesToClear = [
+    "branches",
+    "courses",
+  ] as const;
+
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(storesToClear, "readwrite");
+
+    storesToClear.forEach((storeName) => {
+      if (db.objectStoreNames.contains(storeName)) {
+        tx.objectStore(storeName).clear();
+      } else {
+        console.warn(`⚠️ Store "${storeName}" not found in IndexedDB`);
+      }
+    });
+
+    tx.oncomplete = () => {
+      console.log("✅ IndexedDB dependent data cleared");
+      resolve();
+    };
+    tx.onerror = () => {
+      console.error("❌ Failed to clear dependent IndexedDB data", tx.error);
+      reject(tx.error || new Error("Failed to clear dependent data"));
+    };
+  });
+}
+
 /* ---------------- Branches ---------------- */
 
 export async function addBranchesToDB(
@@ -424,16 +518,46 @@ export async function updateInstitutionInDB(
   institution: InstitutionRecord
 ): Promise<void> {
   if (!institution.id) throw new Error("Institution id required for update");
+
   const db = await openDB();
+
   return new Promise((resolve, reject) => {
     const tx = db.transaction(INSTITUTION_STORE, "readwrite");
     const store = tx.objectStore(INSTITUTION_STORE);
-    const req = store.put(institution);
-    req.onsuccess = () => resolve();
-    req.onerror = () =>
+
+    const req = store.put({
+      ...institution,
+      updatedAt: Date.now(), // ⏱ optional: track last update time
+    });
+
+    req.onsuccess = () => {
+      console.log(`✅ Institution (id: ${institution.id}) updated successfully`);
+    };
+
+    req.onerror = () => {
+      console.error("❌ Failed to update institution:", req.error);
+      tx.abort();
       reject(req.error || new Error("Failed to update institution"));
+    };
+
+    tx.oncomplete = () => {
+      notifyDBChange(COURSES_STORE);
+      notifyDBChange(BRANCH_STORE);
+      resolve();
+    };
+
+    tx.onerror = () => {
+      console.error("❌ Institution update transaction failed:", tx.error);
+      reject(tx.error || new Error("Transaction failed"));
+    };
+
+    tx.onabort = () => {
+      console.warn("⚠️ Institution update transaction aborted:", tx.error);
+      reject(tx.error || new Error("Transaction aborted"));
+    };
   });
 }
+
 
 export async function deleteInstitutionFromDB(id: number): Promise<void> {
   const db = await openDB();

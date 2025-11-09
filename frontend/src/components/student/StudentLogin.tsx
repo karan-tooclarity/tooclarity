@@ -3,7 +3,6 @@
 import React, { useCallback, useMemo, useState } from "react";
 import Image from "next/image";
 import {
-  ArrowLeft,
   Loader2,
   Smartphone,
   Lock,
@@ -20,7 +19,6 @@ import {
   redirectToGoogleOAuth,
 } from "@/lib/google-auth";
 
-
 type OAuthProvider = {
   id: string;
   label: string;
@@ -33,16 +31,16 @@ const oauthProviders: OAuthProvider[] = [
     label: "Continue with Google",
     icon: "/google.png",
   },
-//   {
-//     id: "microsoft",
-//     label: "Continue with Microsoft",
-//     icon: "/window.svg",
-//   },
-//   {
-//     id: "apple",
-//     label: "Continue with Apple",
-//     icon: Apple,
-//   },
+  //   {
+  //     id: "microsoft",
+  //     label: "Continue with Microsoft",
+  //     icon: "/window.svg",
+  //   },
+  //   {
+  //     id: "apple",
+  //     label: "Continue with Apple",
+  //     icon: Apple,
+  //   },
 ];
 
 interface StudentLoginProps {
@@ -51,17 +49,16 @@ interface StudentLoginProps {
 
 const StudentLogin: React.FC<StudentLoginProps> = ({ onSuccess }) => {
   const router = useRouter();
-  const { login,refreshUser } = useAuth();
+  const { login, refreshUser } = useAuth();
 
   const [isScriptLoaded, setIsScriptLoaded] = useState(false);
   const [loadingProvider, setLoadingProvider] = useState<string | null>(null);
-  
+
   // Form state
   const [formData, setFormData] = useState<LoginData>({
     contactNumber: "",
     password: "",
     type: "student",
-
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -102,13 +99,12 @@ const StudentLogin: React.FC<StudentLoginProps> = ({ onSuccess }) => {
               }
 
               await refreshUser();
-              
+
               // If parent provided a success handler, use it
               if (onSuccess) {
                 onSuccess();
                 return;
               }
-
             } catch (error) {
               console.error("Error sending Google token", error);
             } finally {
@@ -129,10 +125,14 @@ const StudentLogin: React.FC<StudentLoginProps> = ({ onSuccess }) => {
     };
   }, [refreshUser, router, onSuccess]);
 
-  const handleGoogleClick = useCallback (() => {
+  const handleGoogleClick = useCallback(() => {
     const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ?? "";
     const redirectUri = process.env.NEXT_PUBLIC_GOOGLE_REDIRECT_URI ?? "";
-    const state = JSON.stringify({ state: "student", type: "login", device: "web" });
+    const state = JSON.stringify({
+      state: "student",
+      type: "login",
+      device: "web",
+    });
     redirectToGoogleOAuth({
       clientId,
       redirectUri,
@@ -145,7 +145,7 @@ const StudentLogin: React.FC<StudentLoginProps> = ({ onSuccess }) => {
   // Handle input changes
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       [name]: value,
     }));
@@ -161,14 +161,14 @@ const StudentLogin: React.FC<StudentLoginProps> = ({ onSuccess }) => {
 
     try {
       const response = await login(formData);
-      
+
       if (!response) {
         setError(response || "Login failed");
         return;
       }
 
       await refreshUser();
-      
+
       if (onSuccess) {
         onSuccess();
         return;
@@ -248,9 +248,9 @@ const StudentLogin: React.FC<StudentLoginProps> = ({ onSuccess }) => {
     <section className="flex min-h-screen flex-col bg-gradient-to-b from-white via-white to-blue-50 px-4 py-6 sm:px-6 sm:py-10 lg:px-10 lg:py-16">
       <div className="mx-auto flex w-full max-w-md flex-1 flex-col">
         <header className="flex items-center gap-3 text-blue-600">
-          <button className="rounded-full p-1 transition hover:bg-blue-50">
+          {/* <button className="rounded-full p-1 transition hover:bg-blue-50">
             <ArrowLeft className="h-5 w-5" />
-          </button>
+          </button> */}
         </header>
 
         <div className="mb-8 flex flex-col items-center">
@@ -322,7 +322,9 @@ const StudentLogin: React.FC<StudentLoginProps> = ({ onSuccess }) => {
 
           <button
             type="submit"
-            disabled={isLoading || !formData.contactNumber || !formData.password}
+            disabled={
+              isLoading || !formData.contactNumber || !formData.password
+            }
             className="w-full rounded-2xl bg-blue-600 py-3 text-base font-semibold text-white shadow-md transition hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
             {isLoading && <Loader2 className="h-5 w-5 animate-spin" />}
@@ -332,7 +334,10 @@ const StudentLogin: React.FC<StudentLoginProps> = ({ onSuccess }) => {
 
         <div className="mt-6 text-center text-sm text-gray-600">
           Don&apos;t have an account?{" "}
-          <button className="font-semibold text-blue-600 hover:underline">
+          <button
+            onClick={() => router.push("/student/signup")}
+            className="font-semibold text-blue-600 hover:underline"
+          >
             Sign up
           </button>
         </div>

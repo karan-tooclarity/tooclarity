@@ -1,43 +1,189 @@
 .pageContainer {
   min-height: 100vh;
-  padding: 32px 16px;
+  padding: 0;
   display: flex;
   justify-content: center;
-  background: linear-gradient(180deg, rgba(216, 221, 255, 0.5) 0%, #ffffff 60%);
+  background-image: linear-gradient(#dbe0ff, #ffffff, #ffffff, #ffffff);
 }
+
+.settingsSection{
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  justify-content: center;
+  align-items: center;
+}
+
+.contentWrapper {
+  display: flex;
+  flex-direction: column;
+}
+
+.rightColumn {
+  display: flex;
+  flex-direction: column;
+}
+
+
+
+/* Add bottom padding only on mobile where footer is visible */
 
 .card {
   width: 100%;
-  max-width: 420px;
-  background: rgba(255, 255, 255, 0.95);
-  border-radius: 24px;
-  padding: 32px 24px;
-  box-shadow: 0 20px 40px rgba(2, 34, 215, 0.08);
+  max-width: 100%;
+  padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 32px;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  padding: 16px 20px;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  gap: 16px;
+}
+
+.backButton {
+  background: transparent;
+  border: none;
+  padding: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #1a1a1a;
+  transition: all 0.2s ease;
+  border-radius: 8px;
+}
+
+.backButton:hover {
+  background: #f5f5f5;
+}
+
+.title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin: 0;
+  flex: 1;
 }
 
 @media (max-width: 768px) {
-  .pageContainer {
-    padding: 24px 12px;
+  .card {
+    padding: 0;
   }
 
-  .card {
-    padding: 24px 18px;
-    border-radius: 20px;
-    gap: 24px;
+  .header {
+    padding: 12px 16px;
+  }
+
+  .title {
+    font-size: 16px;
   }
 }
 
 @media (max-width: 480px) {
+  .card {
+    padding: 0;
+  }
+
+  .header {
+    padding: 12px 16px;
+  }
+
+  .title {
+    font-size: 16px;
+  }
+}
+
+/* Tablet: improve spacing and center content */
+@media (min-width: 768px) {
   .pageContainer {
-    padding: 16px 8px;
+    background: linear-gradient(to bottom, #f8f9ff 0%, #ffffff 40%);
   }
 
   .card {
-    padding: 20px 16px;
-    border-radius: 18px;
-    gap: 20px;
+    max-width: 100%;
+    background: white;
+  }
+
+  .header {
+    padding: 20px 28px;
+    border-radius: 24px 24px 0 0;
+  }
+
+  .title {
+    font-size: 20px;
+  }
+
+  .settingsSection {
+    padding: 0 28px 28px;
+  }
+}
+
+/* Desktop: two-column layout with profile left, content right */
+@media (min-width: 1024px) {
+  .pageContainer {
+    background: linear-gradient(to bottom, #f8f9ff 0%, #ffffff 30%);
+  }
+
+  .card {
+    max-width: 100%;
+  }
+
+  .header {
+    padding: 24px 32px;
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9ff 100%);
+  }
+
+  .title {
+    font-size: 22px;
+  }
+
+  .backButton:hover {
+    background: #e8ebff;
+  }
+
+  .contentWrapper {
+    display: grid;
+    grid-template-columns: 380px 1fr;
+    min-height: 600px;
+  }
+
+  .contentWrapper > div:first-child {
+    /* ProfileHeader */
+    border-right: 2px solid #f0f0ff;
+    background: linear-gradient(to bottom, #fafbff 0%, #ffffff 60%);
+    padding: 40px 28px;
+  }
+
+  .rightColumn {
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+  }
+
+  .settingsSection {
+    padding: 0 32px 32px;
+    margin-top: auto;
+    width: 100%;
+  }
+}
+
+/* Extra large desktop: increase max-width */
+@media (min-width: 1440px) {
+  .card {
+    max-width: 100%;
+  }
+
+  .contentWrapper {
+    grid-template-columns: 420px 1fr;
+  }
+
+  .header {
+    padding: 28px 40px;
   }
 }

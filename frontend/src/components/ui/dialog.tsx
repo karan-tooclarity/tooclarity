@@ -46,16 +46,38 @@ function _DialogOverlay({
   )
 }
 
-function _DialogContent({
+function DialogContentInner({
   className,
   children,
   showCloseButton = true,
   overlayClassName,
+  disableOutsidePointerDown = false,
+  disableEscapeKeyDown = false,
   ...props
 }: React.ComponentProps<typeof _DialogPrimitive.Content> & {
   showCloseButton?: boolean
   overlayClassName?: string
+  disableOutsidePointerDown?: boolean
+  disableEscapeKeyDown?: boolean
 }) {
+  const handleInteractOutside = React.useCallback(
+    (event: Event) => {
+      if (disableOutsidePointerDown) {
+        event.preventDefault()
+      }
+    },
+    [disableOutsidePointerDown]
+  )
+
+  const handleEscapeKeyDown = React.useCallback(
+    (event: KeyboardEvent) => {
+      if (disableEscapeKeyDown) {
+        event.preventDefault()
+      }
+    },
+    [disableEscapeKeyDown]
+  )
+
   return (
     <_DialogPortal data-slot="_Dialog-portal">
       <_DialogOverlay className={overlayClassName} />
@@ -72,13 +94,20 @@ function _DialogContent({
           "overflow-y-auto",
           className
         )}
+        onInteractOutside={handleInteractOutside}
+        onPointerDownOutside={handleInteractOutside}
+        onEscapeKeyDown={handleEscapeKeyDown}
         {...props}
       >
         {children}
         {showCloseButton && (
           <_DialogPrimitive.Close
             data-slot="_Dialog-close"
-            className="ring-offset-background focus:ring-ring absolute top-4 right-4 rounded-xs opacity-70 transition-opacity hover:opacity-100 focus:ring-2 focus:ring-offset-2 focus:outline-hidden disabled:pointer-events-none [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4"
+            className="ring-offset-background focus:ring-ring absolute top-4 right-4 rounded-xs opacity-70 
+                       transition-opacity hover:opacity-100 focus:ring-2 focus:ring-offset-2 
+                       focus:outline-hidden disabled:pointer-events-none 
+                       [&_svg]:pointer-events-none [&_svg]:shrink-0 
+                       [&_svg:not([class*='size-'])]:size-4"
           >
             <XIcon />
             <span className="sr-only">Close</span>
@@ -88,6 +117,11 @@ function _DialogContent({
     </_DialogPortal>
   )
 }
+
+
+const _DialogContent = (props: React.ComponentProps<typeof DialogContentInner>) => (
+  <DialogContentInner {...props} />
+)
 
 function _DialogHeader({ className, ...props }: React.ComponentProps<"div">) {
   return (

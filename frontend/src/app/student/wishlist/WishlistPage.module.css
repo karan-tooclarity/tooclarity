@@ -1,0 +1,201 @@
+/* Wishlist Page Styles */
+
+.pageContainer {
+  width: 100%;
+  max-width: 480px;
+  margin: 0 auto;
+  min-height: 100vh;
+  background-image: linear-gradient(#dbe0ff, #ffffff, #ffffff);
+  position: relative;
+}
+
+/* Tablet and Desktop - full width responsive */
+@media (min-width: 768px) {
+  .pageContainer {
+    max-width: 100%;
+    padding: 20px 40px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .pageContainer {
+    max-width: 100%;
+    padding: 32px 60px;
+  }
+}
+
+@media (min-width: 1440px) {
+  .pageContainer {
+    max-width: 100%;
+    padding: 40px 80px;
+  }
+}
+
+/* Header */
+.header {
+  background: transparent;
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+/* Tablet and Desktop - enhanced header */
+@media (min-width: 768px) {
+  .header {
+    padding: 20px 0;
+    gap: 20px;
+    border-radius: 0;
+    margin-bottom: 8px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .header {
+    padding: 24px 0;
+    gap: 24px;
+    border-radius: 0;
+    margin-bottom: 12px;
+    box-shadow: none;
+  }
+}
+
+.backButton {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  padding: 0;
+}
+
+.backButton:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+/* Tablet and Desktop - enhanced back button */
+@media (min-width: 768px) {
+  .backButton {
+    width: 44px;
+    height: 44px;
+  }
+  
+  .backButton:hover {
+    background: rgba(0, 82, 255, 0.1);
+    transform: scale(1.05);
+  }
+}
+
+@media (min-width: 1024px) {
+  .backButton {
+    width: 48px;
+    height: 48px;
+  }
+}
+
+.backButton svg {
+  flex-shrink: 0;
+}
+
+.title {
+  font-size: 20px;
+  font-weight: 600;
+  color: #060B13;
+  margin: 0;
+  flex: 1;
+}
+
+/* Tablet and Desktop - enhanced title */
+@media (min-width: 768px) {
+  .title {
+    font-size: 24px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .title {
+    font-size: 28px;
+    font-weight: 700;
+  }
+}
+
+/* Empty State */
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  text-align: center;
+  min-height: 50vh;
+}
+
+.emptyState p {
+  font-size: 16px;
+  color: #666;
+  margin: 0;
+}
+
+/* Tablet and Desktop - enhanced empty state */
+@media (min-width: 768px) {
+  .emptyState {
+    padding: 80px 40px;
+  }
+  
+  .emptyState p {
+    font-size: 18px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .emptyState {
+    padding: 100px 60px;
+  }
+  
+  .emptyState p {
+    font-size: 20px;
+  }
+}
+
+/* Courses Grid */
+.coursesGrid {
+  padding: 20px;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 20px;
+}
+
+/* Tablet - 2 columns */
+@media (min-width: 768px) {
+  .coursesGrid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 24px;
+    padding: 24px 0;
+  }
+}
+
+/* Desktop - 3 columns */
+@media (min-width: 1024px) {
+  .coursesGrid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 28px;
+    padding: 28px 0;
+  }
+}
+
+/* Large Desktop - 4 columns */
+@media (min-width: 1440px) {
+  .coursesGrid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 32px;
+    padding: 32px 0;
+  }
+}

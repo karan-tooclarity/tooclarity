@@ -158,7 +158,7 @@ const updateAcademicProfile = async (req, res) => {
   try {
     const student = await InstituteAdmin.findOneAndUpdate(
       { _id: req.userId, role: "STUDENT" },
-      { $set: { academicProfile } },
+      { $set: { academicProfile, isProfileCompleted: true } },
       { new: true }
     );
 

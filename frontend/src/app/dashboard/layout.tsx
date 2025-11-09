@@ -8,7 +8,6 @@ import { useAuth } from "@/lib/auth-context";
 import { motion } from "framer-motion";
 import AdminDashboard from "@/components/dashboard/AdminDashboard";
 import { SearchProvider } from "@/lib/search-context";
-import StudentDashboard from "@/components/student/StudentDashboard";
 
 export default function DashboardLayout({
   children,
@@ -50,7 +49,11 @@ export default function DashboardLayout({
   }
 
   if(user?.role === "STUDENT"){
-    return <StudentDashboard/>;
+    if(!user.isProfileCompleted){
+      router.push("/student/onboarding");
+    }
+    return <>{children}</>;
+    //return <StudentDashboard/>;
   }
 
   if (

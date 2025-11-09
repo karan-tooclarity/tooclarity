@@ -17,7 +17,7 @@ const StudentOtpScreen: React.FC<StudentOtpScreenProps> = ({
   onBack,
   onSuccess,
 }) => {
-  const router = useRouter();
+  // const router = useRouter();
   const [otp, setOtp] = useState<string[]>(new Array(6).fill(""));
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);

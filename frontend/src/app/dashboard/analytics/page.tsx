@@ -23,6 +23,7 @@ function AnalyticsPage() {
 	const [kpiCourseViews, setKpiCourseViews] = useState<number>(0);
 	const [kpiLeads, setKpiLeads] = useState<number>(0);
 	const [kpiViewsDelta, setKpiViewsDelta] = useState<{value:number; isPositive:boolean}>({ value: 0, isPositive: true });
+	const [kpiCallbacks, setKpiCallbacks] = useState<number>(0);
 	const [kpiLeadsDelta, setKpiLeadsDelta] = useState<{value:number; isPositive:boolean}>({ value: 0, isPositive: true });
 	const [isKpiLoading, setIsKpiLoading] = useState<boolean>(false);
 	const [viewLeadTrends, setViewLeadTrends] = useState<{ views: number[]; leads: number[] } | null>(null);
@@ -51,9 +52,10 @@ function AnalyticsPage() {
 			try {
 				setIsKpiLoading(true);
 				const range = analyticsRange.toLowerCase() as 'weekly'|'monthly'|'yearly';
-				const [viewsRange, leadsRange] = await Promise.all([
+				const [viewsRange, leadsRange, callbacksRange] = await Promise.all([
 					metricsAPI.getInstitutionAdminByRange('views', range) as { success?: boolean; data?: { totalViews?: number; trend?: { value: number; isPositive: boolean } } },
 					metricsAPI.getInstitutionAdminByRange('leads', range) as { success?: boolean; data?: { totalLeads?: number; trend?: { value: number; isPositive: boolean } } },
+					enquiriesAPI.getTypeSummaryRollups(range) as { data?: { callbacks?: number } },
 				]);
 				if (!mounted) return;
 				if (viewsRange?.success) {
@@ -64,6 +66,8 @@ function AnalyticsPage() {
 					setKpiLeads(leadsRange.data?.totalLeads || 0);
 					if (leadsRange.data?.trend) setKpiLeadsDelta(leadsRange.data.trend);
 				}
+				// Set Callback Leads KPI based on selected range
+				setKpiCallbacks(Number(callbacksRange?.data?.callbacks || 0));
 			} catch {
 			console.error('Analytics: KPI fetch failed');
 		} finally {
@@ -333,9 +337,14 @@ function AnalyticsPage() {
 						</AnimatePresence>
 						<AnimatePresence mode="wait">
 							<StatCard 
-								title="Course Views"
-								value={kpiCourseViews}
-								trend={kpiViewsDelta}
+								//title="Course Views"
+								//value={kpiCourseViews}
+								//trend={kpiViewsDelta}
+								//isLoading={isKpiLoading}
+								//showFilters={false}
+								title="Callback Leads"
+								value={kpiCallbacks}
+								trend={{value: 0, isPositive: true}}
 								isLoading={isKpiLoading}
 								showFilters={false}
 							/>

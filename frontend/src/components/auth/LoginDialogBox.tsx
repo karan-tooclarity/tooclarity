@@ -23,6 +23,7 @@ import {
   GoogleCredentialResponse,
   redirectToGoogleOAuth,
 } from "@/lib/google-auth";
+import { toast } from "react-toastify";
 
 type LoginCaller = "admin" | "institution";
 
@@ -317,6 +318,7 @@ export default function LoginDialogBox({
           if (!user?.isProfileCompleted && !user?.isPaymentDone) router.push("/signup");
           else if (user?.isProfileCompleted && !user?.isPaymentDone) router.push("/payment");
           else router.push("/dashboard");
+          toast.success("LoggedIn successfully!");
           return;
         }
 

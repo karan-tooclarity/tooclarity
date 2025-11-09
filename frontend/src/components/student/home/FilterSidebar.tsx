@@ -79,7 +79,7 @@ const FILTER_CONFIG: Record<string, {
       '4 - 5 Yrs',
       '5 - 6 Yrs',
     ],
-    boardType: ['State Board', 'CBSE'],
+    modes: ['Offline', 'Online'],
     programDuration: [
       'Summer Camp',
       'Academic Year',
@@ -343,20 +343,6 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
   return (
     <aside className={styles.sidebar}>
       <div className={styles.content}>
-        <div className={styles.header}>
-          <h2 className={styles.title}>Filters</h2>
-          {/* Filter Icon SVG */}
-          <svg
-            className={styles.headerIcon}
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-          >
-            <path d="M3 4a1 1 0 0 1 1-1h16a1 1 0 0 1 1 1v2.586a1 1 0 0 1-.293.707l-6.414 6.414a1 1 0 0 0-.293.707V17l-4 4v-6.586a1 1 0 0 0-.293-.707L3.293 7.293A1 1 0 0 1 3 6.586V4z" />
-          </svg>
-        </div>
-
         {/* Institute Type - Mutually Exclusive */}
         <FilterSection
           title="Institute Type"
@@ -384,6 +370,15 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
                     : 'schoolLevels'
                 }
                 options={filterConfig.levels}
+              />
+            )}
+
+            {/* Mode */}
+            {filterConfig.modes && (
+              <FilterSection
+                title="Mode"
+                filterType="modes"
+                options={filterConfig.modes}
               />
             )}
 
@@ -441,12 +436,12 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
               />
             )}
 
-            {/* Mode */}
-            {filterConfig.modes && (
+            {/* Seating type */}
+            {filterConfig.seatingType && (
               <FilterSection
-                title="Mode"
-                filterType="modes"
-                options={filterConfig.modes}
+                title="Seating type"
+                filterType="seatingType"
+                options={filterConfig.seatingType}
               />
             )}
 
@@ -456,6 +451,24 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
                 title="Price Range"
                 filterType="priceRange"
                 options={filterConfig.priceRange}
+              />
+            )}
+
+            {/* Operating Hours */}
+            {filterConfig.operatingHours && (
+              <FilterSection
+                title="Operating Hours"
+                filterType="operatingHours"
+                options={filterConfig.operatingHours}
+              />
+            )}
+
+            {/* Duration */}
+            {filterConfig.duration && (
+              <FilterSection
+                title="Duration"
+                filterType="duration"
+                options={filterConfig.duration}
               />
             )}
           </>

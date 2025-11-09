@@ -21,6 +21,14 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "flagcdn.com",
       },
+      {
+        protocol: "https",
+        hostname: "tooclaritystaticbucket.s3.us-east-1.amazonaws.com",
+      },
+      {
+        protocol: "https",
+        hostname: "res.cloudinary.com",
+      }
     ],
     formats: ["image/avif", "image/webp"], // efficient formats
   },

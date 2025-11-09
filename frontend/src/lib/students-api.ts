@@ -53,6 +53,39 @@ export interface CreateStudentPayload {
   googleId?: string;
 }
 
+// Define specific types for different academic profile details
+export interface KindergartenDetails {
+  ageGroup?: string;
+  programType?: string;
+  // Add other kindergarten-specific fields
+}
+
+export interface SchoolDetails {
+  grade?: string;
+  board?: string;
+  // Add other school-specific fields
+}
+
+export interface GraduationDetails {
+  degree?: string;
+  major?: string;
+  university?: string;
+  // Add other graduation-specific fields
+}
+
+export interface CoachingCenterDetails {
+  course?: string;
+  examType?: string;
+  // Add other coaching-specific fields
+}
+
+export type AcademicProfileDetails = 
+  | KindergartenDetails 
+  | SchoolDetails 
+  | GraduationDetails 
+  | CoachingCenterDetails
+  | Record<string, unknown>;
+
 export interface UpdateAcademicProfilePayload {
   profileType:
     | "KINDERGARTEN"
@@ -63,7 +96,7 @@ export interface UpdateAcademicProfilePayload {
     | "STUDY_HALLS"
     | "TUITION_CENTER"
     | "STUDY_ABROAD";
-  details: Record<string, unknown>;
+  details: AcademicProfileDetails;
 }
 
 // ===== Course Types for Student Dashboard =====
@@ -83,36 +116,44 @@ export interface CourseForStudent {
   institution?: {
     _id: string;
     instituteName: string;
+    instituteLogo?: string;
+    instituteType?: string; // Added for institute-specific course page rendering
   };
   rating?: number;
   reviews?: number;
   studentsEnrolled?: number;
+  // Additional fields for Study Hall
+  operationalDays?: string[];
+  openingTime?: string;
+  closingTime?: string;
+  hasWifi?: string;
+  hasChargingPoints?: string;
+  hasAC?: string;
+  hasPersonalLocker?: string;
+  seatingOption?: string;
+  // Additional fields
+  eligibilityCriteria?: string;
+  type?: "PROGRAM" | "COURSE";
 }
 
 // ===== Student Dashboard API (stubs) =====
 export const studentDashboardAPI = {
   // Fetch the current user's profile (shared profile endpoint)
   getProfile: async (): Promise<StudentApiResponse<StudentProfile>> => {
-    type BackendProfile = {
-      id?: string;
-      _id?: string;
-      name?: string;
-      email?: string;
-      contactNumber?: string;
-      profilePicture?: string;
-      birthday?: string;
-      data?: unknown;
-    };
-    const res = await studentApiRequest<BackendProfile>("/v1/profile", { method: "GET" });
-    const raw = (res as ApiResponse<BackendProfile>).data as BackendProfile;
+    const res = await studentApiRequest<StudentProfile>("/v1/profile", { method: "GET" });
+    // Normalize shape to StudentProfile best-effort
+    const rawData = res.data || res;
+    const data = typeof rawData === 'object' && rawData !== null ? rawData : {};
+    
     const normalized: StudentProfile = {
-      id: raw?.id || raw?._id || "",
-      name: raw?.name || "",
-      email: raw?.email || "",
-      phoneNumber: raw?.contactNumber,
-      profilePicture: raw?.profilePicture,
-      birthday: raw?.birthday,
+      id: (data as Record<string, unknown>)?.id as string || (data as Record<string, unknown>)?._id as string || "",
+      name: (data as Record<string, unknown>)?.name as string || "",
+      email: (data as Record<string, unknown>)?.email as string || "",
+      phoneNumber: (data as Record<string, unknown>)?.contactNumber as string | undefined,
+      profilePicture: (data as Record<string, unknown>)?.profilePicture as string || (data as Record<string, unknown>)?.ProfilePicutre as string, // backend may use ProfilePicutre
+      birthday: (data as Record<string, unknown>)?.birthday as string | undefined, // if backend provides
     };
+    
     return { success: true, message: "ok", data: normalized };
   },
 

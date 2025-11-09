@@ -4,7 +4,7 @@ import React from 'react';
 import styles from './ProfileStats.module.css';
 
 interface StatItem {
-  icon: string;
+  icon: React.ReactNode;
   value: string | number;
   label: string;
 }

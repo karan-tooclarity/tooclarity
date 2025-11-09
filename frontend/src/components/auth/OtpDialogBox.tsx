@@ -11,6 +11,7 @@ import _InputField from "@/components/ui/InputField";
 import { authAPI } from "../../lib/api";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../../lib/auth-context";
+import { toast } from "react-toastify";
 
 interface Otp_DialogBoxProps {
   open: boolean;
@@ -102,6 +103,7 @@ export default function Otp_DialogBox({
         onVerificationSuccess();
         setOpen(false);
         await refreshUser();
+        toast.success("Account Registered Successfully!");
         router.push("/signup");
       } else {
         setError(response.message || "Invalid OTP. Please try again.");
@@ -141,6 +143,9 @@ export default function Otp_DialogBox({
       <_DialogContent
         className="max-w-lg flex flex-col justify-between scrollbar-hide"
         overlayClassName="bg-black/50"
+        showCloseButton={false}
+        disableOutsidePointerDown
+        disableEscapeKeyDown={true}
       >
         <_DialogHeader className="flex flex-col items-center gap-2">
           <_DialogTitle className="max-w-xs font-montserrat font-bold text-xl sm:text-[24px] leading-tight text-center">

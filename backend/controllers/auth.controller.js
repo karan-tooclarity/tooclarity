@@ -58,7 +58,7 @@ exports.register = async (req, res, next, options = {}) => {
     }
     if (type === "institution") {
       existingUser = await checkDuplicateUser({
-        $or: [{ email, contactNumber }],
+        $or: [{ email }, { contactNumber }],
       });
       if (existingUser) {
         const conflictField =
@@ -84,7 +84,7 @@ exports.register = async (req, res, next, options = {}) => {
       email: email || null,
       password: password || undefined,
       contactNumber: contactNumber || null,
-      designation: designation || null,
+      designation: designation || undefined,
       linkedinUrl: linkedin || null,
       googleId: googleId || undefined,
       ProfilePicture: null,

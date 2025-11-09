@@ -6,6 +6,8 @@ import {
   Loader2,
   Smartphone,
   Lock,
+  Eye,
+  EyeOff,
   type LucideIcon,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -54,6 +56,7 @@ const StudentRegistration: React.FC<StudentRegistrationProps> = ({
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleRegisterSuccess = useCallback(async () => {
     await refreshUser();
@@ -134,8 +137,6 @@ const StudentRegistration: React.FC<StudentRegistrationProps> = ({
     setFormData((prev) => ({ ...prev, [name]: value }));
     if (formError) setFormError(null);
   };
-
-
 
   // 🔹 Form submission
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -263,13 +264,21 @@ const StudentRegistration: React.FC<StudentRegistrationProps> = ({
             <div className="relative">
               <Lock className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
               <input
-                type="password"
+                type={showPassword ? "text" : "password"}
                 name="password"
                 value={formData.password}
                 onChange={handleInputChange}
                 placeholder="Password"
-                className="w-full rounded-2xl border border-gray-200 bg-gray-50 py-3 pl-12 pr-4 text-base text-gray-900 outline-none transition hover:border-blue-200 focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-100"
+                className="w-full rounded-2xl border border-gray-200 bg-gray-50 py-3 pl-12 pr-12 text-base text-gray-900 outline-none transition hover:border-blue-200 focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-100"
               />
+              <button
+                type="button"
+                onClick={() => setShowPassword((prev) => !prev)}
+                aria-label={showPassword ? "Hide password" : "Show password"}
+                className="absolute right-3 top-2 flex h-8 w-8 items-center justify-center text-gray-500 transition hover:text-gray-700"
+              >
+                {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+              </button>
             </div>
           </label>
 

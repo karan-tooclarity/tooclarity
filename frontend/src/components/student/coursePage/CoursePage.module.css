@@ -1,0 +1,1081 @@
+/* CoursePage.module.css */
+
+.pageContainer {
+  max-width: 480px;
+  margin: 0 auto;
+  background: transparent;
+  min-height: 100vh;
+  padding: 0px 20px 20px 20px;
+  position: relative;
+}
+
+/* Image Container */
+.imageContainer {
+  width: 100%;
+  height: 350px;
+  position: relative;
+  overflow: hidden;
+  border-radius: 16px;
+  flex-shrink: 0;
+}
+
+.courseImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Badge Container - Holds both institution badge and bookmark button */
+.badgeContainer {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: rgba(204, 202, 202, 0.15);
+  backdrop-filter: blur(2px);
+  border-bottom-left-radius: 14px;
+  border-bottom-right-radius: 14px;
+}
+
+/* Institution Badge - Transparent with blur */
+.institutionBadge {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+}
+
+.logoContainer {
+  width: 70px;
+  height: 70px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 8px;
+}
+
+.logo {
+  width: 60px;
+  height: 60px;
+  object-fit: contain;
+  border-radius: 6px;
+}
+
+.institutionInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  flex: 1;
+}
+
+.institutionName {
+  font-size: 14px;
+  font-weight: 600;
+  color: white;
+  margin: 0;
+  line-height: 1.3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.locationRow {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.locationText {
+  font-size: 11px;
+  font-weight: 400;
+  color: white;
+  line-height: 1.3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Bookmark Button - Inside badge container */
+.bookmarkBtn {
+  position: relative;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+  padding: 0;
+}
+
+.bookmarkBtn:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: scale(1.05);
+}
+
+.bookmarkIcon {
+  width: 20px;
+  height: 20px;
+  color: white;
+}
+
+.bookmarkBtn.active {
+  background: rgba(255, 255, 255, 0.95);
+}
+
+.bookmarkBtn.active .bookmarkIcon {
+  color: #0052FF;
+}
+
+/* Back Button */
+.backButton {
+  position: absolute;
+  top: 16px;
+  left: 35px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.95);
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  z-index: 10;
+  transition: all 0.3s ease;
+}
+
+.backButton:hover {
+  background: white;
+  transform: scale(1.05);
+}
+
+.backButton svg {
+  width: 20px;
+  height: 20px;
+  color: #222;
+}
+
+/* Course Header */
+.courseHeader {
+  width: 100%;
+  position: relative;
+}
+
+.headerImage {
+  width: 100%;
+  height: 280px;
+  position: relative;
+  background: linear-gradient(135deg, #f5f7fa 0%, #d8ddff 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.imagePlaceholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #999;
+  font-size: 16px;
+  font-weight: 500;
+}
+
+/* Brand Badge */
+.brandBadge {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  width: 56px;
+  height: 56px;
+  background: rgba(255, 255, 255, 0.95);
+  padding: 8px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.brandBadge img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+/* Bookmark Button */
+.bookmarkBtn {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.95);
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  transition: all 0.3s ease;
+}
+
+.bookmarkBtn:hover {
+  background: white;
+  transform: scale(1.1);
+}
+
+.bookmarkBtn svg {
+  width: 22px;
+  height: 22px;
+  color: #666;
+}
+
+
+.titleContainer{
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+}
+
+.intituteLabel{
+    font-size: 10px;
+}
+
+.intituteBox {
+  background: #F9FAFB;
+  border: 1px solid #E5E7EB;
+  border-radius: 5px;
+  padding: 5px 10px;
+  text-align: center;
+  width: 80%;
+  font-size: 10px;
+  margin: 5px;
+}
+
+
+/* Institution Overlay */
+.institutionOverlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.7) 0%, transparent 100%);
+  padding: 20px 16px;
+  color: white;
+}
+
+.institutionOverlay h2 {
+  font-size: 20px;
+  font-weight: 700;
+  margin: 0 0 8px 0;
+}
+
+.locationRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+}
+
+.locationRow svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* Content Section */
+.contentSection {
+  padding: 10px 0px;
+  background: transparent;
+  margin-bottom: 40px;
+}
+
+/* Title Section */
+.titleSection {
+  margin-bottom: 12px;
+}
+
+.courseTitle {
+  font-size: 18px;
+  font-weight: 700;
+  color: #000000;
+  margin: 0 0 4px 0;
+  line-height: 1.3;
+}
+
+.courseSubtitle {
+  font-size: 14px;
+  font-weight: 400;
+  color: #000000;
+  margin: 0;
+  line-height: 1.3;
+}
+
+/* Info Grid - 2 column grid for info boxes */
+.infoGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.infoBox {
+  background: #F9FAFB;
+  border: 1px solid #E5E7EB;
+  border-radius: 12px;
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #000000;
+  height: 48px;
+  text-align: center;
+}
+
+.infoBoxBlue{
+  background: #F9FAFB;
+  border: 1px solid #E5E7EB;
+  border-radius: 12px;
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 48px;
+  color: #0052FF;
+  text-align: center;
+}
+
+.infoLabel {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.infoValue {
+  font-size: 14px;
+  font-weight: 500;
+  margin-left: 5px;
+}
+
+/* Mode and Timings Grid */
+.modeTimingsGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.modeTimingsSection {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 16px;
+  font-size: 16px;
+}
+
+.modeTimingBox {
+  background: #F9FAFB;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  padding: 12px 16px;
+}
+
+.modeTimingLabel {
+  font-size: 14px;
+  font-weight: 700;
+  color: #000000;
+  margin-bottom: 6px;
+}
+
+.modeTimingValue {
+  font-size: 14px;
+  color: #000000;
+  font-weight: 400;
+}
+
+/* Section */
+.section {
+  margin-bottom: 20px;
+}
+
+.placementsection{
+    background-color: #A6D0F8;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    padding: 10px;
+}
+
+.sectionTitle {
+  font-size: 16px;
+  font-weight: 500;
+  color: #060B13;
+  margin: 0 0 10px 0;
+  line-height: 1;
+}
+
+.sectionText {
+  font-size: 13px;
+  color: #4B5563;
+  line-height: 1.6;
+  margin: 0;
+  font-weight: 400;
+  background: #F9FAFB;
+  border: 1px solid #E5E7EB;
+  border-radius: 12px;
+  padding: 14px 16px;
+}
+
+.sectionValueBox {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+}
+
+/* Action Buttons */
+.actionButtons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.requestCallBtn,
+.bookDemoBtn {
+  padding: 14px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-family: inherit;
+  border: none;
+}
+
+.requestCallBtn {
+  background: transparent;
+  color: #0052FF;
+  border: 2px solid #0052FF;
+}
+
+.requestCallBtn:hover {
+  background: #F0F4FF;
+  transform: translateY(-1px);
+}
+
+.bookDemoBtn {
+  background: #0052FF;
+  color: #FFFFFF;
+  border: 2px solid #0052FF;
+}
+
+.bookDemoBtn:hover {
+  background: #0041CC;
+  transform: translateY(-1px);
+}
+
+.requestCallBtn:active,
+.bookDemoBtn:active {
+  transform: translateY(0);
+}
+
+/* Operational Days */
+.daysGrid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.dayPill {
+  padding: 10px;
+  width: 42px;
+  text-align: center;
+  background: #F5F5F5;
+  border: none;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #000000;
+  transition: all 0.2s ease;
+}
+
+.dayPill.active {
+  background: #0052FF;
+  color: #FFFFFF;
+  font-weight: 600;
+}
+
+/* Features Grid */
+.featuresGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px 16px;
+  margin-top: 20px;
+}
+
+.featureItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 6px;
+}
+
+.featureIcon {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 2px;
+  border-radius: 40px;
+  border-color: #357ABD;
+  border-width: 2px;
+}
+
+.additionalTopSup {
+  position: absolute;
+  top: -12px;
+  right: -20px;
+  color: #0222D7;
+  border-width: 1px;
+  border-color: #697282;
+  height: 24px;
+  background-color: #ffffff;
+  min-width: 39px;
+  padding-left: 2px;
+  padding-right: 2px;
+  border-radius: 5px;
+  font-size: 12px;
+  font-weight: 600;
+  align-content: center;
+}
+
+
+.additionalBottomSup {
+  position: absolute;
+  top: -12px;
+  right: -20px;
+  color: #FFFFFF;
+  border-width: 1px;
+  border-color: #FFFFFF;
+  height: 24px;
+  background-color: #1FC274;
+  width: 39px;
+  border-radius: 5px;
+  font-size: 12px;
+  font-weight: 600;
+  align-content: center;
+}
+
+
+.additionalBottomSupNo{
+  position: absolute;
+  top: -12px;
+  right: -20px;
+  color: #FFFFFF;
+  border-width: 1px;
+  border-color: #FFFFFF;
+  height: 24px;
+  background-color: #E84444;
+  width: 39px;
+  border-radius: 5px;
+  font-size: 12px;
+  font-weight: 600;
+  align-content: center;
+}
+
+
+.featureIcon svg {
+  width: 24px;
+  height: 24px;
+  color: #0052FF;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.featureLabel {
+  font-size: 10px;
+  color: #000000;
+  line-height: 1.3;
+  font-weight: 400;
+}
+
+/* Advertisement Section */
+.adSection {
+  background: linear-gradient(135deg, #7B2CBF 0%, #9D4EDD 100%);
+  border-radius: 12px;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 20px 0 16px 0;
+  color: white;
+  min-height: 140px;
+}
+
+.adContent h3 {
+  font-size: 18px;
+  font-weight: 700;
+  margin: 0 0 6px 0;
+  line-height: 1.2;
+}
+
+.adContent p {
+  font-size: 12px;
+  line-height: 1.4;
+  margin: 0;
+  opacity: 0.95;
+  font-weight: 400;
+}
+
+.adImage {
+  width: 110px;
+  height: 110px;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+/* Show More Button */
+.showMoreBtn {
+  width: 100%;
+  padding: 12px;
+  background: transparent;
+  border: 1px solid #D0D0D0;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #000000;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all 0.3s ease;
+  font-family: inherit;
+  margin-bottom: 12px;
+}
+
+.showMoreBtn:hover {
+  background: #F5F5F5;
+  border-color: #0052FF;
+  color: #0052FF;
+}
+
+.showMoreBtn svg {
+  width: 18px;
+  height: 18px;
+}
+
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .imageContainer {
+    height: 240px;
+  }
+
+  .logoContainer {
+    width: 56px;
+    height: 56px;
+  }
+
+  .logo {
+    width: 48px;
+    height: 48px;
+  }
+
+  .badgeContainer {
+    padding: 10px 14px;
+  }
+
+  .institutionName {
+    font-size: 13px;
+  }
+
+  .locationText {
+    font-size: 10px;
+  }
+
+  .bookmarkBtn {
+    width: 36px;
+    height: 36px;
+  }
+
+  .bookmarkIcon {
+    width: 18px;
+    height: 18px;
+  }
+}
+
+
+
+/* Responsive Design */
+@media (max-width: 480px) {
+  .headerImage {
+    height: 240px;
+  }
+
+  .imageContainer {
+    height: 220px;
+  }
+
+  .logoContainer {
+    width: 50px;
+    height: 50px;
+  }
+
+  .logo {
+    width: 44px;
+    height: 44px;
+  }
+
+  .badgeContainer {
+    padding: 8px 12px;
+  }
+
+  .institutionName {
+    font-size: 12px;
+  }
+
+  .locationText {
+    font-size: 9px;
+  }
+
+  .bookmarkBtn {
+    width: 34px;
+    height: 34px;
+  }
+
+  .bookmarkIcon {
+    width: 16px;
+    height: 16px;
+  }
+
+  .institutionOverlay h2 {
+    font-size: 18px;
+  }
+
+  .courseTitle {
+    font-size: 20px;
+  }
+
+  .infoGrid {
+    gap: 8px;
+  }
+
+  .infoBox {
+    padding: 12px 14px;
+    font-size: 14px;
+  }
+
+  .infoLabel,
+  .infoValue {
+    font-size: 14px;
+  }
+
+  .modeTimingsGrid {
+    gap: 8px;
+  }
+
+  .modeTimingBox {
+    padding: 10px 14px;
+  }
+
+  .modeTimingLabel,
+  .modeTimingValue {
+    font-size: 13px;
+  }
+
+  .featuresGrid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+  }
+
+  .featureIcon {
+    width: 48px;
+    height: 48px;
+  }
+
+  .featureIcon svg {
+    width: 24px;
+    height: 24px;
+  }
+
+  .featureLabel {
+    font-size: 10px;
+  }
+
+  .adSection {
+    flex-direction: column;
+    text-align: center;
+    gap: 16px;
+  }
+
+  .adImage {
+    width: 100px;
+    height: 100px;
+  }
+}
+
+@media (max-width: 360px) {
+
+  .actionButtons {
+    grid-template-columns: 1fr;
+  }
+
+  .featuresGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Tablet enhancements (keep mobile unchanged) */
+@media (min-width: 768px) {
+  .pageContainer {
+    max-width: 960px;
+    padding: 0 24px 24px 24px;
+  }
+
+  .imageContainer {
+    height: 420px;
+    border-radius: 20px;
+  }
+
+  .badgeContainer {
+    padding: 14px 18px;
+    border-bottom-left-radius: 18px;
+    border-bottom-right-radius: 18px;
+  }
+
+  .logoContainer {
+    width: 80px;
+    height: 80px;
+  }
+
+  .logo {
+    width: 72px;
+    height: 72px;
+  }
+
+  .institutionName {
+    font-size: 16px;
+  }
+
+  .locationText {
+    font-size: 12px;
+  }
+
+  .contentSection {
+    padding: 24px 0;
+  }
+
+  .courseTitle {
+    font-size: 22px;
+  }
+
+  .courseSubtitle {
+    font-size: 16px;
+  }
+
+  .infoGrid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+
+  .infoBox,
+  .infoBoxBlue {
+    height: 56px;
+    padding: 16px;
+  }
+
+  .infoLabel,
+  .infoValue {
+    font-size: 15px;
+  }
+
+  .modeTimingsGrid {
+    gap: 14px;
+  }
+
+  .modeTimingBox {
+    padding: 14px 16px;
+  }
+
+  .sectionTitle {
+    font-size: 18px;
+  }
+
+  .sectionText {
+    font-size: 14px;
+  }
+
+  .daysGrid {
+    gap: 8px;
+  }
+
+  .dayPill {
+    width: 48px;
+    padding: 10px 12px;
+  }
+
+  .featuresGrid {
+    gap: 16px 20px;
+  }
+
+  .featureIcon {
+    width: 56px;
+    height: 56px;
+    border-width: 2px;
+  }
+
+  .featureIcon svg {
+    width: 28px;
+    height: 28px;
+  }
+
+  .featureLabel {
+    font-size: 11px;
+  }
+
+  .additionalTopSup {
+    top: -14px;
+    right: -22px;
+    width: 44px;
+    height: 26px;
+    font-size: 13px;
+  }
+
+  .additionalBottomSup {
+    top: -14px;
+    right: -22px;
+    width: 44px;
+    height: 26px;
+    font-size: 13px;
+  }
+
+  .adSection {
+    min-height: 160px;
+    padding: 24px;
+  }
+
+  .adContent h3 {
+    font-size: 20px;
+  }
+
+  .adContent p {
+    font-size: 13px;
+  }
+
+  .adImage {
+    width: 120px;
+    height: 120px;
+  }
+
+  .showMoreBtn {
+    padding: 14px;
+    font-size: 15px;
+  }
+}
+
+/* Desktop enhancements */
+@media (min-width: 1024px) {
+  .pageContainer {
+    max-width: 1180px;
+    padding: 0 32px 32px 32px;
+  }
+
+  .imageContainer {
+    height: 480px;
+  }
+
+  .courseTitle {
+    font-size: 24px;
+  }
+
+  .courseSubtitle {
+    font-size: 18px;
+  }
+
+  .infoGrid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 18px;
+  }
+
+  .infoBox,
+  .infoBoxBlue {
+    height: 60px;
+  }
+
+  .modeTimingBox {
+    padding: 16px 18px;
+  }
+
+  .featuresGrid {
+    gap: 18px 24px;
+  }
+
+  .featureIcon {
+    width: 64px;
+    height: 64px;
+  }
+
+  .featureIcon svg {
+    width: 32px;
+    height: 32px;
+  }
+
+  .featureLabel {
+    font-size: 12px;
+  }
+
+  .additionalTopSup {
+    top: -16px;
+    right: -24px;
+    width: 46px;
+    height: 28px;
+    font-size: 13px;
+  }
+
+  .additionalBottomSup {
+    top: -16px;
+    right: -24px;
+    width: 46px;
+    height: 28px;
+    font-size: 13px;
+  }
+
+  .adSection {
+    min-height: 180px;
+    padding: 28px;
+  }
+
+  .adContent h3 {
+    font-size: 22px;
+  }
+
+  .adImage {
+    width: 140px;
+    height: 140px;
+  }
+}

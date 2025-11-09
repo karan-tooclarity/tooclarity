@@ -1,0 +1,133 @@
+/* ScheduleCallbackDialog.module.css */
+
+.dialogContent {
+  max-width: 400px;
+  width: 95vw;
+  padding: 24px;
+  border-radius: 24px;
+  background: white;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 24px;
+  position: relative;
+}
+
+.iconContainer {
+  position: absolute;
+  top: -12px;
+  right: 16px;
+  width: 60px;
+  height: 60px;
+  background: #FFD700;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(255, 215, 0, 0.3);
+}
+
+.callIcon {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+}
+
+.dialogHeader {
+  width: 100%;
+  text-align: center;
+}
+
+.title {
+  font-size: 24px;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin: 0;
+  text-align: center;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.inputGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.askButton {
+  width: 100%;
+  height: 48px;
+  background: white;
+  border: 1px solid #0222D7;
+  color: #0222D7;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.askButton:hover {
+  background: #f8f9ff;
+}
+
+.submitButtonContainer {
+  margin-top: 8px;
+}
+
+.submitButton {
+  width: 100%;
+  height: 48px;
+  background: #0222D7;
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.submitButton:hover:not(:disabled) {
+  background: #0119b8;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(2, 34, 215, 0.3);
+}
+
+.submitButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Responsive adjustments */
+@media (max-width: 480px) {
+  .dialogContent {
+    padding: 20px;
+  }
+
+  .title {
+    font-size: 20px;
+  }
+
+  .iconContainer {
+    width: 50px;
+    height: 50px;
+    right: 12px;
+  }
+
+  .callIcon {
+    width: 28px;
+    height: 28px;
+  }
+}

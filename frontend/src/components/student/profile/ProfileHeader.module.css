@@ -1,30 +1,28 @@
 .header {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 32px;
-  margin-bottom: 40px;
+  display: flex;
+  flex-direction: column;
   align-items: center;
+  padding: 32px 20px 24px;
+  background: transparent;
 }
 
-.userInfo {
-  display: flex;
-  gap: 20px;
-  align-items: center;
+.avatarContainer {
+  margin-bottom: 16px;
 }
 
 .avatar {
   width: 120px;
   height: 120px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #ffeaa7 0%, #fdcb6e 100%);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 48px;
   flex-shrink: 0;
-  color: white;
-  font-weight: 600;
+  color: #2d3436;
+  font-weight: 700;
   overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .avatar img {
@@ -36,81 +34,159 @@
 .initials {
   font-size: 48px;
   font-weight: 700;
+  color: #2d3436;
 }
 
-.details h1 {
-  font-size: 28px;
+.userInfo {
+  text-align: center;
+  width: 100%;
+}
+
+.name {
+  font-size: 24px;
   font-weight: 700;
-  margin: 0 0 4px 0;
-  color: #222;
+  margin: 0 0 8px 0;
+  color: #1a1a1a;
 }
 
-.details p {
-  font-size: 14px;
-  color: #666;
-  margin: 0 0 12px 0;
+.emailRow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.email {
+  font-size: 16px;
+  color: #6b7280;
+  margin: 0;
 }
 
 .editBtn {
-  padding: 8px 16px;
-  background: #d8ddff;
-  color: #0222d7;
-  border: 1px solid #0222d7;
-  border-radius: 8px;
+  background: transparent;
+  border: none;
   cursor: pointer;
-  font-size: 13px;
-  font-weight: 600;
-  transition: all 0.3s ease;
-  display: inline-flex;
+  padding: 4px;
+  display: flex;
   align-items: center;
-  gap: 6px;
-  font-family: inherit;
+  justify-content: center;
+  transition: all 0.2s ease;
+  border-radius: 4px;
 }
 
 .editBtn:hover {
-  background: #0222d7;
-  color: white;
+  background: #f5f5ff;
 }
 
 @media (max-width: 1024px) {
   .header {
-    grid-template-columns: 1fr;
-    gap: 20px;
+    padding: 24px 20px 20px;
   }
 
   .avatar {
     width: 100px;
     height: 100px;
+  }
+
+  .initials {
     font-size: 40px;
   }
 
-  .details h1 {
+  .name {
+    font-size: 22px;
+  }
+}
+
+/* Tablet enhancements */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .header {
+    padding: 28px 28px 24px;
+  }
+
+  .avatarContainer {
+    margin-bottom: 20px;
+  }
+
+  .avatar {
+    width: 120px;
+    height: 120px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  }
+
+  .initials {
+    font-size: 48px;
+  }
+
+  .name {
     font-size: 24px;
+    margin-bottom: 10px;
+  }
+
+  .email {
+    font-size: 16px;
   }
 }
 
 @media (max-width: 768px) {
   .header {
-    grid-template-columns: 1fr;
-    gap: 16px;
+    padding: 20px 16px 16px;
   }
 
   .avatar {
-    width: 80px;
-    height: 80px;
-    font-size: 32px;
+    width: 90px;
+    height: 90px;
   }
 
-  .details h1 {
+  .initials {
+    font-size: 36px;
+  }
+
+  .name {
     font-size: 20px;
   }
 
-  .details p {
-    font-size: 13px;
+  .email {
+    font-size: 16px;
+  }
+}
+
+/* Desktop enhancements */
+@media (min-width: 1024px) {
+  .header {
+    padding: 0;
+    align-items: flex-start;
   }
 
-  .editBtn {
-    font-size: 12px;
-    padding: 6px 12px;
+  .avatarContainer {
+    margin-bottom: 24px;
+    align-self: center;
+  }
+
+  .avatar {
+    width: 140px;
+    height: 140px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+  }
+
+  .initials {
+    font-size: 56px;
+  }
+
+  .userInfo {
+    text-align: center;
+  }
+
+  .name {
+    font-size: 26px;
+    margin-bottom: 12px;
+  }
+
+  .email {
+    font-size: 16px;
+  }
+
+  .editBtn svg {
+    width: 20px;
+    height: 20px;
   }
 }

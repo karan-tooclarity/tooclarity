@@ -1,21 +1,49 @@
-.header {
-  display: grid;
-  grid-template-columns: auto 1fr auto;
-  gap: 16px;
-  margin-bottom: 32px;
-  align-items: center;
-  padding: 16px 0;
+.headerContainer {
+  position: relative;
 }
 
-.greetingSection {
+.header {
   display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 20px 0;
+  background: transparent;
+  border-radius: 24px;
+  padding: 20px 24px;
+}
+
+.leftSection {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 1;
+  position: relative;
+  min-width: 0;
+  max-width: 400px;
+}
+
+.centerSection {
+  flex: 1;
+  max-width: 600px;
+  display: flex;
+  justify-content: center;
   align-items: center;
   gap: 12px;
 }
 
+.rightSection {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+
+
 .avatar {
-  width: 48px;
-  height: 48px;
+  width: 56px;
+  height: 56px;
   border-radius: 50%;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   display: flex;
@@ -23,11 +51,13 @@
   justify-content: center;
   color: white;
   font-weight: 600;
-  font-size: 18px;
+  font-size: 20px;
   overflow: hidden;
-  border: none;
+  border: 3px solid white;
   cursor: pointer;
   padding: 0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  flex-shrink: 0;
 }
 
 .avatar:focus-visible {
@@ -41,59 +71,89 @@
   object-fit: cover;
 }
 
-.greetingText h2 {
-  font-size: 18px;
-  font-weight: 600;
-  color: #222;
-  margin: 0;
+.greetingText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
 }
 
-.greetingText p {
-  font-size: 14px;
+.greeting {
+  font-size: 16px;
+  font-weight: 500;
   color: #666;
   margin: 0;
+  line-height: 1.2;
 }
 
-.searchFilterGroup {
-  display: flex;
-  gap: 12px;
-  align-items: center;
+.userName {
+  font-size: 20px;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin: 0;
+  line-height: 1.2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.searchWrapper {
+  position: relative;
+  width: 100%;
+  max-width: 500px;
+}
+
+.searchIcon {
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 20px;
+  height: 20px;
+  color: #999;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  pointer-events: none;
 }
 
 .searchBar {
-  flex: 1;
-  padding: 12px 16px;
-  border: 1px solid #e5e5e5;
-  border-radius: 12px;
-  font-size: 14px;
+  width: 100%;
+  padding: 14px 16px 14px 48px;
+  border: none;
+  border-radius: 30px;
+  font-size: 15px;
   background: white;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   transition: all 0.3s ease;
-  min-width: 200px;
   font-family: inherit;
+  color: #333;
+}
+
+.searchBar::placeholder {
+  color: #999;
+  font-weight: 400;
 }
 
 .searchBar:focus {
   outline: none;
-  border-color: #0222d7;
-  box-shadow: 0 0 0 3px rgba(2, 34, 215, 0.1);
+  box-shadow: 0 4px 12px rgba(2, 34, 215, 0.15);
 }
 
 .filterBtn,
 .notificationBtn,
 .wishlistBtn {
-  width: 44px;
-  height: 44px;
-  border-radius: 12px;
+  width: 52px;
+  height: 52px;
+  border-radius: 40px;
   background: white;
-  border: 1px solid #e5e5e5;
+  border: none;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: all 0.3s ease;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-  font-size: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   padding: 0;
   flex-shrink: 0;
 }
@@ -101,42 +161,25 @@
 .filterBtn:hover,
 .notificationBtn:hover,
 .wishlistBtn:hover {
-  background: #d8ddff;
-  border-color: #0222d7;
+  background: #f5f7ff;
+  box-shadow: 0 4px 12px rgba(2, 34, 215, 0.15);
+  transform: translateY(-2px);
 }
 
 .filterBtn:active,
 .notificationBtn:active,
 .wishlistBtn:active {
-  transform: scale(0.95);
+  transform: translateY(0);
 }
 
 .filterIcon,
-.notificationIcon,
-.wishlistIcon {
-  width: 20px;
-  height: 20px;
-  color: #222;
+.notificationIcon {
+  width: 22px;
+  height: 22px;
+  color: #0222d7;
   stroke-linecap: round;
   stroke-linejoin: round;
   transition: color 0.3s ease;
-}
-
-.filterBtn:hover .filterIcon,
-.notificationBtn:hover .notificationIcon,
-.wishlistBtn:hover .wishlistIcon {
-  color: #0222d7;
-}
-
-.notificationBtn::after {
-  content: '';
-  position: absolute;
-  width: 8px;
-  height: 8px;
-  background: #ff6b6b;
-  border-radius: 50%;
-  top: 8px;
-  right: 8px;
 }
 
 .notificationBtn {
@@ -145,59 +188,324 @@
 
 .initialsText {
   font-weight: 700;
-  font-size: 18px;
+  font-size: 20px;
   color: white;
 }
 
-.greeting {
+/* Desktop menu button and dropdown */
+.menuWrapper {
+  position: relative;
+}
+
+.menuBtn {
+  width: 52px;
+  height: 52px;
+  border-radius: 40px;
+  background: white;
+  border: none;
+  cursor: pointer;
+  display: flex; /* shown on mobile, hidden on desktop via media query */
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  padding: 0;
+}
+
+.wishlistBtn {
+  display: none; /* hidden by default, shown on desktop */
+}
+
+.menuBtn:hover {
+  background: #f5f7ff;
+  box-shadow: 0 4px 12px rgba(2, 34, 215, 0.15);
+  transform: translateY(-2px);
+}
+
+.menuDropdown {
+  position: absolute;
+  top: calc(100% + 12px);
+  right: 0;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  padding: 10px;
+  min-width: 220px;
+  z-index: 1000;
+  animation: slideDown 0.2s ease;
+}
+
+.menuItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 12px;
+  background: #f8f9ff;
+  border: 1px solid #e5e8ff;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #1a1a1a;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: left;
+  font-family: inherit;
+}
+
+.menuItem + .menuItem {
+  margin-top: 8px;
+}
+
+.menuItem:hover {
+  background: #e8ebff;
+  border-color: #0222d7;
+  color: #0222d7;
+  transform: translateX(4px);
+}
+
+.menuItemActive {
+  border-color: #0222d7;
+}
+
+.menuIcon svg {
+  display: block;
+}
+
+.menuLabel {
+  line-height: 1;
+}
+
+.wishlistDropdown {
+  position: absolute;
+  top: calc(100% + 12px);
+  right: 0;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  padding: 20px;
+  min-width: 280px;
+  z-index: 1000;
+  animation: slideDown 0.3s ease;
+}
+
+.institutionDropdown {
+  position: absolute;
+  top: calc(100% + 12px);
+  right: 0;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  padding: 20px;
+  min-width: 320px;
+  max-width: 400px;
+  z-index: 1000;
+  animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.dropdownHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #e5e5e5;
+}
+
+.dropdownHeader h3 {
   font-size: 18px;
   font-weight: 600;
-  color: #222;
+  color: #1a1a1a;
   margin: 0;
 }
 
-.userName {
-  font-size: 14px;
+.closeDropdown {
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: #f5f5f5;
+  border-radius: 8px;
+  font-size: 24px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   color: #666;
-  margin: 0;
+  transition: all 0.2s ease;
+}
+
+.closeDropdown:hover {
+  background: #e5e5e5;
+  color: #1a1a1a;
+}
+
+.dropdownContent {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.institutionTypeBtn {
+  padding: 12px 16px;
+  background: #f8f9ff;
+  border: 1px solid #e5e8ff;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 500;
+  color: #1a1a1a;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: left;
+  font-family: inherit;
+}
+
+.institutionTypeBtn:hover {
+  background: #e8ebff;
+  border-color: #0222d7;
+  color: #0222d7;
+  transform: translateX(4px);
+}
+
+.dropdownFooter {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #e5e5e5;
+}
+
+.saveDropdownBtn {
+  width: 100%;
+  padding: 12px 16px;
+  background: linear-gradient(135deg, #0222d7 0%, #4c6ef5 100%);
+  border: none;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 600;
+  color: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-family: inherit;
+  box-shadow: 0 4px 12px rgba(2, 34, 215, 0.2);
+}
+
+.saveDropdownBtn:hover {
+  background: linear-gradient(135deg, #0222d7 0%, #3b5bdb 100%);
+  box-shadow: 0 6px 16px rgba(2, 34, 215, 0.3);
+  transform: translateY(-2px);
+}
+
+.saveDropdownBtn:active {
+  transform: translateY(0);
 }
 
 @media (max-width: 1024px) {
   .header {
-    grid-template-columns: 1fr;
-    gap: 12px;
+    flex-wrap: wrap;
+    gap: 16px;
   }
 
-  .searchFilterGroup {
+  .centerSection {
+    order: 3;
     width: 100%;
+    max-width: 100%;
   }
 
-  .searchBar {
-    width: 100%;
+  .rightSection {
+    order: 2;
+  }
+}
+
+@media (min-width: 1024px) {
+  .menuBtn {
+    display: none; /* hide on desktop */
+  }
+  .wishlistBtn {
+    display: flex; /* show wishlist on desktop */
   }
 }
 
 @media (max-width: 768px) {
   .header {
-    grid-template-columns: 1fr;
-    gap: 12px;
-    margin-bottom: 20px;
+    padding: 30px 20px 10px 20px;
+    border-radius: 20px;
   }
 
-  .searchFilterGroup {
-    width: 100%;
-    flex-direction: column;
+  .leftSection {
+    max-width: 350px;
   }
 
-  .searchBar {
-    width: 100%;
+  .avatar {
+    width: 48px;
+    height: 48px;
+    font-size: 18px;
   }
 
-  .greetingText h2 {
+  .greeting {
+    font-size: 14px;
+  }
+
+  .userName {
+    font-size: 18px;
+  }
+
+  .filterBtn,
+  .notificationBtn {
+    width: 44px;
+    height: 44px;
+  }
+
+  .filterIcon,
+  .notificationIcon {
+    width: 20px;
+    height: 20px;
+  }
+
+  .wishlistDropdown,
+  .institutionDropdown {
+    left: 0;
+    right: 0;
+    min-width: auto;
+  }
+}
+
+@media (max-width: 480px) {
+  .leftSection {
+    max-width: 280px;
+  }
+
+  .avatar {
+    width: 44px;
+    height: 44px;
+  }
+
+  .greeting {
+    font-size: 13px;
+  }
+
+  .userName {
     font-size: 16px;
   }
 
-  .greetingText p {
-    font-size: 13px;
+  .filterBtn,
+  .notificationBtn {
+    width: 40px;
+    height: 40px;
+  }
+
+  .filterIcon,
+  .notificationIcon {
+    width: 18px;
+    height: 18px;
   }
 }

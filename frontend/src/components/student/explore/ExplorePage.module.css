@@ -1,0 +1,272 @@
+.pageContainer {
+  min-height: 100vh;
+  background-image: linear-gradient(#dbe0ff, #ffffff, #ffffff, #ffffff);
+  padding-bottom: 80px;
+}
+
+.content {
+  padding-left: 10px;
+}
+
+.loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 60px 20px;
+  font-size: 16px;
+  color: #6b7280;
+}
+
+.categorySection {
+  margin-bottom: 32px;
+}
+
+.categoryHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding-right: 10px;
+}
+
+.categoryTitle {
+  font-size: 18px;
+  font-weight: 500;
+  color: #1a1a1a;
+  margin: 0;
+}
+
+.seeAllBtn {
+  background: transparent;
+  border: none;
+  color: #3553FD;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 4px 8px;
+  transition: opacity 0.2s ease;
+}
+
+.seeAllBtn:hover {
+  opacity: 0.8;
+}
+
+.institutionsGrid {
+  display: flex;
+  flex-direction: row;
+  overflow: hidden;
+}
+
+.institutionCard {
+  background-color: transparent;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-height: 140px;
+  justify-content: center;
+  width: 113px;
+  flex-shrink: 0;
+}
+
+.institutionCard:hover {
+  transform: translateY(-2px);
+}
+
+.institutionLogo {
+  width: 113px;
+  height: 110px;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border-radius: 8px;
+}
+
+.institutionLogo img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.placeholderLogo {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 32px;
+  font-weight: 700;
+  border-radius: 8px;
+}
+
+.institutionInfo {
+  width: 113px;
+  text-align: left;
+}
+
+.institutionName {
+  font-size: 16px;
+  font-weight: 500;
+  color: #1a1a1a;
+  margin: 0 0 4px 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 113px;
+}
+
+.institutionLocation {
+  font-size: 12px;
+  color: #6b7280;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+
+  .categorySection {
+    margin-bottom: 24px;
+  }
+
+  .institutionsGrid {
+    gap: 10px;
+  }
+
+  .institutionCard {
+    min-height: 120px;
+  }
+
+  .institutionLogo {
+    width: 64px;
+    height: 64px;
+  }
+
+  .placeholderLogo {
+    font-size: 24px;
+  }
+
+  .institutionName {
+    font-size: 16px;
+  }
+
+  .institutionLocation {
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .institutionLogo {
+    width: 100%;
+    height: 100%;
+  }
+
+  .institutionName {
+    font-size: 16px;
+  }
+
+  .institutionLocation {
+    font-size: 12px;
+  }
+}
+
+/* Tablet: center content and allow wrapping with larger cards */
+@media (min-width: 768px) {
+  .content {
+    padding-left: 24px;
+    padding-right: 24px;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+
+  .categorySection {
+    margin-bottom: 36px;
+  }
+
+  .categoryHeader {
+    padding-right: 0;
+  }
+
+  .institutionsGrid {
+    flex-wrap: wrap;
+    gap: 16px;
+    overflow: visible;
+  }
+
+  .institutionCard {
+    width: 160px;
+    min-height: 180px;
+  }
+
+  .institutionLogo {
+    width: 160px;
+    height: 140px;
+  }
+
+  .institutionInfo {
+    width: 160px;
+  }
+
+  .institutionName {
+    font-size: 18px;
+    max-width: 160px;
+  }
+
+  .institutionLocation {
+    font-size: 13px;
+  }
+}
+
+/* Desktop: expand grid further and increase spacing */
+@media (min-width: 1024px) {
+  .content {
+    max-width: 1200px;
+    padding-left: 32px;
+    padding-right: 32px;
+    margin: 0px;
+  }
+
+  .categoryTitle{
+    font-size: 20px;
+  }
+
+  .categorySection {
+    margin-bottom: 40px;
+  }
+
+  .institutionsGrid {
+    gap: 20px;
+  }
+
+  .institutionCard {
+    width: 180px;
+    min-height: 200px;
+  }
+
+  .institutionLogo {
+    width: 180px;
+    height: 160px;
+  }
+
+  .institutionInfo {
+    width: 180px;
+  }
+
+  .institutionName {
+    font-size: 18px;
+    max-width: 180px;
+  }
+
+  .institutionLocation {
+    font-size: 14px;
+  }
+}

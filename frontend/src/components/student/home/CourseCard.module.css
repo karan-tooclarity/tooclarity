@@ -1,256 +1,361 @@
+/* Card Container */
 .card {
-  background: white;
+  background: transparent;
   border-radius: 16px;
-  overflow: hidden;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  overflow: visible;
   transition: all 0.3s ease;
   display: flex;
   flex-direction: column;
   height: 100%;
+  /*font-family: "Montserrat";*/
 }
 
 .card:hover {
-  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.15);
-  transform: translateY(-4px);
+  transform: translateY(-2px);
 }
 
 /* Image Container */
 .imageContainer {
   width: 100%;
-  height: 200px;
+  height: 344px;
   position: relative;
   overflow: hidden;
-  background: linear-gradient(135deg, #f5f7fa 0%, #d8ddff 100%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  border-radius: 8.76px;
+  flex-shrink: 0;
+  margin-top: 20px;
 }
 
-.imagePlaceholder {
+.courseImage {
   width: 100%;
   height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: linear-gradient(135deg, #f5f7fa 0%, #d8ddff 100%);
-  text-align: center;
+  object-fit: cover;
+  display: block;
 }
 
-.placeholderText {
-  color: #999;
-  font-size: 14px;
-  font-weight: 500;
-}
-
-/* Badge - Course Level */
-.badge {
+/* Badge Container - Holds both institution badge and bookmark button */
+.badgeContainer {
   position: absolute;
-  top: 12px;
-  left: 12px;
-  background: rgba(255, 255, 255, 0.95);
-  padding: 6px 12px;
-  border-radius: 8px;
-  font-size: 12px;
-  font-weight: 600;
-  color: #0222d7;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-/* Wishlist Button with SVG Icon */
-.wishlistBtn {
-  position: absolute;
-  top: 12px;
-  right: 12px;
-  width: 36px;
-  height: 36px;
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.95);
-  border: none;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.3s ease;
-  padding: 0;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.wishlistBtn:hover {
-  background: white;
-  transform: scale(1.1);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-}
-
-.wishlistBtn:active {
-  transform: scale(0.95);
-}
-
-.wishlistIcon {
-  width: 20px;
-  height: 20px;
-  color: #999;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  transition: color 0.3s ease;
-}
-
-.wishlistBtn.active .wishlistIcon {
-  color: #ff6b6b;
-  fill: #ff6b6b;
-}
-
-.wishlistBtn:hover .wishlistIcon {
-  color: #ff6b6b;
-}
-
-/* Content Section */
-.content {
-  padding: 16px;
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-}
-
-/* Institution Name */
-.institution {
-  font-size: 12px;
-  font-weight: 600;
-  color: #0222d7;
-  margin: 0 0 6px 0;
-  letter-spacing: 0.5px;
-  text-transform: uppercase;
-}
-
-/* Course Title */
-.title {
-  font-size: 16px;
-  font-weight: 700;
-  color: #222;
-  margin: 0 0 10px 0;
-  line-height: 1.4;
-}
-
-/* Rating Section */
-.ratingSection {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 8px;
-}
-
-.rating {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 13px;
-  color: #666;
-}
-
-.stars {
-  color: #ffc107;
-  font-size: 13px;
-}
-
-.ratingValue {
-  font-weight: 700;
-  color: #222;
-  font-size: 13px;
-}
-
-.reviews {
-  font-size: 12px;
-  color: #999;
-}
-
-/* Student Count */
-.students {
-  font-size: 13px;
-  color: #666;
-  margin: 4px 0 8px 0;
-}
-
-/* Metadata - Course Mode Tag */
-.metadata {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  margin: 8px 0 12px 0;
-}
-
-.modeTag {
-  display: inline-block;
-  padding: 4px 10px;
-  background: #f0f0f0;
-  color: #666;
-  font-size: 12px;
-  font-weight: 500;
-  border-radius: 6px;
-}
-
-/* Footer - Price and Button */
-.footer {
+  bottom: 0;
+  left: 0;
+  right: 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  margin-top: auto;
-  padding-top: 12px;
-  border-top: 1px solid #e5e5e5;
+  padding: 12px 16px;
+  background: rgba(204, 202, 202, 0.15);
+  backdrop-filter: blur(2px);
+  border-bottom-left-radius: 14px;
+  border-bottom-right-radius: 14px;
 }
 
-.priceSection {
+/* Institution Badge - Transparent with blur */
+.institutionBadge {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+}
+
+.logoContainer {
+  width: 70px;
+  height: 70px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 8px;
+}
+
+.logo {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: 6px;
+}
+
+.institutionInfo {
   display: flex;
   flex-direction: column;
-}
-
-.price {
-  font-size: 18px;
-  font-weight: 700;
-  color: #0222d7;
-}
-
-.enrollBtn {
+  gap: 2px;
+  min-width: 0;
   flex: 1;
-  padding: 10px 16px;
-  background: #0222d7;
-  color: white;
-  border: none;
-  border-radius: 10px;
+}
+
+.institutionName {
+  font-size: 16px;
+  font-weight: 700;
+  color: #FFFFFF;
+  margin: 0;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.locationRow {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.locationIcon {
+  width: 12px;
+  height: 12px;
+  color: #FFFFFF;
+  flex-shrink: 0;
+  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.2));
+}
+
+.locationText {
   font-size: 13px;
-  font-weight: 600;
+  color: #FFFFFF;
+  font-weight: 400;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+/* Bookmark Button - Right side of badge */
+.bookmarkBtn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: none;
   cursor: pointer;
-  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  flex-shrink: 0;
+}
+
+.bookmarkBtn:hover {
+  transform: scale(1.1);
+  background: #FFFFFF;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.bookmarkBtn:active {
+  transform: scale(0.95);
+}
+
+.bookmarkIcon {
+  width: 20px;
+  height: 20px;
+  color: #333333;
+  transition: all 0.2s ease;
+}
+
+.bookmarkBtn.active .bookmarkIcon {
+  color: #E91B1B;
+  fill: #E91B1B;
+}
+
+.bookmarkBtn:hover .bookmarkIcon {
+  color: #060B13;
+}
+
+/* Content Section - Transparent Background */
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+}
+
+/* Description */
+.description {
+  color: #333333;
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  font-weight: 400;
+  font-style: Regular;
+  font-size: 14px;
+  line-height: 20px;
+  letter-spacing: 0px;
+}
+
+/* Info Row - Fees and Duration */
+.infoRow {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  font-weight: 500;
+  margin-top: auto;
+}
+
+.infoItem {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.infoLabel {
+  font-size: 14px;
+  font-weight: 400;
+  color: #000000;
+  white-space: nowrap;
+}
+
+.infoValue {
+  font-size: 14px;
+  color: #000000;
+  white-space: nowrap;
+}
+
+/* View Details Button */
+.viewDetailsBtn {
+  width: 100%;
+  height: 50px;
+  padding: 16px 24px 16px 24px;
+  background: #0052FF;
+  color: #FFFFFF;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
   font-family: inherit;
+  margin-top: 4px;
+  gap: 10px;
+  font-weight: 500;
+  font-style: Medium;
+  font-size: 18px;
+  line-height: 18px;
+  letter-spacing: 0%;
+  text-align: center;
 }
 
-.enrollBtn:hover {
-  background: #0219c0;
-  transform: translateY(-2px);
+.viewDetailsBtn:hover {
+  background: #0041CC;
+  transform: translateY(-1px);
 }
 
-.enrollBtn:active {
+.viewDetailsBtn:active {
   transform: translateY(0);
 }
 
+/* Responsive Design */
 @media (max-width: 768px) {
-  .card {
-    border-radius: 12px;
-  }
-
   .imageContainer {
-    height: 180px;
+    height: 240px;
   }
 
-  .content {
-    padding: 12px;
+  .badgeContainer {
+    padding: 10px 12px;
   }
 
-  .title {
+  .logoContainer {
+    width: 56px;
+    height: 56px;
+  }
+
+  .institutionName {
     font-size: 15px;
   }
 
-  .viewDetailsBtn {
-    padding: 10px 12px;
+  .locationText {
+    font-size: 12px;
+  }
+
+  .bookmarkBtn {
+    width: 36px;
+    height: 36px;
+  }
+
+  .bookmarkIcon {
+    width: 18px;
+    height: 18px;
+  }
+
+  .description {
+    font-size: 14px;
+    margin-top: 10px;
+  }
+
+  .infoLabel,
+  .infoValue {
     font-size: 13px;
+  }
+
+  .viewDetailsBtn {
+    padding: 12px 18px;
+    font-size: 15px;
+  }
+}
+
+@media (max-width: 480px) {
+  .imageContainer {
+    height: 220px;
+  }
+
+  .badgeContainer {
+    padding: 8px 10px;
+  }
+
+  .institutionBadge {
+    gap: 8px;
+  }
+
+  .logoContainer {
+    width: 50px;
+    height: 50px;
+  }
+
+  .institutionName {
+    font-size: 14px;
+  }
+
+  .locationIcon {
+    width: 11px;
+    height: 11px;
+  }
+
+  .locationText {
+    font-size: 11px;
+  }
+
+  .bookmarkBtn {
+    width: 34px;
+    height: 34px;
+  }
+
+  .bookmarkIcon {
+    width: 17px;
+    height: 17px;
+  }
+
+  .content {
+    gap: 8px;
+  }
+
+  .description {
+    font-size: 14px;
+  }
+
+  .infoRow {
+    gap: 20px;
+  }
+
+  .infoLabel,
+  .infoValue {
+    font-size: 14px;
+  }
+
+  .viewDetailsBtn {
+    padding: 12px 16px;
+    font-size: 18px;
   }
 }
