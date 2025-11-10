@@ -38,6 +38,7 @@ const FAQ = () => {
     },
   ];
 
+
   return (
     <div className="max-w-4xl mx-auto py-16 px-4">
       <div className="text-center mb-12">
