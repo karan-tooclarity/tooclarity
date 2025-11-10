@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useState, useEffect } from "react";
+import React, { useMemo, useState, useEffect, useCallback } from "react";
 import styles from "./ProfilePage.module.css";
 import ProfileHeader from "./ProfileHeader";
 import ProfileStats from "./ProfileStats";
@@ -8,6 +8,7 @@ import SettingsSection from "./SettingsSection";
 import FooterNav from "../home/FooterNav";
 import { useAuth } from "@/lib/auth-context";
 import { useRouter } from "next/navigation";
+import { toast } from "react-toastify";
 
 // Define user metrics type for strong typing
 interface UserMetrics {
@@ -20,10 +21,12 @@ interface User {
   name?: string;
   email?: string;
   metrics?: UserMetrics;
+  profilePicture?: string;
 }
 
 const ProfilePage: React.FC = () => {
   const { user } = useAuth() as { user: User | null };
+  const { logout } = useAuth();
   const router = useRouter();
 
   // Wishlist count comes from localStorage key 'wishlistedCourses'
@@ -36,6 +39,30 @@ const ProfilePage: React.FC = () => {
       return user?.metrics?.wishlistCount ?? "--";
     }
   });
+
+  // const handleLogout = async () => {
+  //   try {
+  //     await logout();
+  //     localStorage.removeItem("auth_token");
+  //     toast.success("Logged out successfully!");
+  //     router.push("/student/login");
+  //   } catch (err) {
+  //     console.error("Logout failed:", err);
+  //     toast.error("Logout failed. Please try again.");
+  //   }
+  // };
+
+  const handleLogout = useCallback(async () => {
+    try {
+      await logout();
+      localStorage.removeItem("auth_token");
+      toast.success("Logged out successfully!");
+      router.push("/student/login");
+    } catch (err) {
+      console.error("Logout failed:", err);
+      toast.error("Logout failed. Please try again.");
+    }
+  }, [logout, router]);
 
   useEffect(() => {
     const read = () => {
@@ -155,12 +182,11 @@ const ProfilePage: React.FC = () => {
         label: "Logout",
         onClick: () => {
           // Handle logout
-          localStorage.clear();
-          router.push('/student/login');
+          handleLogout();
         },
       },
     ],
-    [router]
+    [router, handleLogout]
   );
 
   return (
@@ -177,6 +203,7 @@ const ProfilePage: React.FC = () => {
         <div className={styles.contentWrapper}>
           <ProfileHeader
             name={user?.name || "------"}
+            avatar={user?.profilePicture}
             email={user?.email || "----@gmail.com"}
           />
           <div className={styles.rightColumn}>
@@ -193,3 +220,4 @@ const ProfilePage: React.FC = () => {
 };
 
 export default ProfilePage;
+

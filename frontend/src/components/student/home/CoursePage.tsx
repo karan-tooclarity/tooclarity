@@ -13,7 +13,7 @@ interface CoursePageProps {
     description?: string;
     aboutCourse?: string;
     eligibility?: string;
-    price: number;
+    price: string;
     duration?: string;
     mode?: string;
     timings?: string;
@@ -42,7 +42,7 @@ export const CoursePage: React.FC<CoursePageProps> = ({
   onBookDemo,
 }) => {
   const [showMore, setShowMore] = useState(false);
-  const allDays = ['Mon', 'Tues', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  const allDays = ['Mon', 'Tues', 'Wed', 'Thur', 'Fri', 'Sat', 'Sun'];
   const operationalDays = course.operationalDays || ['Mon', 'Tues', 'Wed', 'Thu', 'Fri'];
 
   const handleShowMore = () => {
@@ -121,7 +121,7 @@ export const CoursePage: React.FC<CoursePageProps> = ({
         <div className={styles.infoGrid} style={{ minWidth: 0 }}>
           <div className={styles.infoBoxBlue} style={{ minWidth: 0 }}>
             <span className={styles.infoLabel} style={{ minWidth: 0 }}>Total Fees: </span>
-            <span className={styles.infoValue} style={{ minWidth: 0 }}>₹ {(course.price / 100000).toFixed(2)} L</span>
+            <span className={styles.infoValue} style={{ minWidth: 0 }}>₹ {(parseInt(course.price) / 100000).toFixed(2)} L</span>
           </div>
           {course.duration && (
             <div className={styles.infoBox} style={{ minWidth: 0 }}>
@@ -287,7 +287,7 @@ export const CoursePage: React.FC<CoursePageProps> = ({
 
             <div className={styles.featureItem} style={{ minWidth: 0 }}>
               <div className={styles.featureIcon} style={{ minWidth: 0, position: 'relative' }}>
-                <sup className={styles.additionalBottomSup} >Yes</sup>
+                <sup className={styles.additionalBottomSup} >No</sup>
                 <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg" xmlnsXlink="http://www.w3.org/1999/xlink">
                 <rect width="28" height="28" fill="url(#pattern0_228_2762)"/>
                 <defs>
@@ -304,7 +304,7 @@ export const CoursePage: React.FC<CoursePageProps> = ({
         </div>
 
         {/* Advertisement Section */}
-        <div className={styles.adSection} style={{ minWidth: 0 }}>
+        {/* <div className={styles.adSection} style={{ minWidth: 0 }}>
           <div className={styles.adContent} style={{ minWidth: 0 }}>
             <h3 style={{ minWidth: 0 }}>Galaxy F16 5G</h3>
             <p style={{ minWidth: 0 }}>India&apos;s<br />Segment&apos;s slimmest phone with aAMOLED</p>
@@ -312,7 +312,7 @@ export const CoursePage: React.FC<CoursePageProps> = ({
           <div className={styles.adImage} style={{ minWidth: 0 }}>
             <span style={{ minWidth: 0 }}>Phone Image</span>
           </div>
-        </div>
+        </div> */}
 
         {/* Show More Button */}
         <button className={styles.showMoreBtn} onClick={handleShowMore} style={{ minWidth: 0 }}>

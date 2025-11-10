@@ -13,7 +13,7 @@ interface CoursePageProps {
     description?: string;
     aboutCourse?: string;
     eligibility?: string;
-    price: number;
+    price: string;
     duration?: string;
     mode?: string;
     timings?: string;
@@ -28,6 +28,12 @@ interface CoursePageProps {
       extraCare?: boolean;
       mealsProvided?: boolean;
       playground?: boolean;
+      resumeBuilding?: boolean;
+      linkedinOptimization?: boolean;
+      exclusiveJobPortal?: boolean;
+      certification?: boolean;
+      placementDrives?: boolean;
+      mockInterviews?: boolean;
     };
   };
   onBack?: () => void;
@@ -43,8 +49,8 @@ export const CoachingCenter: React.FC<CoursePageProps> = ({
   onBookDemo,
 }) => {
   const [showMore, setShowMore] = useState(false);
-  const allDays = ['Mon', 'Tues', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-  const operationalDays = course.operationalDays || ['Mon', 'Tues', 'Wed', 'Thu', 'Fri'];
+  const allDays = ['Mon', 'Tues', 'Wed', 'Thur', 'Fri', 'Sat', 'Sun'];
+  const operationalDays = course.operationalDays || ['Mon', 'Tues', 'Wed', 'Thur', 'Fri'];
 
   const handleShowMore = () => {
     setShowMore(!showMore);
@@ -131,7 +137,7 @@ export const CoachingCenter: React.FC<CoursePageProps> = ({
         <div className={styles.infoGrid} style={{ minWidth: 0 }}>
           <div className={styles.infoBoxBlue} style={{ minWidth: 0 }}>
             <span className={styles.infoLabel} style={{ minWidth: 0 }}>Total Fees: </span>
-            <span className={styles.infoValue} style={{ minWidth: 0 }}>₹ {(course.price / 100000).toFixed(2)} L</span>
+            <span className={styles.infoValue} style={{ minWidth: 0 }}>₹ {(parseInt(course.price) / 100000).toFixed(2)} L</span>
           </div>
           {course.duration && (
             <div className={styles.infoBox} style={{ minWidth: 0 }}>
@@ -217,7 +223,7 @@ export const CoachingCenter: React.FC<CoursePageProps> = ({
           <div className={styles.featuresGrid} style={{ minWidth: 0 }}>
             <div className={styles.featureItem} style={{ minWidth: 0 }}>
               <div className={styles.featureIcon} style={{ minWidth: 0, position: 'relative' }}>
-                <sup className={styles.additionalBottomSup} >Yes</sup>
+                <sup className={styles.additionalBottomSup} >{course.features?.resumeBuilding? "Yes" : "No"}</sup>
                 <svg width="27" height="27" viewBox="0 0 27 27" fill="none" xmlns="http://www.w3.org/2000/svg" xmlnsXlink="http://www.w3.org/1999/xlink">
                 <rect width="27" height="27" fill="url(#pattern0_2450_3972)"/>
                 <defs>
@@ -233,7 +239,7 @@ export const CoachingCenter: React.FC<CoursePageProps> = ({
 
             <div className={styles.featureItem} style={{ minWidth: 0 }}>
               <div className={styles.featureIcon} style={{ minWidth: 0, position: 'relative' }}>
-                <sup className={styles.additionalBottomSup} >Yes</sup>
+                <sup className={styles.additionalBottomSup} >{course.features?.linkedinOptimization? "Yes" : "No"}</sup>
                 <svg width="27" height="27" viewBox="0 0 27 27" fill="none" xmlns="http://www.w3.org/2000/svg" xmlnsXlink="http://www.w3.org/1999/xlink">
                 <rect width="27" height="27" fill="url(#pattern0_2450_3984)"/>
                 <defs>
@@ -249,7 +255,7 @@ export const CoachingCenter: React.FC<CoursePageProps> = ({
 
             <div className={styles.featureItem} style={{ minWidth: 0 }}>
               <div className={styles.featureIcon} style={{ minWidth: 0, position: 'relative' }}>
-                <sup className={styles.additionalBottomSup} >Yes</sup>
+                <sup className={styles.additionalBottomSup} >{course.features?.mockInterviews? "Yes" : "No"}</sup>
                 <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg" xmlnsXlink="http://www.w3.org/1999/xlink">
                 <rect width="28" height="28" fill="url(#pattern0_2450_3995)"/>
                 <defs>
@@ -265,7 +271,7 @@ export const CoachingCenter: React.FC<CoursePageProps> = ({
 
             <div className={styles.featureItem} style={{ minWidth: 0 }}>
               <div className={styles.featureIcon} style={{ minWidth: 0, position: 'relative' }}>
-                <sup className={styles.additionalBottomSup} >Yes</sup>
+                <sup className={styles.additionalBottomSup} >{course.features?.exclusiveJobPortal? "Yes" : "No"}</sup>
                 <svg width="34" height="25" viewBox="0 0 34 25" fill="none" xmlns="http://www.w3.org/2000/svg" xmlnsXlink="http://www.w3.org/1999/xlink">
                 <rect width="34" height="25" fill="url(#pattern0_2450_4006)"/>
                 <defs>
@@ -281,7 +287,7 @@ export const CoachingCenter: React.FC<CoursePageProps> = ({
 
             <div className={styles.featureItem} style={{ minWidth: 0 }}>
               <div className={styles.featureIcon} style={{ minWidth: 0, position: 'relative' }}>
-                <sup className={styles.additionalBottomSup} >Yes</sup>
+                <sup className={styles.additionalBottomSup} >{course.features?.placementDrives? "Yes": "No"}</sup>
                 <svg width="26" height="29" viewBox="0 0 26 29" fill="none" xmlns="http://www.w3.org/2000/svg" xmlnsXlink="http://www.w3.org/1999/xlink">
                 <rect width="26" height="29" fill="url(#pattern0_2450_4019)"/>
                 <defs>
@@ -297,7 +303,7 @@ export const CoachingCenter: React.FC<CoursePageProps> = ({
 
             <div className={styles.featureItem} style={{ minWidth: 0 }}>
               <div className={styles.featureIcon} style={{ minWidth: 0, position: 'relative' }}>
-                <sup className={styles.additionalBottomSupNo} >Yes</sup>
+                <sup className={styles.additionalBottomSupNo} >{course.features?.certification? "Yes" : "No"}</sup>
                 <svg width="25" height="30" viewBox="0 0 25 30" fill="none" xmlns="http://www.w3.org/2000/svg" xmlnsXlink="http://www.w3.org/1999/xlink">
                 <rect width="25" height="30" fill="url(#pattern0_2450_4031)"/>
                 <defs>
@@ -316,7 +322,7 @@ export const CoachingCenter: React.FC<CoursePageProps> = ({
 
 
         {/* Advertisement Section */}
-        <div className={styles.adSection} style={{ minWidth: 0 }}>
+        {/* <div className={styles.adSection} style={{ minWidth: 0 }}>
           <div className={styles.adContent} style={{ minWidth: 0 }}>
             <h3 style={{ minWidth: 0 }}>Galaxy F16 5G</h3>
             <p style={{ minWidth: 0 }}>India&apos;s<br />Segment&apos;s slimmest phone with aAMOLED</p>
@@ -324,7 +330,7 @@ export const CoachingCenter: React.FC<CoursePageProps> = ({
           <div className={styles.adImage} style={{ minWidth: 0 }}>
             <span style={{ minWidth: 0 }}>Phone Image</span>
           </div>
-        </div>
+        </div> */}
 
         {/* Show More Button */}
         <button className={styles.showMoreBtn} onClick={handleShowMore} style={{ minWidth: 0 }}>

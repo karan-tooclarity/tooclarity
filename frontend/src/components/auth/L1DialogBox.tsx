@@ -316,162 +316,6 @@ export default function L1DialogBox({
     setErrors((prev) => ({ ...prev, logo: undefined }));
   };
 
-  // const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
-  //   e.preventDefault();
-  //   setSubmitted(true);
-  //   setIsLoading(true);
-
-  //   try {
-  //     let logoUrl = formData.logoUrl;
-
-  //     // ✅ Get the most recently saved institution (for comparison)
-  //     const institutions = await getAllInstitutionsFromDB();
-  //     const latest =
-  //       institutions && institutions.length > 0
-  //         ? institutions.sort(
-  //             (a, b) => (b.createdAt || 0) - (a.createdAt || 0)
-  //           )[0]
-  //         : null;
-
-  //     const latestLogoUrl = latest?.logoUrl || "";
-  //     const latestLogoPreview = latest?.logoPreviewUrl || "";
-
-  //     console.log("🔍 Latest saved logo:", latestLogoUrl);
-  //     console.log("🔍 Latest saved preview:", latestLogoPreview);
-  //     console.log("🆕 Current preview:", formData.logoPreviewUrl);
-
-  //     // ✅ 1) Check if logo changed before uploading
-  //     const isLogoChanged =
-  //       formData.logo &&
-  //       formData.logo instanceof File &&
-  //       formData.logoPreviewUrl !== latestLogoPreview;
-
-  //     if (isLogoChanged && formData.logo instanceof File) {
-  //       try {
-  //         console.log("⬆️ Uploading new logo to AWS S3...");
-
-  //         // 🧠 Support both single & multiple files
-  //         const uploadResult = await uploadToS3(formData.logo);
-
-  //         if (Array.isArray(uploadResult)) {
-  //           const first = uploadResult[0];
-  //           if (!first?.success)
-  //             throw new Error(first?.error || "Upload failed");
-  //           logoUrl = first.fileUrl || logoUrl;
-  //         } else {
-  //           if (!uploadResult.success)
-  //             throw new Error(uploadResult.error || "Upload failed");
-  //           logoUrl = uploadResult.fileUrl || logoUrl;
-  //         }
-
-  //         console.log("✅ Logo uploaded successfully:", logoUrl);
-  //       } catch (uploadError) {
-  //         console.error("❌ AWS upload failed:", uploadError);
-  //         setErrors((prev) => ({
-  //           ...prev,
-  //           logo: "Failed to upload logo. Try again.",
-  //         }));
-  //         setIsLoading(false);
-  //         return;
-  //       }
-  //     } else {
-  //       console.log("⚡ Skipping logo upload — same preview detected.");
-  //     }
-
-  //     // ✅ 2) Prepare data for validation and saving
-  //     const dataToValidate = { ...formData, logoUrl };
-
-  //     // ✅ 3) Validate after upload
-  //     const { error } = activeSchema.validate(dataToValidate, {
-  //       abortEarly: false,
-  //     });
-  //     if (error) {
-  //       const validationErrors: Errors = {};
-  //       error.details.forEach((err) => {
-  //         const fieldName = err.path[0] as string;
-  //         validationErrors[fieldName] = err.message.replace(
-  //           '"value"',
-  //           fieldName
-  //         );
-  //       });
-  //       setErrors(validationErrors);
-  //       setIsLoading(false);
-  //       return;
-  //     }
-
-  //     setErrors({});
-
-  //     // ✅ 4) Normalize data before saving
-  //     const normalize = (x: Partial<FormData> & { id?: number; createdAt?: number; logoUrl?: string; logoPreviewUrl?: string }) => ({
-  //       instituteType: x.instituteType || "",
-  //       instituteName: x.instituteName || "",
-  //       approvedBy: x.approvedBy || "",
-  //       establishmentDate: x.establishmentDate || "",
-  //       contactInfo: x.contactInfo || "",
-  //       additionalContactInfo: x.additionalContactInfo || "",
-  //       headquartersAddress: x.headquartersAddress || "",
-  //       state: x.state || "",
-  //       pincode: x.pincode || "",
-  //       locationURL: x.locationURL || "",
-  //       logoUrl: x.logoUrl || "",
-  //       logoPreviewUrl: x.logoPreviewUrl || "",
-  //     });
-
-  //     const current = normalize(dataToValidate);
-  //     let effectiveId: number | null = null;
-
-  //     if (latest) {
-  //       const latestNormalized = normalize(latest);
-  //       const isSame =
-  //         JSON.stringify(latestNormalized) === JSON.stringify(current);
-
-  //       if (isSame) {
-  //         console.log("✅ No changes detected. Skipping DB update.");
-  //         effectiveId = latest.id || null;
-  //       } else {
-  //         console.log("🔄 Updating institution in IndexedDB...");
-  //         await updateInstitutionInDB({
-  //           ...(latest as Record<string, unknown>),
-  //           ...current,
-  //           id: latest.id,
-  //         });
-  //         effectiveId = latest.id || null;
-  //       }
-  //     } else {
-  //       console.log("🆕 Adding new institution to IndexedDB...");
-  //       const id = await addInstitutionToDB(current);
-  //       effectiveId = id;
-  //       console.log("✅ Institution saved locally with id:", id);
-  //     }
-
-  //     // ✅ 5) Update localStorage
-  //     if (typeof window !== "undefined") {
-  //       localStorage.setItem("institutionType", current.instituteType);
-  //       if (effectiveId !== null)
-  //         localStorage.setItem("institutionId", String(effectiveId));
-  //       if (current.logoUrl)
-  //         localStorage.setItem("institutionLogFileName", current.logoUrl);
-  //       else localStorage.removeItem("institutionLogFileName");
-  //     }
-
-  //     setDialogOpen(false);
-  //     setSubmitted(false);
-  //     setErrors({});
-  //     onSuccess?.();
-  //   } catch (error) {
-  //     console.error(
-  //       "❌ Error saving/updating institution in IndexedDB:",
-  //       error
-  //     );
-  //     setErrors((prev) => ({
-  //       ...prev,
-  //       logo: "Failed to save institution. Try again.",
-  //     }));
-  //   } finally {
-  //     setIsLoading(false);
-  //   }
-  // };
-
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
   e.preventDefault();
   setSubmitted(true);
@@ -552,7 +396,7 @@ export default function L1DialogBox({
     // ✅ 4) Normalize data before saving
     const normalize = (
       x: Partial<FormData> & {
-        id?: number;
+        id?: string;
         createdAt?: number;
         logoUrl?: string;
         logoPreviewUrl?: string;
@@ -573,7 +417,7 @@ export default function L1DialogBox({
     });
 
     const current = normalize(dataToValidate);
-    let effectiveId: number | null = null;
+    let effectiveId: string | null = null;
 
     const institutionTypeChanged =
       latest && latest.instituteType !== formData.instituteType;

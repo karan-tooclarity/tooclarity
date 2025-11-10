@@ -13,7 +13,7 @@ interface CoursePageProps {
     description?: string;
     aboutCourse?: string;
     eligibility?: string;
-    price: number;
+    price: string;
     duration?: string;
     mode?: string;
     timings?: string;
@@ -43,8 +43,8 @@ export const StudyAbroad: React.FC<CoursePageProps> = ({
   onBookDemo,
 }) => {
   const [showMore, setShowMore] = useState(false);
-  const allDays = ['Mon', 'Tues', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-  const operationalDays = course.operationalDays || ['Mon', 'Tues', 'Wed', 'Thu', 'Fri'];
+  // const allDays = ['Mon', 'Tues', 'Wed', 'Thur', 'Fri', 'Sat', 'Sun'];
+  // const operationalDays = course.operationalDays || ['Mon', 'Tues', 'Wed', 'Thu', 'Fri'];
 
   const handleShowMore = () => {
     setShowMore(!showMore);

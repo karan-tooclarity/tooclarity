@@ -2,10 +2,11 @@
 
 import React, { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+// import CoursePage from "@/components/student/home/CoursePage";
 import InstituteCoursePage from "@/components/student/home/InstituteCoursePage";
 import HomeHeader from "@/components/student/home/HomeHeader";
 import FooterNav from "@/components/student/home/FooterNav";
-import { studentDashboardAPI, type CourseForStudent } from "@/lib/students-api";
+import { coursePageData, studentDashboardAPI } from "@/lib/students-api";
 import { useAuth } from "@/lib/auth-context";
 import styles from "./CoursePage.module.css";
 
@@ -15,10 +16,15 @@ const CourseDetailsPage: React.FC = () => {
   const { user } = useAuth();
   const courseId = params.courseId as string;
   
-  const [courseData, setCourseData] = useState<CourseForStudent | null>(null);
+  const [courseData, setCourseData] = useState<coursePageData| null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+
+  useEffect(() => {
+  console.log("Effect running for courseId:", courseId);
+  // ...fetch code
+}, [courseId]);
 
   useEffect(() => {
     const fetchCourseDetails = async () => {
@@ -27,21 +33,12 @@ const CourseDetailsPage: React.FC = () => {
         setError(null);
         
         // Fetch all courses and find the specific one
-        const response = await studentDashboardAPI.getVisibleCourses();
-        
+        const response = await studentDashboardAPI.getCoursebyId(courseId);
         if (!response.success || !response.data) {
           throw new Error(response.message || "Failed to fetch course details");
         }
 
-        const course = (response.data as CourseForStudent[]).find(
-          (c) => c._id === courseId
-        );
-
-        if (!course) {
-          throw new Error("Course not found");
-        }
-
-        setCourseData(course);
+        setCourseData(response.data);
       } catch (err) {
         console.error("Error fetching course:", err);
         setError(err instanceof Error ? err.message : "Failed to load course");
@@ -96,6 +93,7 @@ const CourseDetailsPage: React.FC = () => {
       <div className={styles.pageContainer}>
         <HomeHeader
           userName={user?.name || "Student"}
+          userAvatar={user?.profilePicture}
           searchValue={searchQuery}
           onSearchChange={handleSearch}
           onFilterClick={() => {}}
@@ -120,6 +118,7 @@ const CourseDetailsPage: React.FC = () => {
       <div className={styles.pageContainer}>
         <HomeHeader
           userName={user?.name || "Student"}
+          userAvatar={user?.profilePicture}
           searchValue={searchQuery}
           onSearchChange={handleSearch}
           onFilterClick={() => {}}
@@ -148,6 +147,7 @@ const CourseDetailsPage: React.FC = () => {
     <div className={styles.pageContainer}>
       <HomeHeader
         userName={user?.name || "Student"}
+        userAvatar={user?.profilePicture}
         searchValue={searchQuery}
         onSearchChange={handleSearch}
         onFilterClick={() => {}}
@@ -159,38 +159,63 @@ const CourseDetailsPage: React.FC = () => {
       <InstituteCoursePage
         course={{
           id: courseId,
-          title: courseData.courseName || "Untitled Course",
+          institutionId: courseData.institution.id || ``,
+          title: courseData.course.courseName || courseData.course.selectBranch|| "Untitled Course",
           institution: courseData.institution?.instituteName || "Unknown Institution",
-          location: courseData.location || courseData.institution?.instituteName || "Location not specified",
-          description: courseData.aboutCourse || 'Discover quality education with comprehensive learning programs',
-          aboutCourse: courseData.aboutCourse || 'Our institution provides world-class education with experienced faculty and modern facilities.',
-          eligibility: courseData.eligibilityCriteria || 'All students meeting basic requirements',
-          price: courseData.priceOfCourse || 0,
-          duration: courseData.courseDuration || courseData.mode || '1 year',
-          mode: courseData.mode || 'Classroom',
-          timings: courseData.openingTime && courseData.closingTime 
-            ? `${courseData.openingTime} - ${courseData.closingTime}`
-            : '9:00 AM - 5:00 PM',
-          brandLogo: courseData.institution?.instituteLogo || '',
-          startDate: courseData.startDate 
-            ? new Date(courseData.startDate).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+          location: courseData.institution?.locationURL || courseData.course.location || "Location not specified",
+          description: courseData.course.aboutCourse || 'Discover quality education with comprehensive learning programs',
+          aboutCourse: courseData.course.aboutCourse || 'Our institution provides world-class education with experienced faculty and modern facilities.',
+          eligibility: courseData.course.eligibilityCriteria || 'All students meeting basic requirements',
+          price: courseData.course.priceOfCourse || '0',
+          duration: courseData.course.courseDuration ||'1 year',
+          mode: courseData.course.mode || 'Classroom',
+          timings: (courseData.institution.openingTime && courseData.institution.closingTime 
+            ? `${courseData.institution.openingTime} - ${courseData.institution.closingTime}`
+            : '9:00 AM - 5:00 PM') || (courseData.course.openingTime && courseData.course.closingTime
+            ? `${courseData.course.openingTime} - ${courseData.course.closingTime}` 
+            : '9:00 AM - 5:00 PM'),
+          image: courseData.course.imageUrl || '',
+          brandLogo: courseData.institution?.logoUrl || '',
+          startDate: courseData.course.startDate 
+            ? new Date(courseData.course.startDate).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
             : 'July 2024',
-          operationalDays: courseData.operationalDays && courseData.operationalDays.length > 0
-            ? courseData.operationalDays
-            : ['Mon', 'Tues', 'Wed', 'Thu', 'Fri'],
+          operationalDays: courseData.institution?.operationalDays || courseData.course.operationalDays || ['Mon', 'Tues', 'Wed', 'Thu', 'Fri'],
+          instructor: courseData.course.instructorProfile || '',
+          subject: courseData.course.subject || '',
+          hallName: courseData.course.hallName || '',
+          totalSeats: courseData.course.totalSeats || '0',
           features: {
             recognized: true,
             activities: true,
-            transport: true,
-            extraCare: true,
-            mealsProvided: courseData.hasWifi === 'Yes',
-            playground: courseData.hasAC === 'Yes',
+            transport: courseData.institution.busService === true,
+            extraCare: courseData.institution.extendedCare === 'yes',
+            mealsProvided: courseData.institution.mealsProvided === 'Yes',
+            playground: courseData.institution.playground === true,
+            resumeBuilding: courseData.institution.resumeBuilding === true,
+            linkedinOptimization: courseData.institution.linkedinOptimization === true,
+            mockInterviews: courseData.institution.mockInterviews === true,
+            placementDrives: courseData.institution.placementDrives === true,
+            library: courseData.institution.library === true,
+            entranceExam: courseData.institution.entranceExam === true,
+            managementQuota: courseData.institution.managementQuota === true,
+            classSize: courseData.course.classSize || '0',
+            classSizeRatio: courseData.course.classSizeRatio || '0',
+            schoolCategory : courseData.institution.schoolCategory || '',
+            curriculumType : courseData.institution.curriculumType || '',
+            hostelFacility : courseData.institution.hostelFacility === true,
+            certification : courseData.institution.certification === true,
+            exclusiveJobPortal : courseData.institution.exclusiveJobPortal === true,
+            hasWifi: courseData.course.hasWifi === 'yes',
+            hasChargingPoints: courseData.course.hasChargingPoints === 'yes',
+            hasAC: courseData.course.hasAC === 'yes',
+            hasPersonalLocker: courseData.course.hasPersonalLocker === 'yes',
+            collegeCategory: courseData.institution.collegeCategory || '',
           },
         }}
-        instituteType={courseData.institution?.instituteType}
         onBack={handleBackFromDetails}
         onRequestCall={handleRequestCall}
         onBookDemo={handleBookDemo}
+        instituteType={courseData.institution?.instituteType}
       />
       <FooterNav onExploreClick={handleExploreClick} />
       </div>

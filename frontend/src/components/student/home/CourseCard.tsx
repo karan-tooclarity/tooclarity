@@ -2,6 +2,7 @@
 
 import React from 'react';
 import styles from './CourseCard.module.css';
+import Image from 'next/image';
 
 interface Course {
   id: string;
@@ -14,7 +15,7 @@ interface Course {
   level?: string;
   mode?: string;
   wishlisted: boolean;
-  image?: string;
+  imageUrl?: string;
   location?: string;
   description?: string;
   duration?: string;
@@ -44,9 +45,10 @@ export const CourseCard: React.FC<CourseCardProps> = ({
     <div className={styles.card} style={{ width: '100%', minWidth: 0 }}>
       {/* Course Image with Overlays */}
       <div className={styles.imageContainer} style={{ width: '100%', minWidth: 0 }}>
-        <img
-          src={course.image || 'https://res.cloudinary.com/daq0xtstq/image/upload/v1759253728/Gemini_Generated_Image_82dkbt82dkbt82dk_chvp3e.png'}
+        <Image
+          src={course.imageUrl || 'https://res.cloudinary.com/daq0xtstq/image/upload/v1759253728/Gemini_Generated_Image_82dkbt82dkbt82dk_chvp3e.png'}
           alt={course.title}
+          width={200} height={200}
           className={styles.courseImage}
           style={{ width: '100%', height: '100%', objectFit: 'cover', minWidth: 0 }}
         />
@@ -56,10 +58,11 @@ export const CourseCard: React.FC<CourseCardProps> = ({
           {/* Institution Badge - Left side */}
           <div className={styles.institutionBadge} style={{ minWidth: 0 }}>
             <div className={styles.logoContainer}>
-              <img 
+              <Image
                 src={course.brandLogo || "https://res.cloudinary.com/daq0xtstq/image/upload/v1759253728/Gemini_Generated_Image_82dkbt82dkbt82dk_chvp3e.png"} 
                 alt={course.institution}
                 className={styles.logo}
+                width={20} height={20}
                 style={{ width: '100%', height: '100%', objectFit: 'contain', minWidth: 0 }}
               />
             </div>
