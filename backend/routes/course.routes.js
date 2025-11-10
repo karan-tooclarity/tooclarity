@@ -30,4 +30,6 @@ router.get('/summary/metrics/institution-admin', courseController.getInstitution
 router.get('/summary/metrics/institution-admin/range', courseController.getInstitutionAdminMetricByRangeUnified);
 router.get('/summary/metrics/institution-admin/series', courseController.getInstitutionAdminMetricSeriesUnified);
 
+// router.post('/:courseId/request-call', courseController.requestCallBack);
+
 module.exports = router;

@@ -100,6 +100,8 @@ exports.register = async (req, res, next, options = {}) => {
           isPaymentDone: false,
           address: undefined,
           birthday: undefined,
+          requestRaised: undefined,
+          programVisited: undefined,
         });
         break;
 
@@ -109,6 +111,8 @@ exports.register = async (req, res, next, options = {}) => {
           isPaymentDone: undefined,
           address: null,
           birthday: null,
+          requestRaised: 0,
+          programVisited: 0,
         });
         break;
 
@@ -116,6 +120,8 @@ exports.register = async (req, res, next, options = {}) => {
         Object.assign(userPayload, {
           role: "ADMIN",
           birthday: undefined,
+          programVisited: undefined,
+          requestRaised: undefined,
         });
         break;
     }

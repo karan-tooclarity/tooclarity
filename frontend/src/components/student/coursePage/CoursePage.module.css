@@ -559,13 +559,20 @@
   border-color: #697282;
   height: 24px;
   background-color: #ffffff;
-  min-width: 39px;
+  min-width: 50px;
   padding-left: 2px;
   padding-right: 2px;
   border-radius: 5px;
   font-size: 12px;
   font-weight: 600;
   align-content: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  line-height: 1.1;
+  white-space: normal;     
+  word-break: break-word;
 }
 
 

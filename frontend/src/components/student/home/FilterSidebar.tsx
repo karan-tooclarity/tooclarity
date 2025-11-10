@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useCallback, useMemo } from 'react';
 import styles from './FilterSidebar.module.css';
 
 interface ActiveFilters {
@@ -12,31 +12,23 @@ interface ActiveFilters {
   programDuration?: string[];
   priceRange?: string[];
   boardType?: string[];
-  // Graduation-specific filters
   graduationType?: string[];
   streamType?: string[];
   educationType?: string[];
-  // Coaching-specific filters
   classSize?: string[];
-  // Study Hall specific filters
   seatingType?: string[];
   operatingHours?: string[];
   duration?: string[];
-  // Tuition Center specific filters
   subjects?: string[];
-  // Legacy support
   institutes?: string[];
   levels?: string[];
 }
 
 interface FilterSidebarProps {
-  /** Current active filters */
   activeFilters: ActiveFilters;
-  /** Callback when filter is toggled */
   onFilterChange: (filterType: string, value: string, isChecked: boolean) => void;
 }
 
-// Kindergarten Specific Filters
 const INSTITUTE_TYPES = [
   'Kindergarten',
   "School's",
@@ -48,7 +40,6 @@ const INSTITUTE_TYPES = [
   'Study Abroad',
 ];
 
-// Context-specific filter configurations
 const FILTER_CONFIG: Record<string, {
   levels?: string[];
   boardType?: string[];
@@ -60,11 +51,9 @@ const FILTER_CONFIG: Record<string, {
   streamType?: string[];
   educationType?: string[];
   classSize?: string[];
-  // Study Hall specific
   seatingType?: string[];
   operatingHours?: string[];
   duration?: string[];
-  // Tuition Center specific
   subjects?: string[];
 }> = {
   'Kindergarten': {
@@ -251,110 +240,131 @@ const FILTER_CONFIG: Record<string, {
   },
 };
 
-/*const MODES = ['Offline', 'Online'];
+const EMPTY_ARRAY: string[] = [];
 
-const PRICE_RANGES = [
-  'Below ₹75,000',
-  '₹75,000 - ₹1,50,000',
-  '₹1,50,000 - ₹3,00,000',
-  'Above ₹3,00,000',
-];
-*/
-/**
- * FilterSidebar Component - Sidebar with course filters
- * Features: Multi-select pill-button filters for kindergarten courses
- * Responsive: Sticky on desktop, collapsible on mobile
- */
+interface FilterSectionProps {
+  title: string;
+  filterType: keyof ActiveFilters;
+  options: string[];
+  isMutuallyExclusive?: boolean;
+  selectedValue?: string;
+  selectedValues?: string[];
+  onFilterChange: (filterType: string, value: string, isChecked: boolean) => void;
+}
+
+const areArraysEqual = (a: string[], b: string[]) => {
+  if (a === b) {
+    return true;
+  }
+  if (a.length !== b.length) {
+    return false;
+  }
+  const setA = new Set(a);
+  for (const value of b) {
+    if (!setA.has(value)) {
+      return false;
+    }
+  }
+  return true;
+};
+
+const FilterSection = React.memo(function FilterSection({
+  title,
+  filterType,
+  options,
+  isMutuallyExclusive = false,
+  selectedValue,
+  selectedValues = EMPTY_ARRAY,
+  onFilterChange,
+}: FilterSectionProps) {
+  const handleClick = useCallback((option: string) => {
+    if (isMutuallyExclusive) {
+      const shouldSelect = selectedValue !== option;
+      onFilterChange(String(filterType), option, shouldSelect);
+    } else {
+      const shouldSelect = !selectedValues.includes(option);
+      onFilterChange(String(filterType), option, shouldSelect);
+    }
+  }, [filterType, isMutuallyExclusive, selectedValue, selectedValues, onFilterChange]);
+
+  return (
+    <div className={styles.section}>
+      <h3 className={styles.sectionTitle}>{title}</h3>
+      <div className={styles.buttonGroup}>
+        {options.map((option) => {
+          const isSelected = isMutuallyExclusive
+            ? selectedValue === option
+            : selectedValues.includes(option);
+
+          return (
+            <button
+              key={option}
+              className={`${styles.filterButton} ${isSelected ? styles.filterButtonActive : ''}`}
+              onClick={() => handleClick(option)}
+              aria-pressed={isSelected}
+              type="button"
+            >
+              {option}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}, (prev, next) => {
+  if (prev.title !== next.title) {
+    return false;
+  }
+  if (prev.filterType !== next.filterType) {
+    return false;
+  }
+  if (prev.isMutuallyExclusive !== next.isMutuallyExclusive) {
+    return false;
+  }
+  if (prev.options !== next.options) {
+    return false;
+  }
+  if (prev.onFilterChange !== next.onFilterChange) {
+    return false;
+  }
+  if (prev.isMutuallyExclusive) {
+    return prev.selectedValue === next.selectedValue;
+  }
+  const prevValues = prev.selectedValues ?? EMPTY_ARRAY;
+  const nextValues = next.selectedValues ?? EMPTY_ARRAY;
+  return areArraysEqual(prevValues, nextValues);
+});
+
 export const FilterSidebar: React.FC<FilterSidebarProps> = ({
   activeFilters,
   onFilterChange,
 }) => {
-  const handleInstituteTypeClick = (value: string) => {
-    // Mutually exclusive: clicking same option deselects it, different option replaces it
-    const isCurrentlySelected = activeFilters.instituteType === value;
-    if (isCurrentlySelected) {
-      onFilterChange('instituteType', value, false); // Deselect
-    } else {
-      onFilterChange('instituteType', value, true); // Select
-    }
-  };
-
-  const handleOtherFilterClick = (
-    filterType: string,
-    value: string
-  ) => {
-    const filterKey = filterType as keyof ActiveFilters;
-    const currentValues = (activeFilters[filterKey] as string[]) || [];
-    const isChecked = !currentValues.includes(value);
-    onFilterChange(filterType, value, isChecked);
-  };
-
-  const FilterSection = ({
-    title,
-    filterType,
-    options,
-    isMutuallyExclusive = false,
-  }: {
-    title: string;
-    filterType: keyof ActiveFilters;
-    options: string[];
-    isMutuallyExclusive?: boolean;
-  }) => {
-    const currentValue = isMutuallyExclusive
-      ? activeFilters[filterType]
-      : (activeFilters[filterType] as string[]) || [];
-    
-    return (
-      <div className={styles.section}>
-        <h3 className={styles.sectionTitle}>{title}</h3>
-        <div className={styles.buttonGroup}>
-          {options.map((option) => {
-            const isSelected = isMutuallyExclusive
-              ? currentValue === option
-              : (currentValue as string[]).includes(option);
-
-            return (
-              <button
-                key={option}
-                className={`${styles.filterButton} ${isSelected ? styles.filterButtonActive : ''}`}
-                onClick={() =>
-                  isMutuallyExclusive
-                    ? handleInstituteTypeClick(option)
-                    : handleOtherFilterClick(String(filterType), option)
-                }
-                aria-pressed={isSelected}
-                type="button"
-              >
-                {option}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-    );
-  };
-
-  // Get the filter configuration for the selected institute type
   const selectedInstituteType = activeFilters.instituteType;
-  const filterConfig = selectedInstituteType
-    ? FILTER_CONFIG[selectedInstituteType]
-    : null;
+  const filterConfig = useMemo(() => (
+    selectedInstituteType
+      ? FILTER_CONFIG[selectedInstituteType] ?? null
+      : null
+  ), [selectedInstituteType]);
+
+  const getSelectedValues = useCallback((key: keyof ActiveFilters): string[] => {
+    const value = activeFilters[key];
+    return Array.isArray(value) ? value : EMPTY_ARRAY;
+  }, [activeFilters]);
 
   return (
     <aside className={styles.sidebar}>
       <div className={styles.content}>
-        {/* Institute Type - Mutually Exclusive */}
         <FilterSection
           title="Institute Type"
           filterType="instituteType"
           options={INSTITUTE_TYPES}
           isMutuallyExclusive={true}
+          selectedValue={selectedInstituteType}
+          onFilterChange={onFilterChange}
         />
 
-        {/* Conditionally show filters based on selected institute type */}
         {filterConfig && (
           <>
-            {/* Levels */}
             {filterConfig.levels && (
               <FilterSection
                 title={
@@ -370,105 +380,132 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
                     : 'schoolLevels'
                 }
                 options={filterConfig.levels}
+                selectedValues={
+                  selectedInstituteType === 'Kindergarten'
+                    ? getSelectedValues('kindergartenLevels')
+                    : getSelectedValues('schoolLevels')
+                }
+                onFilterChange={onFilterChange}
               />
             )}
 
-            {/* Mode */}
             {filterConfig.modes && (
               <FilterSection
                 title="Mode"
                 filterType="modes"
                 options={filterConfig.modes}
+                selectedValues={getSelectedValues('modes')}
+                onFilterChange={onFilterChange}
               />
             )}
 
-            {/* Board Type */}
             {filterConfig.boardType && (
               <FilterSection
                 title="Board type"
                 filterType="boardType"
                 options={filterConfig.boardType}
+                selectedValues={getSelectedValues('boardType')}
+                onFilterChange={onFilterChange}
               />
             )}
 
-            {/* Graduation Type */}
             {filterConfig.graduationType && (
               <FilterSection
                 title="Graduation type"
                 filterType="graduationType"
                 options={filterConfig.graduationType}
+                selectedValues={getSelectedValues('graduationType')}
+                onFilterChange={onFilterChange}
               />
             )}
 
-            {/* Stream Type */}
             {filterConfig.streamType && (
               <FilterSection
                 title="Stream type"
                 filterType="streamType"
                 options={filterConfig.streamType}
+                selectedValues={getSelectedValues('streamType')}
+                onFilterChange={onFilterChange}
               />
             )}
 
-            {/* Education Type */}
             {filterConfig.educationType && (
               <FilterSection
                 title="Education type"
                 filterType="educationType"
                 options={filterConfig.educationType}
+                selectedValues={getSelectedValues('educationType')}
+                onFilterChange={onFilterChange}
               />
             )}
 
-            {/* Program Duration */}
             {filterConfig.programDuration && (
               <FilterSection
                 title="Program Duration"
                 filterType="programDuration"
                 options={filterConfig.programDuration}
+                selectedValues={getSelectedValues('programDuration')}
+                onFilterChange={onFilterChange}
               />
             )}
 
-            {/* Age Group */}
             {filterConfig.ageGroup && (
               <FilterSection
                 title="Age Group"
                 filterType="ageGroup"
                 options={filterConfig.ageGroup}
+                selectedValues={getSelectedValues('ageGroup')}
+                onFilterChange={onFilterChange}
               />
             )}
 
-            {/* Seating type */}
             {filterConfig.seatingType && (
               <FilterSection
                 title="Seating type"
                 filterType="seatingType"
                 options={filterConfig.seatingType}
+                selectedValues={getSelectedValues('seatingType')}
+                onFilterChange={onFilterChange}
               />
             )}
 
-            {/* Price Range */}
             {filterConfig.priceRange && (
               <FilterSection
                 title="Price Range"
                 filterType="priceRange"
                 options={filterConfig.priceRange}
+                selectedValues={getSelectedValues('priceRange')}
+                onFilterChange={onFilterChange}
               />
             )}
 
-            {/* Operating Hours */}
             {filterConfig.operatingHours && (
               <FilterSection
                 title="Operating Hours"
                 filterType="operatingHours"
                 options={filterConfig.operatingHours}
+                selectedValues={getSelectedValues('operatingHours')}
+                onFilterChange={onFilterChange}
               />
             )}
 
-            {/* Duration */}
             {filterConfig.duration && (
               <FilterSection
                 title="Duration"
                 filterType="duration"
                 options={filterConfig.duration}
+                selectedValues={getSelectedValues('duration')}
+                onFilterChange={onFilterChange}
+              />
+            )}
+
+            {filterConfig.subjects && (
+              <FilterSection
+                title="Subjects"
+                filterType="subjects"
+                options={filterConfig.subjects}
+                selectedValues={getSelectedValues('subjects')}
+                onFilterChange={onFilterChange}
               />
             )}
           </>

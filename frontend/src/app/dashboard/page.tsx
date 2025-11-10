@@ -50,7 +50,8 @@ const itemVariants = {
 function DashboardPage() {
 	const { user } = useAuth();
 
-	// All hooks must be called before any conditional returns
+	
+	// Otherwise render institute admin dashboard
 	const [stats, setStats] = useState<DashboardStatsData>({
 		courseViews: 0,
 		courseComparisons: 0,
@@ -79,28 +80,28 @@ function DashboardPage() {
 		//	"Requested for callback", "Requested for demo",
 		// ];
 		// const programs = [
-		//	"BTech Computer Science", "MBA Marketing", "BSc Data Science", "BCom Finance",
-		//		"BTech Mechanical", "MSc AI", "BA Economics"
-		// ];
-		// const newStudents: StudentItem[] = Array.from({ length: 4 }, (_, i) => ({
-		// 	date: new Date(Date.now() - i * 24 * 60 * 60 * 1000).toLocaleDateString('en-GB'),
-		// 	name: names[Math.floor(Math.random() * names.length)],
-		// 	id: (181200 + i).toString(),
-		// 	status: statuses[Math.floor(Math.random() * statuses.length)],
-		// 	programInterests: [programs[Math.floor(Math.random() * programs.length)]]
-		// }));
-	// 	setStudents(newStudents);
-	// }, []);
-
-	// ------- TanStack Query hooks (source of truth) -------
-	const { data: inst } = useInstitution();
+			//	"BTech Computer Science", "MBA Marketing", "BSc Data Science", "BCom Finance",
+			//		"BTech Mechanical", "MSc AI", "BA Economics"
+			// ];
+			// const newStudents: StudentItem[] = Array.from({ length: 4 }, (_, i) => ({
+				// 	date: new Date(Date.now() - i * 24 * 60 * 60 * 1000).toLocaleDateString('en-GB'),
+				// 	name: names[Math.floor(Math.random() * names.length)],
+				// 	id: (181200 + i).toString(),
+				// 	status: statuses[Math.floor(Math.random() * statuses.length)],
+				// 	programInterests: [programs[Math.floor(Math.random() * programs.length)]]
+				// }));
+				// 	setStudents(newStudents);
+				// }, []);
+				
+				// ------- TanStack Query hooks (source of truth) -------
+				const { data: inst } = useInstitution();
     const { data: statsData, isLoading: statsLoading } = useDashboardStats(filters.timeRange);
     const programViewsRange = filters.timeRange;
     const { data: programViewsData } = useProgramViews(programViewsRange);
 	const { data: recentStudents, isLoading: studentsLoading } = useRecentStudents();
 	const { data: seriesValues } = useChartData('views');
 	const queryClient = useQueryClient();
-
+	
 	// Sync hook data into existing local state so UI remains unchanged
 	useEffect(() => {
 		if (inst?._id) setInstitutionId(inst._id);

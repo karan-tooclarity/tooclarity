@@ -13,7 +13,7 @@ interface CoursePageProps {
     description?: string;
     aboutCourse?: string;
     eligibility?: string;
-    price: number;
+    price: string;
     duration?: string;
     mode?: string;
     timings?: string;
@@ -43,7 +43,7 @@ export const ExamPreparation: React.FC<CoursePageProps> = ({
   onBookDemo,
 }) => {
   const [showMore, setShowMore] = useState(false);
-  const allDays = ['Mon', 'Tues', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  const allDays = ['Mon', 'Tues', 'Wed', 'Thur', 'Fri', 'Sat', 'Sun'];
   const operationalDays = course.operationalDays || ['Mon', 'Tues', 'Wed', 'Thu', 'Fri'];
 
   const handleShowMore = () => {
@@ -132,7 +132,7 @@ export const ExamPreparation: React.FC<CoursePageProps> = ({
         <div className={styles.infoGrid} style={{ minWidth: 0 }}>
           <div className={styles.infoBoxBlue} style={{ minWidth: 0 }}>
             <span className={styles.infoLabel} style={{ minWidth: 0 }}>Total Fees: </span>
-            <span className={styles.infoValue} style={{ minWidth: 0 }}>₹ {(course.price / 100000).toFixed(2)} L</span>
+            <span className={styles.infoValue} style={{ minWidth: 0 }}>₹ {(parseInt(course.price) / 100000).toFixed(2)} L</span>
           </div>
           {course.duration && (
             <div className={styles.infoBox} style={{ minWidth: 0 }}>
