@@ -4,13 +4,19 @@ const InstituteAdminModel = require("../models/InstituteAdmin");
 const AppError = require("../utils/appError");
 const asyncHandler = require("express-async-handler");
 const { uploadStream } = require("../services/upload.service");
+const RedisUtil = require("../utils/redis.util");
+const { addAnalyticsJob } = require("../jobs/analytics.job");
+const mongoose = require("mongoose");
+const Subscription = require("../models/Subscription");
 
 // Generic helpers
 async function incrementMetricGeneric(req, res, next, cfg) {
   const { institutionId, courseId } = req.params;
-  const { metricField, rollupField, updatedEvent, institutionAdminTotalEvent } = cfg;
+  const { metricField, rollupField, updatedEvent, institutionAdminTotalEvent } =
+    cfg;
 
-  const incUpdate = {}; incUpdate[metricField] = 1;
+  const incUpdate = {};
+  incUpdate[metricField] = 1;
   const course = await Course.findOneAndUpdate(
     { _id: courseId, institution: institutionId },
     { $inc: incUpdate },
@@ -22,18 +28,25 @@ async function incrementMetricGeneric(req, res, next, cfg) {
   try {
     const now = new Date();
     const yyyy = now.getUTCFullYear();
-    const mm = String(now.getUTCMonth() + 1).padStart(2, '0');
-    const dd = String(now.getUTCDate()).padStart(2, '0');
+    const mm = String(now.getUTCMonth() + 1).padStart(2, "0");
+    const dd = String(now.getUTCDate()).padStart(2, "0");
     const dayKey = `${yyyy}-${mm}-${dd}`;
 
     const incPath = `${rollupField}.$.count`;
-    const queryHas = { _id: courseId }; queryHas[`${rollupField}.day`] = dayKey;
-    const queryPush = { _id: courseId }; queryPush[`${rollupField}.day`] = { $ne: dayKey };
+    const queryHas = { _id: courseId };
+    queryHas[`${rollupField}.day`] = dayKey;
+    const queryPush = { _id: courseId };
+    queryPush[`${rollupField}.day`] = { $ne: dayKey };
 
     await Course.updateOne(queryHas, { $inc: { [incPath]: 1 } });
-    await Course.updateOne(queryPush, { $push: { [rollupField]: { day: dayKey, count: 1 } } });
+    await Course.updateOne(queryPush, {
+      $push: { [rollupField]: { day: dayKey, count: 1 } },
+    });
   } catch (err) {
-    console.error('CourseController: rollup update failed', err?.message || err);
+    console.error(
+      "CourseController: rollup update failed",
+      err?.message || err
+    );
   }
 
   // Emit socket events with fresh institutionAdmin total
@@ -44,165 +57,228 @@ async function incrementMetricGeneric(req, res, next, cfg) {
       payload[metricField] = course[metricField];
       io.to(`institution:${institutionId}`).emit(updatedEvent, payload);
 
-      const inst = await Institution.findById(institutionId).select("institutionAdmin");
-              if (inst?.institutionAdmin) {
-          const adminId = String(inst.institutionAdmin);
-          io.to(`institutionAdmin:${adminId}`).emit(updatedEvent, payload);
-          const institutions = await Institution.find({ institutionAdmin: adminId }).select('_id');
-        const ids = institutions.map(i => i._id);
+      const inst = await Institution.findById(institutionId).select(
+        "institutionAdmin"
+      );
+      if (inst?.institutionAdmin) {
+        const adminId = String(inst.institutionAdmin);
+        io.to(`institutionAdmin:${adminId}`).emit(updatedEvent, payload);
+        const institutions = await Institution.find({
+          institutionAdmin: adminId,
+        }).select("_id");
+        const ids = institutions.map((i) => i._id);
         if (ids.length > 0) {
-          const groupField = {}; groupField[`total`] = { $sum: { $ifNull: [ `$${metricField}`, 0 ] } };
+          const groupField = {};
+          groupField[`total`] = { $sum: { $ifNull: [`$${metricField}`, 0] } };
           const agg = await Course.aggregate([
             { $match: { institution: { $in: ids } } },
-            { $group: Object.assign({ _id: null }, groupField) }
+            { $group: Object.assign({ _id: null }, groupField) },
           ]);
-          const total = (agg[0]?.total) || 0;
-          const totalPayload = metricField === 'courseViews' ? { totalViews: total } : 
-                              metricField === 'comparisons' ? { totalComparisons: total } : 
-                              { totalLeads: total };
-          io.to(`institutionAdmin:${adminId}`).emit(institutionAdminTotalEvent, totalPayload);
+          const total = agg[0]?.total || 0;
+          const totalPayload =
+            metricField === "courseViews"
+              ? { totalViews: total }
+              : metricField === "comparisons"
+              ? { totalComparisons: total }
+              : { totalLeads: total };
+          io.to(`institutionAdmin:${adminId}`).emit(
+            institutionAdminTotalEvent,
+            totalPayload
+          );
         }
       }
     }
   } catch (err) {
-    console.error('CourseController: socket emit/institutionAdmin total failed', err?.message || err);
+    console.error(
+      "CourseController: socket emit/institutionAdmin total failed",
+      err?.message || err
+    );
   }
 
-  return res.status(200).json({ success: true, data: { courseId, [metricField]: course[metricField] } });
+  return res
+    .status(200)
+    .json({
+      success: true,
+      data: { courseId, [metricField]: course[metricField] },
+    });
 }
 
 async function institutionAdminTotalGeneric(userId, metricField) {
-  const institutions = await Institution.find({ institutionAdmin: userId }).select('_id');
-  const ids = institutions.map(i => i._id);
+  const institutions = await Institution.find({
+    institutionAdmin: userId,
+  }).select("_id");
+  const ids = institutions.map((i) => i._id);
   if (ids.length === 0) return 0;
   const agg = await Course.aggregate([
     { $match: { institution: { $in: ids } } },
-    { $group: { _id: null, total: { $sum: { $ifNull: [ `$${metricField}`, 0 ] } } } }
+    {
+      $group: {
+        _id: null,
+        total: { $sum: { $ifNull: [`$${metricField}`, 0] } },
+      },
+    },
   ]);
   return agg[0]?.total || 0;
 }
 
 // student-based leads helpers
 async function institutionAdminLeadsRangeCurrent(userId, range) {
-  const institutions = await Institution.find({ institutionAdmin: userId }).select('_id');
-  const ids = institutions.map(i => i._id);
+  const institutions = await Institution.find({
+    institutionAdmin: userId,
+  }).select("_id");
+  const ids = institutions.map((i) => i._id);
   if (ids.length === 0) return 0;
   const now = new Date();
   let startDate, endDate;
-  if (range === 'weekly') {
-    startDate = new Date(now); startDate.setUTCDate(startDate.getUTCDate() - 6); endDate = new Date(now);
-  } else if (range === 'monthly') {
-    startDate = new Date(now.getUTCFullYear(), now.getUTCMonth(), 1); endDate = new Date(now);
-  } else if (range === 'yearly') {
-    startDate = new Date(now.getUTCFullYear(), 0, 1); endDate = new Date(now);
-  } else { return 0; }
-  return InstituteAdminModel.countDocuments({ institution: { $in: ids }, role: 'STUDENT', createdAt: { $gte: startDate, $lte: endDate } });
+  if (range === "weekly") {
+    startDate = new Date(now);
+    startDate.setUTCDate(startDate.getUTCDate() - 6);
+    endDate = new Date(now);
+  } else if (range === "monthly") {
+    startDate = new Date(now.getUTCFullYear(), now.getUTCMonth(), 1);
+    endDate = new Date(now);
+  } else if (range === "yearly") {
+    startDate = new Date(now.getUTCFullYear(), 0, 1);
+    endDate = new Date(now);
+  } else {
+    return 0;
+  }
+  return InstituteAdminModel.countDocuments({
+    institution: { $in: ids },
+    role: "STUDENT",
+    createdAt: { $gte: startDate, $lte: endDate },
+  });
 }
 
 async function institutionAdminLeadsRangePrevious(userId, range) {
-  const institutions = await Institution.find({ institutionAdmin: userId }).select('_id');
-  const ids = institutions.map(i => i._id);
+  const institutions = await Institution.find({
+    institutionAdmin: userId,
+  }).select("_id");
+  const ids = institutions.map((i) => i._id);
   if (ids.length === 0) return 0;
   const now = new Date();
   let startDate, endDate;
-  if (range === 'weekly') {
-    endDate = new Date(now); endDate.setUTCDate(endDate.getUTCDate() - 7); startDate = new Date(endDate); startDate.setUTCDate(startDate.getUTCDate() - 6);
-  } else if (range === 'monthly') {
-    startDate = new Date(now.getUTCFullYear(), now.getUTCMonth() - 1, 1); endDate = new Date(now.getUTCFullYear(), now.getUTCMonth(), 1);
-  } else if (range === 'yearly') {
-    startDate = new Date(now.getUTCFullYear() - 1, 0, 1); endDate = new Date(now.getUTCFullYear(), 0, 1);
-  } else { return 0; }
-  return InstituteAdminModel.countDocuments({ institution: { $in: ids }, role: 'STUDENT', createdAt: { $gte: startDate, $lt: endDate } });
+  if (range === "weekly") {
+    endDate = new Date(now);
+    endDate.setUTCDate(endDate.getUTCDate() - 7);
+    startDate = new Date(endDate);
+    startDate.setUTCDate(startDate.getUTCDate() - 6);
+  } else if (range === "monthly") {
+    startDate = new Date(now.getUTCFullYear(), now.getUTCMonth() - 1, 1);
+    endDate = new Date(now.getUTCFullYear(), now.getUTCMonth(), 1);
+  } else if (range === "yearly") {
+    startDate = new Date(now.getUTCFullYear() - 1, 0, 1);
+    endDate = new Date(now.getUTCFullYear(), 0, 1);
+  } else {
+    return 0;
+  }
+  return InstituteAdminModel.countDocuments({
+    institution: { $in: ids },
+    role: "STUDENT",
+    createdAt: { $gte: startDate, $lt: endDate },
+  });
 }
 
 // Fixed range calculation function with proper date handling
 async function institutionAdminRangeGeneric(userId, rollupField, range) {
-  const institutions = await Institution.find({ institutionAdmin: userId }).select('_id');
-  const ids = institutions.map(i => i._id);
+  const institutions = await Institution.find({
+    institutionAdmin: userId,
+  }).select("_id");
+  const ids = institutions.map((i) => i._id);
   if (ids.length === 0) return 0;
-  
+
   const now = new Date();
   let startDate, endDate;
-  
-  if (range === 'weekly') {
+
+  if (range === "weekly") {
     // Last 7 days (including today)
     startDate = new Date(now);
     startDate.setUTCDate(startDate.getUTCDate() - 6);
     endDate = new Date(now);
-  } else if (range === 'monthly') {
+  } else if (range === "monthly") {
     // Current month (from 1st to today)
     startDate = new Date(now.getUTCFullYear(), now.getUTCMonth(), 1);
     endDate = new Date(now);
-  } else if (range === 'yearly') {
+  } else if (range === "yearly") {
     // Current year (from Jan 1st to today)
     startDate = new Date(now.getUTCFullYear(), 0, 1);
     endDate = new Date(now);
   } else {
     return 0;
   }
-  
+
   // Format dates for comparison (YYYY-MM-DD format)
-  const startKey = startDate.toISOString().split('T')[0];
-  const endKey = endDate.toISOString().split('T')[0];
+  const startKey = startDate.toISOString().split("T")[0];
+  const endKey = endDate.toISOString().split("T")[0];
 
   const agg = await Course.aggregate([
     { $match: { institution: { $in: ids } } },
     { $unwind: { path: `$${rollupField}`, preserveNullAndEmptyArrays: false } },
-    { $match: { 
-      [`${rollupField}.day`]: { 
-        $gte: startKey, 
-        $lte: endKey 
-      } 
-    }},
-    { $group: { _id: null, total: { $sum: `$${rollupField}.count` } } }
+    {
+      $match: {
+        [`${rollupField}.day`]: {
+          $gte: startKey,
+          $lte: endKey,
+        },
+      },
+    },
+    { $group: { _id: null, total: { $sum: `$${rollupField}.count` } } },
   ]);
-  
+
   return agg[0]?.total || 0;
 }
 
 // Fixed previous range calculation function with proper date handling
-async function institutionAdminPreviousRangeGeneric(userId, rollupField, range) {
-  const institutions = await Institution.find({ institutionAdmin: userId }).select('_id');
-  const ids = institutions.map(i => i._id);
+async function institutionAdminPreviousRangeGeneric(
+  userId,
+  rollupField,
+  range
+) {
+  const institutions = await Institution.find({
+    institutionAdmin: userId,
+  }).select("_id");
+  const ids = institutions.map((i) => i._id);
   if (ids.length === 0) return 0;
-  
+
   const now = new Date();
   let startDate, endDate;
-  
-  if (range === 'weekly') {
+
+  if (range === "weekly") {
     // Previous week (7 days before current week)
     endDate = new Date(now);
     endDate.setUTCDate(endDate.getUTCDate() - 7);
     startDate = new Date(endDate);
     startDate.setUTCDate(startDate.getUTCDate() - 6);
-  } else if (range === 'monthly') {
+  } else if (range === "monthly") {
     // Previous month
     startDate = new Date(now.getUTCFullYear(), now.getUTCMonth() - 1, 1);
     endDate = new Date(now.getUTCFullYear(), now.getUTCMonth(), 1);
-  } else if (range === 'yearly') {
+  } else if (range === "yearly") {
     // Previous year
     startDate = new Date(now.getUTCFullYear() - 1, 0, 1);
     endDate = new Date(now.getUTCFullYear(), 0, 1);
   } else {
     return 0;
   }
-  
+
   // Format dates for comparison (YYYY-MM-DD format)
-  const startKey = startDate.toISOString().split('T')[0];
-  const endKey = endDate.toISOString().split('T')[0];
+  const startKey = startDate.toISOString().split("T")[0];
+  const endKey = endDate.toISOString().split("T")[0];
 
   const agg = await Course.aggregate([
     { $match: { institution: { $in: ids } } },
     { $unwind: { path: `$${rollupField}`, preserveNullAndEmptyArrays: false } },
-    { $match: { 
-      [`${rollupField}.day`]: { 
-        $gte: startKey, 
-        $lt: endKey 
-      } 
-    }},
-    { $group: { _id: null, total: { $sum: `$${rollupField}.count` } } }
+    {
+      $match: {
+        [`${rollupField}.day`]: {
+          $gte: startKey,
+          $lt: endKey,
+        },
+      },
+    },
+    { $group: { _id: null, total: { $sum: `$${rollupField}.count` } } },
   ]);
-  
+
   return agg[0]?.total || 0;
 }
 
@@ -282,64 +358,53 @@ exports.getCourseById = asyncHandler(async (req, res) => {
   const { courseId } = req.params;
   const userId = req.userId;
 
-  console.log("📘 [getCourseById] Request received for Course ID: ${courseId}");
+  console.log(`📘 [getCourseById] Request received for Course ID: ${courseId}`);
 
   try {
-    // 1️⃣ Check course cache first
-    const cachedCourse = await RedisUtil.getCachedCourses(courseId);
+    // 1️⃣ Try to load cached course+institution combo
+    const cachedCourseData = await RedisUtil.getCachedCourses(courseId);
 
-    if (cachedCourse) {
-      const course = JSON.parse(cachedCourse);
-      console.log("✅ Course cache hit");
+    if (cachedCourseData) {
+      const { course, institution } = JSON.parse(cachedCourseData);
+      console.log("✅ Course + Institution cache hit");
 
-      // Check subscription cache (by institution)
-      if (course?.institution) {
-        const cachedSubscription = await RedisUtil.getCachedSubscription(course.institution);
-        console.log(cachedSubscription);
+      // Try subscription cache
+      const cachedSubscription = await RedisUtil.getCachedSubscription(course.institution);
 
-        if (cachedSubscription) {
-          const subscription = JSON.parse(cachedSubscription);
+      if (cachedSubscription) {
+        const subscription = JSON.parse(cachedSubscription);
+        const now = new Date();
 
-          // Validate subscription dates and status
-          const now = new Date();
-          const isActive =
-            subscription.status === "active" &&
-            new Date(subscription.startDate) <= now &&
-            new Date(subscription.endDate) > now;
+        const isActive =
+          subscription.status === "active" &&
+          new Date(subscription.startDate) <= now &&
+          new Date(subscription.endDate) > now;
 
-          if (isActive) {
-            console.log("✅ Valid subscription cache hit — returning cached course data only");
+        if (isActive) {
+          console.log("✅ Valid subscription — returning cached data");
 
-            // Add analytics job asynchronously
-            if (userId) {
-              await addAnalyticsJob({
-                userId,
-                institutionId: course.institution,
-                courseId,
-                timestamp: new Date().toISOString(),
-              });
-            }
-
-            // ⚡ Return only course and institution
-            return res.status(200).json({
-              success: true,
-              data: {
-                course,
-                institution: course.institutionDetails || null,
-              },
-              source: "cache",
+          // Add analytics job (non-blocking)
+          if (userId) {
+            await addAnalyticsJob({
+              userId,
+              institutionId: course.institution,
+              courseId,
+              timestamp: new Date().toISOString(),
             });
-          } else {
-            console.log("⚠ Cached subscription invalid or expired — will refresh from DB");
           }
+
+          return res.status(200).json({
+            success: true,
+            data: { course, institution },
+          });
         } else {
-          console.log("⚠ No subscription cache found — will refresh from DB");
+          console.log("⚠️ Subscription expired — refreshing from DB");
         }
       } else {
-        console.warn("⚠ Cached course missing institution reference");
+        console.log("⚠️ No subscription cache found — refreshing from DB");
       }
     } else {
-      console.log("⚙ Course not in cache — will fetch from MongoDB");
+      console.log("⚙️ No course cache — fetching from MongoDB");
     }
 
     // 2️⃣ Fetch from MongoDB
@@ -386,26 +451,31 @@ exports.getCourseById = asyncHandler(async (req, res) => {
 
     console.log(courseData);
 
-    if (!courseData || courseData.length === 0) {
-      console.warn("⚠ No valid course found or inactive subscription");
+  if (!courseData || courseData.length === 0) {
+      console.warn("⚠️ No valid course found or inactive subscription");
       return res.status(404).json({
         success: false,
         message: "Course not found or institution subscription inactive",
       });
     }
 
-    const course = courseData[0];
-    const subscription = course.validSubscription?.[0] || null;
-    delete course.validSubscription;
+    const courseRaw = courseData[0];
+    const subscription = courseRaw.validSubscription?.[0] || null;
+    delete courseRaw.validSubscription;
 
-    // 3️⃣ Cache course + subscription separately
-    console.log("💾 Caching course + subscription data...");
-    await Promise.all([
-      RedisUtil.cacheCourse(courseId, course, 600), // 10 minutes
-      subscription && RedisUtil.cacheSubscription(course.institution, subscription, 300), // 5 minutes TTL
-    ]);
+    const { institutionDetails, ...course } = courseRaw;
+    const institution = institutionDetails;
 
-    // 4️⃣ Add analytics job
+    // 3️⃣ Cache combined object in one key (course + institution)
+    const combinedData = { course, institution };
+    await RedisUtil.cacheCourse(courseId, combinedData, 600); // 10 min TTL
+
+    // Cache subscription separately
+    if (subscription && course?.institution) {
+      await RedisUtil.cacheSubscription(course.institution, subscription, 300); // 5 min TTL
+    }
+
+    // 4️⃣ Add analytics
     if (userId && course?.institution) {
       await addAnalyticsJob({
         userId,
@@ -415,25 +485,22 @@ exports.getCourseById = asyncHandler(async (req, res) => {
       });
     }
 
-    // 5️⃣ Send response (only course + institution)
-    console.log("✅ Returning course data from MongoDB");
+    // 5️⃣ Send clean response
+    console.log("✅ Returning fresh data from MongoDB");
     return res.status(200).json({
       success: true,
-      data: {
-        course,
-        institution: course.institutionDetails || null,
-      },
-      source: "mongo",
+      data: { course, institution },
     });
   } catch (error) {
-    console.error("❌ [getCourseById] Error fetching course:", error);
+    console.error("❌ [getCourseById] Error:", error);
     return res.status(500).json({
       success: false,
-      message: "An error occurred while fetching course data.",
+      message: "Error fetching course data.",
       error: error.message,
     });
   }
 });
+
 
 exports.updateCourse = asyncHandler(async (req, res, next) => {
   const { institutionId, courseId } = req.params;
@@ -509,21 +576,40 @@ exports.deleteCourse = asyncHandler(async (req, res, next) => {
 
 // Unified metric increment: /:courseId/metrics?metric=views|comparisons|leads
 exports.incrementMetricUnified = asyncHandler(async (req, res, next) => {
-  const raw = (req.query.metric || req.body.metric || '').toString().toLowerCase();
-  const isViews = raw === 'views' || raw === 'courseviews';
-  const isComparisons = raw === 'comparisons' || raw === 'comparison';
-  const isLeads = raw === 'leads' || raw === 'leadsgenerated';
-  
+  const raw = (req.query.metric || req.body.metric || "")
+    .toString()
+    .toLowerCase();
+  const isViews = raw === "views" || raw === "courseviews";
+  const isComparisons = raw === "comparisons" || raw === "comparison";
+  const isLeads = raw === "leads" || raw === "leadsgenerated";
+
   if (!isViews && !isComparisons && !isLeads) {
-    return next(new AppError('Invalid metric. Use metric=views|comparisons|leads', 400));
+    return next(
+      new AppError("Invalid metric. Use metric=views|comparisons|leads", 400)
+    );
   }
-  
+
   const cfg = isViews
-    ? { metricField: 'courseViews', rollupField: 'viewsRollups', updatedEvent: 'courseViewsUpdated', institutionAdminTotalEvent: 'institutionAdminTotalViews' }
+    ? {
+        metricField: "courseViews",
+        rollupField: "viewsRollups",
+        updatedEvent: "courseViewsUpdated",
+        institutionAdminTotalEvent: "institutionAdminTotalViews",
+      }
     : isComparisons
-    ? { metricField: 'comparisons', rollupField: 'comparisonRollups', updatedEvent: 'comparisonsUpdated', institutionAdminTotalEvent: 'institutionAdminTotalComparisons' }
-    : { metricField: 'leadsGenerated', rollupField: 'leadsRollups', updatedEvent: 'leadsUpdated', institutionAdminTotalEvent: 'institutionAdminTotalLeads' };
-    
+    ? {
+        metricField: "comparisons",
+        rollupField: "comparisonRollups",
+        updatedEvent: "comparisonsUpdated",
+        institutionAdminTotalEvent: "institutionAdminTotalComparisons",
+      }
+    : {
+        metricField: "leadsGenerated",
+        rollupField: "leadsRollups",
+        updatedEvent: "leadsUpdated",
+        institutionAdminTotalEvent: "institutionAdminTotalLeads",
+      };
+
   return incrementMetricGeneric(req, res, next, cfg);
 });
 
@@ -531,14 +617,20 @@ exports.incrementMetricUnified = asyncHandler(async (req, res, next) => {
 function getCurrentPeriod(range) {
   const now = new Date();
   let startDate, endDate;
-  if (range === 'weekly') {
-    startDate = new Date(now); startDate.setUTCDate(startDate.getUTCDate() - 6); endDate = new Date(now);
-  } else if (range === 'monthly') {
-    startDate = new Date(now.getUTCFullYear(), now.getUTCMonth(), 1); endDate = new Date(now);
-  } else if (range === 'yearly') {
-    startDate = new Date(now.getUTCFullYear(), 0, 1); endDate = new Date(now);
+  if (range === "weekly") {
+    startDate = new Date(now);
+    startDate.setUTCDate(startDate.getUTCDate() - 6);
+    endDate = new Date(now);
+  } else if (range === "monthly") {
+    startDate = new Date(now.getUTCFullYear(), now.getUTCMonth(), 1);
+    endDate = new Date(now);
+  } else if (range === "yearly") {
+    startDate = new Date(now.getUTCFullYear(), 0, 1);
+    endDate = new Date(now);
   } else {
-    startDate = new Date(now); startDate.setUTCDate(startDate.getUTCDate() - 6); endDate = new Date(now);
+    startDate = new Date(now);
+    startDate.setUTCDate(startDate.getUTCDate() - 6);
+    endDate = new Date(now);
   }
   return { startDate, endDate };
 }
@@ -546,163 +638,325 @@ function getCurrentPeriod(range) {
 function getPreviousPeriod(range) {
   const now = new Date();
   let startDate, endDate;
-  if (range === 'weekly') {
-    endDate = new Date(now); endDate.setUTCDate(endDate.getUTCDate() - 7);
-    startDate = new Date(endDate); startDate.setUTCDate(startDate.getUTCDate() - 6);
-  } else if (range === 'monthly') {
+  if (range === "weekly") {
+    endDate = new Date(now);
+    endDate.setUTCDate(endDate.getUTCDate() - 7);
+    startDate = new Date(endDate);
+    startDate.setUTCDate(startDate.getUTCDate() - 6);
+  } else if (range === "monthly") {
     startDate = new Date(now.getUTCFullYear(), now.getUTCMonth() - 1, 1);
     endDate = new Date(now.getUTCFullYear(), now.getUTCMonth(), 1);
-  } else if (range === 'yearly') {
+  } else if (range === "yearly") {
     startDate = new Date(now.getUTCFullYear() - 1, 0, 1);
     endDate = new Date(now.getUTCFullYear(), 0, 1);
   } else {
-    endDate = new Date(now); endDate.setUTCDate(endDate.getUTCDate() - 7);
-    startDate = new Date(endDate); startDate.setUTCDate(endDate.getUTCDate() - 6);
+    endDate = new Date(now);
+    endDate.setUTCDate(endDate.getUTCDate() - 7);
+    startDate = new Date(endDate);
+    startDate.setUTCDate(startDate.getUTCDate() - 6);
   }
   return { startDate, endDate };
 }
 
 // ----- Helpers: Course rollups aggregation -----
 async function aggregateRollupsTotal(userId, rollupField, startDate, endDate) {
-  const institutions = await Institution.find({ institutionAdmin: userId }).select('_id');
-  const ids = institutions.map(i => i._id);
+  const institutions = await Institution.find({
+    institutionAdmin: userId,
+  }).select("_id");
+  const ids = institutions.map((i) => i._id);
   if (ids.length === 0) return 0;
-  const startKey = startDate.toISOString().split('T')[0];
-  const endKey = endDate.toISOString().split('T')[0];
+  const startKey = startDate.toISOString().split("T")[0];
+  const endKey = endDate.toISOString().split("T")[0];
   const agg = await Course.aggregate([
     { $match: { institution: { $in: ids } } },
     { $unwind: { path: `$${rollupField}`, preserveNullAndEmptyArrays: false } },
     { $match: { [`${rollupField}.day`]: { $gte: startKey, $lte: endKey } } },
-    { $group: { _id: null, total: { $sum: `$${rollupField}.count` } } }
+    { $group: { _id: null, total: { $sum: `$${rollupField}.count` } } },
   ]);
   return agg[0]?.total || 0;
 }
 
 // ----- Helpers: student-based leads -----
 async function countStudentsInRange(userId, startDate, endDate) {
-  const institutions = await Institution.find({ institutionAdmin: userId }).select('_id');
-  const ids = institutions.map(i => i._id);
+  const institutions = await Institution.find({
+    institutionAdmin: userId,
+  }).select("_id");
+  const ids = institutions.map((i) => i._id);
   if (ids.length === 0) return 0;
-  return InstituteAdminModel.countDocuments({ institution: { $in: ids }, role: 'STUDENT', createdAt: { $gte: startDate, $lte: endDate } });
+  return InstituteAdminModel.countDocuments({
+    institution: { $in: ids },
+    role: "STUDENT",
+    createdAt: { $gte: startDate, $lte: endDate },
+  });
 }
 
 async function countStudentsTotal(userId) {
-  const institutions = await Institution.find({ institutionAdmin: userId }).select('_id');
-  const ids = institutions.map(i => i._id);
+  const institutions = await Institution.find({
+    institutionAdmin: userId,
+  }).select("_id");
+  const ids = institutions.map((i) => i._id);
   if (ids.length === 0) return 0;
-  return InstituteAdminModel.countDocuments({ institution: { $in: ids }, role: 'STUDENT' });
+  return InstituteAdminModel.countDocuments({
+    institution: { $in: ids },
+    role: "STUDENT",
+  });
 }
 
 // ----- Unified institutionAdmin metric summary -----
 // GET /summary/metrics/institutionAdmin?metric=views|comparisons|leads
-exports.getInstitutionAdminMetricSummaryUnified = asyncHandler(async (req, res, next) => {
-  const raw = (req.query.metric || '').toString().toLowerCase();
-  const isViews = raw === 'views' || raw === 'courseviews';
-  const isComparisons = raw === 'comparisons' || raw === 'comparison';
-  const isLeads = raw === 'leads' || raw === 'leadsgenerated';
+exports.getInstitutionAdminMetricSummaryUnified = asyncHandler(
+  async (req, res, next) => {
+    const raw = (req.query.metric || "").toString().toLowerCase();
+    const isViews = raw === "views" || raw === "courseviews";
+    const isComparisons = raw === "comparisons" || raw === "comparison";
+    const isLeads = raw === "leads" || raw === "leadsgenerated";
 
-  if (!isViews && !isComparisons && !isLeads) return next(new AppError('Invalid metric. Use metric=views|comparisons|leads', 400));
+    if (!isViews && !isComparisons && !isLeads)
+      return next(
+        new AppError("Invalid metric. Use metric=views|comparisons|leads", 400)
+      );
 
-  if (isLeads) {
-    const totalLeads = await countStudentsTotal(req.userId);
-    return res.status(200).json({ success: true, data: { totalLeads } });
+    if (isLeads) {
+      const totalLeads = await countStudentsTotal(req.userId);
+      return res.status(200).json({ success: true, data: { totalLeads } });
+    }
+
+    // Fallback totals from Course
+    const institutions = await Institution.find({
+      institutionAdmin: req.userId,
+    }).select("_id");
+    const ids = institutions.map((i) => i._id);
+    if (ids.length === 0) {
+      if (isViews)
+        return res.status(200).json({ success: true, data: { totalViews: 0 } });
+      return res
+        .status(200)
+        .json({ success: true, data: { totalComparisons: 0 } });
+    }
+    const groupField = isViews ? "$courseViews" : "$comparisons";
+    const agg = await Course.aggregate([
+      { $match: { institution: { $in: ids } } },
+      { $group: { _id: null, total: { $sum: { $ifNull: [groupField, 0] } } } },
+    ]);
+    const total = agg[0]?.total || 0;
+    if (isViews)
+      return res
+        .status(200)
+        .json({ success: true, data: { totalViews: total } });
+    return res
+      .status(200)
+      .json({ success: true, data: { totalComparisons: total } });
   }
-
-  // Fallback totals from Course
-  const institutions = await Institution.find({ institutionAdmin: req.userId }).select('_id');
-  const ids = institutions.map(i => i._id);
-  if (ids.length === 0) {
-    if (isViews) return res.status(200).json({ success: true, data: { totalViews: 0 } });
-    return res.status(200).json({ success: true, data: { totalComparisons: 0 } });
-  }
-  const groupField = isViews ? '$courseViews' : '$comparisons';
-  const agg = await Course.aggregate([
-    { $match: { institution: { $in: ids } } },
-    { $group: { _id: null, total: { $sum: { $ifNull: [ groupField, 0 ] } } } }
-  ]);
-  const total = agg[0]?.total || 0;
-  if (isViews) return res.status(200).json({ success: true, data: { totalViews: total } });
-  return res.status(200).json({ success: true, data: { totalComparisons: total } });
-});
+);
 
 // ----- Unified institutionAdmin metric by range -----
 // GET /summary/metrics/institutionAdmin/range?metric=views|comparisons|leads&range=weekly|monthly|yearly
-exports.getInstitutionAdminMetricByRangeUnified = asyncHandler(async (req, res, next) => {
-  const raw = (req.query.metric || '').toString().toLowerCase();
-  const range = (req.query.range || 'weekly').toString().toLowerCase();
-  const isViews = raw === 'views' || raw === 'courseviews';
-  const isComparisons = raw === 'comparisons' || raw === 'comparison';
-  const isLeads = raw === 'leads' || raw === 'leadsgenerated';
+exports.getInstitutionAdminMetricByRangeUnified = asyncHandler(
+  async (req, res, next) => {
+    const raw = (req.query.metric || "").toString().toLowerCase();
+    const range = (req.query.range || "weekly").toString().toLowerCase();
+    const isViews = raw === "views" || raw === "courseviews";
+    const isComparisons = raw === "comparisons" || raw === "comparison";
+    const isLeads = raw === "leads" || raw === "leadsgenerated";
 
-  if (!isViews && !isComparisons && !isLeads) return next(new AppError('Invalid metric. Use metric=views|comparisons|leads', 400));
+    if (!isViews && !isComparisons && !isLeads)
+      return next(
+        new AppError("Invalid metric. Use metric=views|comparisons|leads", 400)
+      );
 
-  if (isLeads) {
+    if (isLeads) {
+      const { startDate: cs, endDate: ce } = getCurrentPeriod(range);
+      const { startDate: ps, endDate: pe } = getPreviousPeriod(range);
+      const current = await countStudentsInRange(req.userId, cs, ce);
+      const previous = await countStudentsInRange(req.userId, ps, pe);
+      const trend = previous > 0 ? ((current - previous) / previous) * 100 : 0;
+      return res
+        .status(200)
+        .json({
+          success: true,
+          data: {
+            totalLeads: current,
+            trend: { value: Math.abs(trend), isPositive: trend >= 0 },
+          },
+        });
+    }
+
+    const rollupField = isViews ? "viewsRollups" : "comparisonRollups";
     const { startDate: cs, endDate: ce } = getCurrentPeriod(range);
     const { startDate: ps, endDate: pe } = getPreviousPeriod(range);
-    const current = await countStudentsInRange(req.userId, cs, ce);
-    const previous = await countStudentsInRange(req.userId, ps, pe);
+    const current = await aggregateRollupsTotal(
+      req.userId,
+      rollupField,
+      cs,
+      ce
+    );
+    const previous = await aggregateRollupsTotal(
+      req.userId,
+      rollupField,
+      ps,
+      pe
+    );
     const trend = previous > 0 ? ((current - previous) / previous) * 100 : 0;
-    return res.status(200).json({ success: true, data: { totalLeads: current, trend: { value: Math.abs(trend), isPositive: trend >= 0 } } });
+    if (isViews)
+      return res
+        .status(200)
+        .json({
+          success: true,
+          data: {
+            totalViews: current,
+            trend: { value: Math.abs(trend), isPositive: trend >= 0 },
+          },
+        });
+    return res
+      .status(200)
+      .json({
+        success: true,
+        data: {
+          totalComparisons: current,
+          trend: { value: Math.abs(trend), isPositive: trend >= 0 },
+        },
+      });
   }
-
-  const rollupField = isViews ? 'viewsRollups' : 'comparisonRollups';
-  const { startDate: cs, endDate: ce } = getCurrentPeriod(range);
-  const { startDate: ps, endDate: pe } = getPreviousPeriod(range);
-  const current = await aggregateRollupsTotal(req.userId, rollupField, cs, ce);
-  const previous = await aggregateRollupsTotal(req.userId, rollupField, ps, pe);
-  const trend = previous > 0 ? ((current - previous) / previous) * 100 : 0;
-  if (isViews) return res.status(200).json({ success: true, data: { totalViews: current, trend: { value: Math.abs(trend), isPositive: trend >= 0 } } });
-  return res.status(200).json({ success: true, data: { totalComparisons: current, trend: { value: Math.abs(trend), isPositive: trend >= 0 } } });
-});
+);
 
 // ----- Series: monthly counts for a given year -----
-exports.getInstitutionAdminMetricSeriesUnified = asyncHandler(async (req, res, next) => {
-  const raw = (req.query.metric || '').toString().toLowerCase();
-  const year = parseInt(req.query.year, 10) || new Date().getUTCFullYear();
-  const isViews = raw === 'views' || raw === 'courseviews';
-  const isComparisons = raw === 'comparisons' || raw === 'comparison';
-  const isLeads = raw === 'leads' || raw === 'leadsgenerated';
-  if (!isViews && !isComparisons && !isLeads) {
-    return next(new AppError('Invalid metric. Use metric=views|comparisons|leads', 400));
-  }
+exports.getInstitutionAdminMetricSeriesUnified = asyncHandler(
+  async (req, res, next) => {
+    const raw = (req.query.metric || "").toString().toLowerCase();
+    const year = parseInt(req.query.year, 10) || new Date().getUTCFullYear();
+    const isViews = raw === "views" || raw === "courseviews";
+    const isComparisons = raw === "comparisons" || raw === "comparison";
+    const isLeads = raw === "leads" || raw === "leadsgenerated";
+    if (!isViews && !isComparisons && !isLeads) {
+      return next(
+        new AppError("Invalid metric. Use metric=views|comparisons|leads", 400)
+      );
+    }
 
-  const institutions = await Institution.find({ institutionAdmin: req.userId }).select('_id');
-  const ids = institutions.map(i => i._id);
-  if (ids.length === 0) {
-    return res.status(200).json({ success: true, data: { series: new Array(12).fill(0) } });
-  }
+    const institutions = await Institution.find({
+      institutionAdmin: req.userId,
+    }).select("_id");
+    const ids = institutions.map((i) => i._id);
+    if (ids.length === 0) {
+      return res
+        .status(200)
+        .json({ success: true, data: { series: new Array(12).fill(0) } });
+    }
 
-  if (isLeads) {
+    if (isLeads) {
+      const series = [];
+      for (let m = 0; m < 12; m++) {
+        const startDate = new Date(Date.UTC(year, m, 1));
+        const endDate = new Date(Date.UTC(year, m + 1, 0, 23, 59, 59, 999));
+        // inclusive end
+        const count = await InstituteAdminModel.countDocuments({
+          institution: { $in: ids },
+          role: "STUDENT",
+          createdAt: { $gte: startDate, $lte: endDate },
+        });
+        series.push(count);
+      }
+      return res.status(200).json({ success: true, data: { series } });
+    }
+
+    // Views or comparisons via rollups
+    const rollupField = isViews ? "viewsRollups" : "comparisonRollups";
     const series = [];
     for (let m = 0; m < 12; m++) {
       const startDate = new Date(Date.UTC(year, m, 1));
       const endDate = new Date(Date.UTC(year, m + 1, 0, 23, 59, 59, 999));
-      // inclusive end
-      const count = await InstituteAdminModel.countDocuments({
-        institution: { $in: ids },
-        role: 'STUDENT',
-        createdAt: { $gte: startDate, $lte: endDate }
-      });
-      series.push(count);
+      const startKey = startDate.toISOString().split("T")[0];
+      const endKey = endDate.toISOString().split("T")[0];
+      const agg = await Course.aggregate([
+        { $match: { institution: { $in: ids } } },
+        {
+          $unwind: {
+            path: `$${rollupField}`,
+            preserveNullAndEmptyArrays: false,
+          },
+        },
+        {
+          $match: { [`${rollupField}.day`]: { $gte: startKey, $lte: endKey } },
+        },
+        { $group: { _id: null, total: { $sum: `$${rollupField}.count` } } },
+      ]);
+      series.push(agg[0]?.total || 0);
     }
     return res.status(200).json({ success: true, data: { series } });
   }
+);
 
-  // Views or comparisons via rollups
-  const rollupField = isViews ? 'viewsRollups' : 'comparisonRollups';
-  const series = [];
-  for (let m = 0; m < 12; m++) {
-    const startDate = new Date(Date.UTC(year, m, 1));
-    const endDate = new Date(Date.UTC(year, m + 1, 0, 23, 59, 59, 999));
-    const startKey = startDate.toISOString().split('T')[0];
-    const endKey = endDate.toISOString().split('T')[0];
-    const agg = await Course.aggregate([
-      { $match: { institution: { $in: ids } } },
-      { $unwind: { path: `$${rollupField}`, preserveNullAndEmptyArrays: false } },
-      { $match: { [`${rollupField}.day`]: { $gte: startKey, $lte: endKey } } },
-      { $group: { _id: null, total: { $sum: `$${rollupField}.count` } } }
-    ]);
-    series.push(agg[0]?.total || 0);
+exports.requestCallback = asyncHandler(async (req, res, next) => {
+  const { institutionId, courseId } = req.params;
+  const userId = req.userId;
+
+  console.log(`📞 [requestCallback] Request from user ${userId} for institution ${institutionId}, course ${courseId}`);
+
+  try {
+    let subscription = null;
+    const now = new Date();
+
+    // 1️⃣ Check subscription cache first
+    const cachedSub = await RedisUtil.getCachedSubscription(institutionId);
+    if (cachedSub) {
+      console.log("✅ Subscription cache hit");
+      subscription = JSON.parse(cachedSub);
+
+      const isActive =
+        subscription.status === "active" &&
+        new Date(subscription.startDate) <= now &&
+        new Date(subscription.endDate) > now;
+
+      if (!isActive) {
+        console.warn("⚠️ Cached subscription expired or invalid — fetching from DB");
+        subscription = null;
+      }
+    } else {
+      console.log("⚙️ No cached subscription found — will query MongoDB");
+    }
+
+    // 2️⃣ If no valid cached subscription, fetch from MongoDB
+    if (!subscription) {
+      const subscriptionFromDB = await Subscription.findOne({
+        institution: institutionId,
+        status: "active",
+        startDate: { $lte: now },
+        endDate: { $gt: now },
+      });
+
+      if (!subscriptionFromDB) {
+        console.warn("❌ No valid active subscription found in DB");
+        return res.status(403).json({
+          success: false,
+          message: "Institution subscription inactive or expired",
+        });
+      }
+
+      subscription = subscriptionFromDB.toObject();
+
+      // Cache it for 5 minutes
+      await RedisUtil.cacheSubscription(institutionId, subscription, 300);
+      console.log("💾 Cached fresh subscription data from DB");
+    }
+
+    // 3️⃣ If reached here, subscription is valid — continue logic
+    console.log("✅ Valid subscription confirmed — proceeding with callback flow");
+
+    // ⬇️ Continue your callback logic below (e.g., record callback request)
+    // For example:
+    // await CallbackRequest.create({ userId, institutionId, courseId, createdAt: new Date() });
+
+    return res.status(200).json({
+      success: true,
+      message: "Callback request accepted",
+    });
+  } catch (error) {
+    console.error("❌ [requestCallback] Error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "An error occurred while processing the callback request.",
+      error: error.message,
+    });
   }
   return res.status(200).json({ success: true, data: { series } });
 });

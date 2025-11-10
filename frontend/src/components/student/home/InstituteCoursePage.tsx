@@ -14,15 +14,17 @@ import { TuitionCentre } from '../coursePage/TuitionCentre';
 import ScheduleCallbackDialog, { CallbackFormData } from './ScheduleCallbackDialog';
 import BookDemoDialog, { BookDemoFormData } from './BookDemoDialog';
 
+
 interface BaseCourse {
   id: string;
+  institutionId: string;
   title: string;
   institution: string;
   location?: string;
   description?: string;
   aboutCourse?: string;
   eligibility?: string;
-  price: number;
+  price: string;
   duration?: string;
   mode?: string;
   timings?: string;
@@ -30,6 +32,10 @@ interface BaseCourse {
   startDate?: string;
   image?: string;
   operationalDays?: string[];
+  instructor?: string,
+  subject?: string,
+  hallName?: string,
+  totalSeats?: string,
   features?: {
     recognized?: boolean;
     activities?: boolean;
@@ -37,6 +43,25 @@ interface BaseCourse {
     extraCare?: boolean;
     mealsProvided?: boolean;
     playground?: boolean;
+    resumeBuilding?: boolean
+    linkedinOptimization?: boolean
+    mockInterviews?: boolean
+    exclusiveJobPortal?: boolean
+    placementDrives?: boolean
+    library?: boolean
+    entranceExam?: boolean
+    managementQuota?: boolean
+    classSize?: string;
+    classSizeRatio?: string
+    schoolCategory?: string;
+    curriculumType?: string;
+    hostelFacility?: boolean;
+    certification?: boolean;
+    hasWifi?: boolean,
+    hasChargingPoints?: boolean,
+    hasAC?: boolean,
+    hasPersonalLocker?: boolean,
+    collegeCategory?: string,
   };
 }
 
@@ -53,14 +78,14 @@ function normalizeType(raw?: string): string {
   if (!raw) return '';
   const cleaned = raw.trim().toLowerCase();
   if (cleaned === "school's" || cleaned === 'school' || cleaned === 'schools') return 'School';
-  if (cleaned === 'ug_pg' || cleaned === 'ug-pg' || cleaned === 'graduation' || cleaned === 'under graduation' || cleaned === 'post graduation') return 'UG_PG';
-  if (cleaned === 'coaching' || cleaned === 'coaching center' || cleaned === 'coachingcentre') return 'CoachingCenter';
-  if (cleaned === 'study hall' || cleaned === 'studyhalls' || cleaned === 'study_hall') return 'StudyHall';
+  if (cleaned === 'under graduation/post graduation') return 'UG_PG';
+  if (cleaned === 'coaching centers' ) return 'CoachingCenter';
+  if (cleaned === 'study halls' ) return 'StudyHall';
   if (cleaned === 'exam' || cleaned === 'exam preparation' || cleaned === 'exampreparation') return 'ExamPreparation';
   if (cleaned === 'study abroad' || cleaned === 'studyabroad' || cleaned === 'abroad') return 'StudyAbroad';
-  if (cleaned === 'tuition centre' || cleaned === 'tuition center' || cleaned === 'tuition') return 'TuitionCentre';
-  if (cleaned === 'intermediate') return 'Intermediate';
-  if (cleaned === 'kindergarten') return 'Kindergarten';
+  if (cleaned === "tution center's" ) return 'TuitionCentre';
+  if (cleaned === 'intermediate college(k12)') return 'Intermediate';
+  if (cleaned === 'kindergarten/childcare center') return 'Kindergarten';
   return ''; // Unknown -> fallback generic
 }
 
@@ -137,7 +162,9 @@ export const InstituteCoursePage: React.FC<InstituteCoursePageProps> = ({
     }
   };
 
-  const key = normalizeType(instituteType) || 'StudyHall'; // Default for now
+  const key = normalizeType(instituteType) || 'StudyHall';
+  console.log("Key:", key);
+  console.log(instituteType) // Default for now
   const Component = componentMap[key] || GenericCoursePage;
 
   return (

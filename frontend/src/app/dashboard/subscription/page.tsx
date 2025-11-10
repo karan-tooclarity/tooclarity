@@ -88,7 +88,7 @@ function ProgramsPage() {
 
   const filteredPrograms = (Array.isArray(programs) ? programs : []).filter((p: Record<string, unknown>)=>{
     const q = search.trim().toLowerCase();
-    const name = String(p?.programName||"").toLowerCase();
+    const name = String(p?.CourseName||"").toLowerCase();
     const branch = String(p?.branchName || (p.branch as Record<string, unknown>)?.branchName || (p.institution as Record<string, unknown>)?.name || "").toLowerCase();
     const passSearch = !q || name.includes(q) || branch.includes(q);
     const branchId = typeof p.branch === 'object' && p.branch !== null ? String((p.branch as Record<string, unknown>)?._id || '') : String(p.branch || '');

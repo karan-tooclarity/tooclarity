@@ -156,7 +156,7 @@ const StudentonBoarding: React.FC = () => {
   const [budgetPerYear, setBudgetPerYear] = useState("");
   const [preferredCountries, setPreferredCountries] = useState<string[]>([]);
   const [passportStatus, setPassportStatus] = useState("");
-  const [additionalInfo, setAdditionalInfo] = useState("");
+  // const [additionalInfo, setAdditionalInfo] = useState("");
   // Study Abroad step 2: country picker UI state
   const [showAllCountries, setShowAllCountries] = useState(false);
   const [countrySearch, setCountrySearch] = useState("");
@@ -192,7 +192,29 @@ const StudentonBoarding: React.FC = () => {
     "Finland",
   ];
 
-
+  // const countryToFlag: Record<string, string> = {
+  //   USA: "🇺🇸",
+  //   Australia: "🇦🇺",
+  //   UK: "🇬🇧",
+  //   Canada: "🇨🇦",
+  //   Ireland: "🇮🇪",
+  //   Germany: "🇩🇪",
+  //   "New Zealand": "🇳🇿",
+  //   France: "🇫🇷",
+  //   Sweden: "🇸🇪",
+  //   Netherlands: "🇳🇱",
+  //   Italy: "🇮🇹",
+  //   Singapore: "🇸🇬",
+  //   Austria: "🇦🇹",
+  //   Spain: "🇪🇸",
+  //   Switzerland: "🇨🇭",
+  //   Lithuania: "🇱🇹",
+  //   Poland: "🇵🇱",
+  //   Malaysia: "🇲🇾",
+  //   Japan: "🇯🇵",
+  //   UAE: "🇦🇪",
+  //   Finland: "🇫🇮",
+  // };
 
   // Build public image path for a given country name using lowercase filename
   const getCountryImageSrc = (name: string) => `/${name.toLowerCase()}.png`;
@@ -771,7 +793,30 @@ const StudentonBoarding: React.FC = () => {
     </div>
   );
 
-
+  // const field = (
+  //   name: "fullName" | "birthday" | "location",
+  //   label: string,
+  //   placeholder: string,
+  //   value: string,
+  //   onChange: (v: string) => void,
+  //   keyboard?: React.HTMLInputAutoCompleteAttribute,
+  //   maxLength?: number
+  // ) => (
+  //   <div className="flex flex-col gap-1">
+  //     <span className={labelCls}>{label}</span>
+  //     <input
+  //       className={[inputBase, errors[name] ? inputError : inputIdle].join(" ")}
+  //       placeholder={placeholder}
+  //       value={value}
+  //       onChange={(e) => onChange(e.target.value)}
+  //       autoComplete={keyboard}
+  //       maxLength={maxLength}
+  //     />
+  //     {errors[name] && (
+  //       <span className="text-[12px] text-red-500">{errors[name]}</span>
+  //     )}
+  //   </div>
+  // );
 
   const personalForm = (
     <div className="flex flex-col gap-4 mt-6">
@@ -831,7 +876,26 @@ const StudentonBoarding: React.FC = () => {
     </div>
   );
 
-
+  // const interestsGrid = (
+  //   <div className="grid grid-cols-2 gap-4 mt-4">
+  //     {interests.map((c) => (
+  //       <button
+  //         key={c.key}
+  //         onClick={() => {
+  //           setSelectedInterest(c.key);
+  //         }}
+  //         className={`h-[96px] rounded-[16px] text-left p-4 shadow-sm border ${
+  //           selectedInterest === c.key
+  //             ? "ring-2 ring-[#0A46E4]"
+  //             : "border-transparent"
+  //         }`}
+  //         style={{ background: c.color, color: "#ffffff" }}
+  //       >
+  //         <div className="text-[14px] font-semibold">{c.label}</div>
+  //       </button>
+  //     ))}
+  //   </div>
+  // );
 
   const renderAcademicForm = () => {
     switch (selectedInterest) {
@@ -1301,7 +1365,35 @@ const StudentonBoarding: React.FC = () => {
     }
   };
 
-
+  // const renderAdditionalForm = () => (
+  //   <div className="flex flex-col gap-4 mt-6">
+  //     <div className="transition">
+  //       <span className={labelCls}>Additional Information</span>
+  //       <textarea
+  //         className={[
+  //           inputBase,
+  //           errors.additionalInfo ? inputError : inputIdle,
+  //         ].join(" ")}
+  //         placeholder="e.g., Any specific requirements, preferences, etc."
+  //         value={additionalInfo}
+  //         onChange={(e) => {
+  //           setAdditionalInfo(e.target.value);
+  //           setErrors((prev) => {
+  //             const n = { ...prev } as Record<string, string>;
+  //             if (e.target.value === "") delete n.additionalInfo;
+  //             return n;
+  //           });
+  //         }}
+  //         rows={3}
+  //       />
+  //       {errors.additionalInfo && (
+  //         <span className="text-[12px] text-red-500">
+  //           {errors.additionalInfo}
+  //         </span>
+  //       )}
+  //     </div>
+  //   </div>
+  // );
 
   const renderStudyAbroadStep2 = () => (
     <div className="flex flex-col gap-4 mt-6">

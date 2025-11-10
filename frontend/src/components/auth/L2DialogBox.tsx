@@ -125,6 +125,7 @@ export interface Course {
   panAadhaar: File | null;
   panAadhaarUrl: string;
   panAadhaarPreviewUrl: string;
+  classSizeRatio?: string;
 }
 
 // Branch shape used locally in this component; dbId tracks IndexedDB id

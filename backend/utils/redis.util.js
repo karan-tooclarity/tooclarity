@@ -151,6 +151,26 @@ class RedisUtil {
       console.error("⚠️ RedisLockUtil.releaseLock Error:", err);
     }
   }
+
+  static async getCachedCourses(courseId) {
+    const key = `course:${courseId}`;
+    return await redis.get(key);
+  }
+
+  static async cacheCourse(courseId, courseData, ttlSeconds = 600) {
+    const key = `course:${courseId}`;
+    await redis.set(key, JSON.stringify(courseData), "EX", ttlSeconds);   
+  }
+
+  static async getCachedSubscription(institutionId){
+    const key = `subscription:${institutionId}`;
+    return await redis.get(key);
+  }
+
+  static async cacheSubscription(institutionId, subscriptionData, ttlSeconds = 300) {
+    const key = `subscription:${institutionId}`;
+    await redis.set(key, JSON.stringify(subscriptionData), "EX", ttlSeconds);   
+  }
 }
 
 module.exports = RedisUtil;

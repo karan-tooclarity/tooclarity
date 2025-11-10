@@ -347,7 +347,7 @@ export default function LoginDialogBox({
             type="button"
             onClick={isGoogle ? handleGoogleClick : undefined}
             disabled={disableGoogleButton}
-            className="flex w-full items-center gap-3 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-medium text-gray-900 shadow-sm transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-70"
+            className="w-full border border-gray-300 rounded py-2 flex items-center justify-center gap-2 hover:bg-gray-100 transition"
           >
             <span className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100">
               {isLoading ? (

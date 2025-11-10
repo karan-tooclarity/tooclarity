@@ -14,9 +14,9 @@ export async function getSocket(origin?: string) {
   // Disable Socket.IO in development if backend is not available
   if (process.env.NODE_ENV === 'development') {
     try {
-      const backendUrl = origin || process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:3001';
-      const response = await fetch(`${backendUrl}/api/health`, { 
-        method: 'HEAD',
+      const backendUrl =  process.env.NEXT_PUBLIC_API_URL|| 'http://localhost:3001/api';
+      const response = await fetch(`${backendUrl}/health`, { 
+        method: 'GET',
         signal: AbortSignal.timeout(2000)
       });
       if (!response.ok) {
@@ -67,7 +67,7 @@ class SocketManager {
 
   constructor() {
     if (typeof window !== 'undefined') {
-      this.origin = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:3001';
+      this.origin = process.env.NEXT_PUBLIC_API_URL|| 'http://localhost:3001';
       window.addEventListener('online', this.onOnline);
       window.addEventListener('offline', this.onOffline);
       document.addEventListener('visibilitychange', this.onVisibility);

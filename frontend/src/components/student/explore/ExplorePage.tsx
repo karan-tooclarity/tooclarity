@@ -160,8 +160,7 @@ const ExplorePage: React.FC = () => {
       {/* Header using HomeHeader component */}
       <HomeHeader
         userName={user?.name || "Student"}
-        userAvatar={(user && 'profilePicture' in user ? (user as { profilePicture?: string }).profilePicture : undefined) || 
-                    (user && 'ProfilePicutre' in user ? (user as { ProfilePicutre?: string }).ProfilePicutre : undefined)}
+        userAvatar={user?.profilePicture}
         searchValue={searchQuery}
         onSearchChange={handleSearch}
         onNotificationClick={() => router.push("/student/notifications")}

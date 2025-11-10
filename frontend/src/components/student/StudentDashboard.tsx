@@ -6,7 +6,7 @@ import CourseCard from "./home/CourseCard";
 import FilterSidebar from "./home/FilterSidebar";
 import FooterNav from "./home/FooterNav";
 import styles from "./StudentDashboard.module.css";
-import { studentDashboardAPI, type CourseForStudent } from "@/lib/students-api";
+import { DashboardCourse, studentDashboardAPI } from "@/lib/students-api";
 import { useAuth } from "@/lib/auth-context";
 import { useNotifications } from "@/lib/hooks/notifications-hooks";
 import { useRouter } from "next/navigation";
@@ -35,7 +35,7 @@ interface Course {
   streamType?: string; // e.g., "Engineering and Technology (B.E./B.Tech.)"
   educationType?: string; // e.g., "Full time", "Part time", "Distance learning"
   // Store original API data for detailed view
-  apiData?: CourseForStudent;
+  apiData: DashboardCourse;
 }
 
 /**
@@ -51,41 +51,51 @@ const getPriceRange = (price: number): string => {
 /**
  * Transform API course data to internal Course format
  */
-const transformApiCourse = (apiCourse: CourseForStudent, wishlisted: boolean): Course => {
+const transformApiCourse = (apiCourse: DashboardCourse, wishlisted: boolean): Course => {
   // Map mode values: "Offline" -> "Offline", keep others as-is
-  const modeMap: Record<string, string> = {
-    "Offline": "Offline",
-    "Online": "Online",
-    "Hybrid": "Hybrid",
-  };
+  // const modeMap: Record<string, string> = {
+  //   "Offline": "Offline",
+  //   "Online": "Online",
+  //   "Hybrid": "Hybrid",
+  // };
 
   const price = apiCourse.priceOfCourse || 0;
   
   return {
-    id: apiCourse._id || apiCourse.id || "",
-    title: apiCourse.courseName || "Untitled Course",
-    institution: apiCourse.institution?.instituteName || "Unknown Institution",
-    image: apiCourse.imageUrl || "/course-placeholder.jpg",
-    rating: apiCourse.rating || 4.5,
-    reviews: apiCourse.reviews || 0,
-    students: apiCourse.studentsEnrolled || 0,
-    price: price,
-    level: "Lower kindergarten", // Default level if not provided
-    mode: modeMap[apiCourse.mode || "Online"] || apiCourse.mode || "Online",
-    wishlisted,
-    // Kindergarten-specific fields with defaults
-    ageGroup: "3 - 4 Yrs", // Default age group
-    programDuration: "Academic Year", // Default program duration
-    priceRange: getPriceRange(price),
-    instituteType: "Kindergarten", // Default to Kindergarten
-    boardType: "CBSE", // Default board type for schools
-    // Graduation-specific fields with defaults
-    graduationType: "Under Graduation", // Default graduation type
-    streamType: "Engineering and Technology (B.E./B.Tech.)", // Default stream
-    educationType: "Full time", // Default education type
-    // Store original API data for course details page
-    apiData: apiCourse,
-  };
+  id: apiCourse._id || "",
+  title: apiCourse.courseName || "Untitled Course",
+  institution: apiCourse.institutionDetails?.instituteName || "Unknown Institution",
+  image: apiCourse.imageUrl || "/course-placeholder.jpg",
+  // rating: apiCourse.rating || 4.5,
+  // reviews: apiCourse.reviews || 0,
+  // students: apiCourse.studentsEnrolled || 0,
+  price: price,
+  // level: "Lower kindergarten", // Default level if not provided
+  // mode: modeMap[apiCourse.mode || "Online"] || apiCourse.mode || "Online",
+  wishlisted,
+  // Kindergarten-specific fields with defaults
+  // ageGroup: "3 - 4 Yrs", // Default age group
+  // programDuration: "Academic Year", // Default program duration
+  priceRange: getPriceRange(price),
+  instituteType: "Kindergarten", // Default to Kindergarten
+  boardType: "CBSE", // Default board type for schools
+
+
+
+
+
+  // Graduation-specific fields with defaults
+  // graduationType: "Under Graduation", // Default graduation type
+  // streamType: "Engineering and Technology (B.E./B.Tech.)", // Default stream
+  // educationType: "Full time", // Default education type
+  // Store original API data for course details page
+  apiData: apiCourse,
+  rating: 0,
+  reviews: 0,
+  students: 0,
+  level: "",
+  mode: "",
+};
 };
 
 const StudentDashboard: React.FC = () => {
@@ -153,7 +163,9 @@ const StudentDashboard: React.FC = () => {
           throw new Error(response.message || "Failed to fetch courses");
         }
         const wishlistedIds = getWishlistedCourseIds();
-        const transformedCourses = (response.data as CourseForStudent[]).map((apiCourse) =>
+
+        // Transform API courses to internal format
+        const transformedCourses = (response.data as DashboardCourse[]).map((apiCourse) =>
           transformApiCourse(apiCourse, wishlistedIds.has(apiCourse._id))
         );
         setCourses(transformedCourses);
@@ -180,19 +192,71 @@ const StudentDashboard: React.FC = () => {
   }, [filteredCourses]);
 
   const loadMoreCourses = () => {
+  // Load more courses function
+  // const loadMoreCourses = () => {
+  //   if (isLoadingMore || displayedCourses.length >= filteredCourses.length) return;
+
+  //   setIsLoadingMore(true);
+    
+  //   // Load next batch immediately without delay
+  //   const nextPage = currentPage + 1;
+  //   const startIndex = 0;
+  //   const endIndex = nextPage * COURSES_PER_PAGE;
+  //   const newDisplayedCourses = filteredCourses.slice(startIndex, endIndex);
+    
+  //   setDisplayedCourses(newDisplayedCourses);
+  //   setCurrentPage(nextPage);
+  //   setIsLoadingMore(false);
+  // };
+
+  const loadMoreCourses = useCallback(() => {
     if (isLoadingMore || displayedCourses.length >= filteredCourses.length) return;
     setIsLoadingMore(true);
     const nextPage = currentPage + 1;
-    const startIndex = 0;
     const endIndex = nextPage * COURSES_PER_PAGE;
     const newDisplayedCourses = filteredCourses.slice(startIndex, endIndex);
     setDisplayedCourses(newDisplayedCourses);
     setCurrentPage(nextPage);
     setIsLoadingMore(false);
-  };
+  }, [isLoadingMore, displayedCourses.length, filteredCourses, currentPage]);
+
+  // Infinite scroll handler
+  // useEffect(() => {
+  //   let ticking = false;
+    
+  //   const handleScroll = () => {
+  //     if (!ticking) {
+  //       window.requestAnimationFrame(() => {
+  //         // Check if we're near the bottom of the page
+  //         const scrollPosition = window.innerHeight + window.scrollY;
+  //         const pageHeight = document.documentElement.scrollHeight;
+  //         const threshold = 500; // Load more when 500px from bottom
+          
+  //         const shouldLoadMore = scrollPosition >= pageHeight - threshold &&
+  //           !isLoadingMore &&
+  //           displayedCourses.length < filteredCourses.length;
+
+  //         if (shouldLoadMore) {
+  //           loadMoreCourses();
+  //         }
+          
+  //         ticking = false;
+  //       });
+  //       ticking = true;
+  //     }
+  //   };
+
+  //   window.addEventListener('scroll', handleScroll, { passive: true });
+    
+  //   // Also check on mount in case content doesn't fill screen
+  //   handleScroll();
+    
+  //   return () => window.removeEventListener('scroll', handleScroll);
+  // }, [displayedCourses.length, filteredCourses.length, isLoadingMore, currentPage, loadMoreCourses]);
 
   useEffect(() => {
     let ticking = false;
+
     const handleScroll = () => {
       if (!ticking) {
         window.requestAnimationFrame(() => {
@@ -211,10 +275,14 @@ const StudentDashboard: React.FC = () => {
         ticking = true;
       }
     };
-    window.addEventListener('scroll', handleScroll, { passive: true });
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+
+    // Check immediately on mount
     handleScroll();
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, [displayedCourses.length, filteredCourses.length, isLoadingMore, currentPage]);
+
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [displayedCourses.length, filteredCourses.length, isLoadingMore, loadMoreCourses]);
 
   useEffect(() => {
     const isMobile = window.innerWidth < 1024;
@@ -431,6 +499,7 @@ const StudentDashboard: React.FC = () => {
     <div className={styles.dashboardContainer}>
       <HomeHeader
         userName={user?.name || "Student"}
+        userAvatar={user?.profilePicture}
         searchValue={searchQuery}
         onSearchChange={handleSearch}
         onFilterClick={handleFilterToggle}
@@ -520,7 +589,7 @@ const StudentDashboard: React.FC = () => {
                       <CourseCard
                         key={course.id}
                         course={{
-                          id: course.id,
+                          id: course.apiData?._id,
                           title: course.title,
                           institution: course.institution,
                           rating: course.rating,
@@ -530,10 +599,11 @@ const StudentDashboard: React.FC = () => {
                           level: course.level,
                           mode: course.mode,
                           wishlisted: course.wishlisted,
-                          location: course.apiData?.location || course.institution,
-                          description: course.apiData?.aboutCourse || 'Quality education program',
+                          location: course.apiData?.institutionDetails.locationURL || course.institution,
+                          description: course.apiData?.courseName || course.apiData.selectBranch || 'Quality education program',
                           duration: course.apiData?.courseDuration || '1 year',
-                          brandLogo: course.apiData?.institution?.instituteLogo || '',
+                          brandLogo: course.apiData?.institutionDetails?.logoUrl || '',
+                          imageUrl: course.apiData?.imageUrl || '',
                         }}
                         onWishlistToggle={handleWishlistToggle}
                         onViewDetails={handleViewCourseDetails}

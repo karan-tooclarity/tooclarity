@@ -8,7 +8,7 @@ import {
   _DialogTitle,
 } from "@/components/ui/dialog";
 import InputField from "@/components/ui/InputField";
-import Image from "next/image";
+// import Image from "next/image";
 import styles from "./ScheduleCallbackDialog.module.css";
 
 interface ScheduleCallbackDialogProps {

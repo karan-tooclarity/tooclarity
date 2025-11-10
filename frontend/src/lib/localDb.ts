@@ -65,7 +65,7 @@ export type BranchRecord = {
 
 
 export type InstitutionRecord = {
-  id?: number;
+  id?: string;
   instituteType?: string;
   instituteName?: string;
   approvedBy?: string;
@@ -484,7 +484,7 @@ export async function deleteBranchFromDB(id: number): Promise<void> {
 
 export async function addInstitutionToDB(
   institution: InstitutionRecord
-): Promise<number> {
+): Promise<string> {
   const db = await openDB();
   return new Promise((resolve, reject) => {
     const tx = db.transaction(INSTITUTION_STORE, "readwrite");
@@ -494,7 +494,7 @@ export async function addInstitutionToDB(
     const record = { ...rest, createdAt: Date.now() };
 
     const req = store.add(record);
-    req.onsuccess = () => resolve(req.result as number);
+    req.onsuccess = () => resolve(req.result as string);
     req.onerror = () =>
       reject(req.error || new Error("Failed to add institution"));
   });

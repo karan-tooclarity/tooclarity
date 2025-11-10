@@ -4,6 +4,7 @@ import React from "react";
 import Image from "next/image";
 import Link from "next/link";
 
+
 const Footer = () => {
   return (
     <footer className="bg-blue-800 text-white py-12 px-4 sm:px-8">
@@ -30,7 +31,7 @@ const Footer = () => {
           <ul className="space-y-2">
             <li>Blog</li>
             <li>Help Center</li>
-            <li>Schedule a Demo</li>
+            <li><Link href="/contactUs">Schedule a Demo</Link></li>
           </ul>
         </div>
         <div>

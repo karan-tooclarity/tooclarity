@@ -288,14 +288,13 @@ const ugPgUniversitySchema = new mongoose.Schema({
     maxlength: 100,
     default: "",
   },
-  placements: {
+
     placementDrives: { type: Boolean, default: false },
     mockInterviews: { type: Boolean, default: false },
     resumeBuilding: { type: Boolean, default: false },
     linkedinOptimization: { type: Boolean, default: false },
     exclusiveJobPortal: { type: Boolean, default: false },
     // certification: { type: Boolean, default: false },
-  },
   // --- ✅ ADD THESE MISSING INSTITUTION-WIDE (L3) FIELDS ---
     library: {
         type: Boolean,
