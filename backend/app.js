@@ -84,6 +84,7 @@ app.use("/api/v1/auth", authPublicRoutes);
 app.use("/auth/google", googleRoutes);
 app.use("/api/v1/payment/", paymentPublicRoutes);
 app.use("/api/v1/public", publicRoutes);
+// app.get("/health", (req, res) => res.status(200).send("OK"));
 
 // Apply Global Auth Middleware (for all routes below this line)
 app.use(globalAuthMiddleware);
@@ -119,6 +120,13 @@ app.use(
   courseRoutes
 );
 
+app.use(
+  "/api/v1/student/course",
+  // requireInstituteAdmin,
+  requireStudent,
+  courseRoutes
+);
+
 // Unified subscription scope under institution
 app.use(
   "/api/v1/institutions/:institutionId/subscriptions",
@@ -128,7 +136,7 @@ app.use(
 
 app.use("/api/v1/notifications", notificationRoutes);
 
-app.get("/health", (req, res) => res.status(200).send("OK"));
+
 
 // ✅ Secure Dashboard routes
 app.use("/api/v1/dashboard", dashboardRoutes);

@@ -115,6 +115,7 @@ export interface Course {
   instructorProfile: string;
   subject: string;
   createdBranch: string;
+  classSizeRatio?: string;
 }
 
 // Branch shape used locally in this component; dbId tracks IndexedDB id

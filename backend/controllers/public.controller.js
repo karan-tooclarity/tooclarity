@@ -1,24 +1,83 @@
 const Course = require("../models/Course");
-const Subscription = require("../models/Subscription");
 const asyncHandler = require("express-async-handler");
 
+
 exports.getAllVisibleCourses = asyncHandler(async (req, res, next) => {
-  // 1. Find all active subscriptions
-  const activeSubscriptions = await Subscription.find({
-    status: "active",
-    endDate: { $gt: new Date() }, // Ensure subscription is not expired
-  }).select("institution");
+  try {
+    const now = new Date();
 
-  const activeInstitutionIds = activeSubscriptions.map(sub => sub.institution);
+    const courses = await Course.aggregate([
+  // Join with subscriptions to check if the institution has an active subscription
+  {
+    $lookup: {
+      from: "subscriptions",
+      let: { institutionId: "$institution" },
+      pipeline: [
+        {
+          $match: {
+            $expr: {
+              $and: [
+                { $eq: ["$institution", "$$institutionId"] },
+                { $eq: ["$status", "active"] },
+                { $lte: ["$startDate", now] },
+                { $gt: ["$endDate", now] }
+              ]
+            }
+          }
+        }
+      ],
+      as: "validSubscription"
+    }
+  },
 
-  // 2. Find all courses that belong to these institutions
-  const courses = await Course.find({
-    institution: { $in: activeInstitutionIds },
-  });
+  // Only keep courses whose institution has an active subscription
+  { $match: { validSubscription: { $ne: [] } } },
 
-  res.status(200).json({
-    success: true,
-    count: courses.length,
-    data: courses,
-  });
+  // Join institution details
+  {
+    $lookup: {
+      from: "institutions",
+      localField: "institution",
+      foreignField: "_id",
+      as: "institutionDetails"
+    }
+  },
+  { $unwind: "$institutionDetails" },
+
+  // Select only necessary fields
+  {
+    $project: {
+      _id: 1,
+      priceOfCourse: 1,
+      courseDuration: 1,
+      courseName: 1,
+      imageUrl: 1,
+      selectBranch:1,
+
+      "institutionDetails._id": 1,
+      "institutionDetails.instituteName": 1,
+      "institutionDetails.logoUrl": 1,
+      "institutionDetails.locationURL": 1
+    }
+  },
+
+  // Remove temporary field cleanly
+  { $unset: "validSubscription" }
+]);
+
+
+    return res.status(200).json({
+      success: true,
+      count: courses.length,
+      data: courses
+    });
+
+  } catch (error) {
+    console.error("❌ [getAllVisibleCourses] Error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "An error occurred while fetching visible courses.",
+      error: error.message
+    });
+  }
 });

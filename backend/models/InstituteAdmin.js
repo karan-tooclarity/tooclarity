@@ -117,6 +117,12 @@ const instituteAdminSchema = new mongoose.Schema(
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Course',
     }],
+    programVisited: {
+      type: Number,
+    },
+    requestRaised: {
+      type: Number,
+    }
 }, { timestamps: true});
 
 instituteAdminSchema.pre("save", async function (next) {

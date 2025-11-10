@@ -13,7 +13,7 @@ interface CoursePageProps {
     description?: string;
     aboutCourse?: string;
     eligibility?: string;
-    price: number;
+    price: string;
     duration?: string;
     mode?: string;
     timings?: string;
@@ -21,6 +21,7 @@ interface CoursePageProps {
     startDate?: string;
     image?: string;
     operationalDays?: string[];
+    toalSeats?: string;
     features?: {
       recognized?: boolean;
       activities?: boolean;
@@ -28,6 +29,10 @@ interface CoursePageProps {
       extraCare?: boolean;
       mealsProvided?: boolean;
       playground?: boolean;
+      hasWifi?: boolean;
+      hasChargingPoints?: boolean,
+      hasPersonalLocker?: boolean,
+      hasAC?: boolean,
     };
   };
   onBack?: () => void;
@@ -43,7 +48,7 @@ export const StudyHall: React.FC<CoursePageProps> = ({
   onBookDemo,
 }) => {
   const [showMore, setShowMore] = useState(false);
-  const allDays = ['Mon', 'Tues', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  const allDays = ['Mon', 'Tues', 'Wed', 'Thur', 'Fri', 'Sat', 'Sun'];
   const operationalDays = course.operationalDays || ['Mon', 'Tues', 'Wed', 'Thu', 'Fri'];
 
   const handleShowMore = () => {
@@ -136,13 +141,13 @@ export const StudyHall: React.FC<CoursePageProps> = ({
           <div style={{ minWidth: 0 }}>
             <h3 className={styles.sectionTitle} style={{ minWidth: 0 }}>Total Seats</h3>
             <div className={styles.modeTimingBox} style={{ minWidth: 0 }}>
-              <div className={styles.modeTimingValue} style={{ minWidth: 0 }}>{'60-100'}</div>
+              <div className={styles.modeTimingValue} style={{ minWidth: 0 }}>{course.toalSeats || '0'}</div>
             </div>
           </div>
           <div style={{ minWidth: 0 }}>
             <h3 className={styles.sectionTitle} style={{ minWidth: 0 }}>Fees</h3>
             <div className={styles.modeTimingBox} style={{ minWidth: 0 }}>
-              <div className={styles.modeTimingValue} style={{ minWidth: 0 }}>{'₹ 10,000/m'}</div>
+              <div className={styles.modeTimingValue} style={{ minWidth: 0 }}>{'₹' + course.price || '0'}</div>
             </div>
           </div>
         </div>
@@ -155,7 +160,7 @@ export const StudyHall: React.FC<CoursePageProps> = ({
                 <path d="M6 1C3.79 1 2 2.79 2 5c0 2.5 4 6 4 6s4-3.5 4-6c0-2.21-1.79-4-4-4zm0 5.5c-.83 0-1.5-.67-1.5-1.5S5.17 3.5 6 3.5 7.5 4.17 7.5 5 6.83 6.5 6 6.5z" fill="#666"/>
               </svg>
               <span className={styles.infoValue} style={{ minWidth: 0 }}>
-                {course.location.length > 12 ? course.location.substring(0, 12) + '...' : course.location}
+                {course.location}
               </span>
             </div>
           )}
@@ -185,7 +190,7 @@ export const StudyHall: React.FC<CoursePageProps> = ({
           <div className={styles.featuresGrid} style={{ minWidth: 0 }}>
             <div className={styles.featureItem} style={{ minWidth: 0 }}>
               <div className={styles.featureIcon} style={{ minWidth: 0, position: 'relative' }}>
-                <sup className={styles.additionalTopSup}>Govt</sup>
+                <sup className={styles.additionalTopSup}>{course.features?.hasWifi ? "Yes" : "No"}</sup>
                 <svg width="30" height="23" viewBox="0 0 30 23" fill="none" xmlns="http://www.w3.org/2000/svg" xmlnsXlink="http://www.w3.org/1999/xlink">
                 <rect width="30" height="23" fill="url(#pattern0_2450_4525)"/>
                 <defs>
@@ -201,7 +206,7 @@ export const StudyHall: React.FC<CoursePageProps> = ({
 
             <div className={styles.featureItem} style={{ minWidth: 0 }}>
               <div className={styles.featureIcon} style={{ minWidth: 0, position: 'relative' }}>
-                <sup className={styles.additionalTopSup}>1:15</sup>
+                <sup className={styles.additionalTopSup}>{course.features?.hasChargingPoints ? "Yes" : "No"}</sup>
                 <svg width="27" height="27" viewBox="0 0 27 27" fill="none" xmlns="http://www.w3.org/2000/svg" xmlnsXlink="http://www.w3.org/1999/xlink">
                 <rect width="27" height="27" fill="url(#pattern0_2450_4538)"/>
                 <defs>
@@ -217,7 +222,7 @@ export const StudyHall: React.FC<CoursePageProps> = ({
 
             <div className={styles.featureItem} style={{ minWidth: 0 }}>
               <div className={styles.featureIcon} style={{ minWidth: 0, position: 'relative' }}>
-                <sup className={styles.additionalTopSup} >15</sup>
+                <sup className={styles.additionalTopSup} >{course.features?.hasAC? "Yes" : "No"}</sup>
                 <svg width="34" height="22" viewBox="0 0 34 22" fill="none" xmlns="http://www.w3.org/2000/svg" xmlnsXlink="http://www.w3.org/1999/xlink">
                 <rect width="34" height="22" fill="url(#pattern0_2450_4550)"/>
                 <defs>
@@ -233,7 +238,7 @@ export const StudyHall: React.FC<CoursePageProps> = ({
 
             <div className={styles.featureItem} style={{ minWidth: 0 }}>
               <div className={styles.featureIcon} style={{ minWidth: 0, position: 'relative' }}>
-                <sup className={styles.additionalBottomSup} >Yes</sup>
+                <sup className={styles.additionalBottomSup} >{course.features?.hasPersonalLocker? "Yes" : "No"}</sup>
                 <svg width="25" height="28" viewBox="0 0 25 28" fill="none" xmlns="http://www.w3.org/2000/svg" xmlnsXlink="http://www.w3.org/1999/xlink">
                 <rect width="25" height="28" fill="url(#pattern0_2450_4562)"/>
                 <defs>
@@ -251,7 +256,7 @@ export const StudyHall: React.FC<CoursePageProps> = ({
         </div>
 
         {/* Advertisement Section */}
-        <div className={styles.adSection} style={{ minWidth: 0 }}>
+        {/* <div className={styles.adSection} style={{ minWidth: 0 }}>
           <div className={styles.adContent} style={{ minWidth: 0 }}>
             <h3 style={{ minWidth: 0 }}>Galaxy F16 5G</h3>
             <p style={{ minWidth: 0 }}>India&apos;s<br />Segment&apos;s slimmest phone with aAMOLED</p>
@@ -259,7 +264,7 @@ export const StudyHall: React.FC<CoursePageProps> = ({
           <div className={styles.adImage} style={{ minWidth: 0 }}>
             <span style={{ minWidth: 0 }}>Phone Image</span>
           </div>
-        </div>
+        </div> */}
 
         {/* Show More Button */}
         <button className={styles.showMoreBtn} onClick={handleShowMore} style={{ minWidth: 0 }}>

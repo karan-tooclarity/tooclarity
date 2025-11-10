@@ -53,7 +53,6 @@ export default function DashboardLayout({
       router.push("/student/onboarding");
     }
     return <>{children}</>;
-    //return <StudentDashboard/>;
   }
 
   if (

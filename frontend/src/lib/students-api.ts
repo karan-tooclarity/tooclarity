@@ -1,6 +1,8 @@
 // Student-specific API configuration placeholder
 
+import { Course } from "@/components/auth/L2DialogBox";
 import { apiRequest, type ApiResponse } from "./api";
+import { InstitutionRecord } from "./localDb";
 
 export type StudentApiResponse<T = unknown> = ApiResponse<T>;
 
@@ -136,6 +138,26 @@ export interface CourseForStudent {
   type?: "PROGRAM" | "COURSE";
 }
 
+export interface DashboardCourse{
+  _id: string;
+  courseName: string;
+  imageUrl?: string;
+  courseDuration?: string;
+  priceOfCourse?: number;
+  selectBranch?: string;
+  institutionDetails:{
+    id:string;
+    instituteName:string;
+    logoUrl?:string;
+    locationURL?:string;
+  }
+}
+
+export interface coursePageData{
+  course: Course;
+  institution: InstitutionRecord;
+}
+
 // ===== Student Dashboard API (stubs) =====
 export const studentDashboardAPI = {
   // Fetch the current user's profile (shared profile endpoint)
@@ -158,8 +180,14 @@ export const studentDashboardAPI = {
   },
 
   // Fetch all visible courses (public endpoint - no auth required)
-  getVisibleCourses: async (): Promise<StudentApiResponse<CourseForStudent[]>> => {
-    return studentApiRequest<CourseForStudent[]>("/v1/public/courses", {
+  getVisibleCourses: async (): Promise<StudentApiResponse<DashboardCourse[]>> => {
+    return studentApiRequest<DashboardCourse[]>("/v1/public/courses", {
+      method: "GET",
+    });
+  },
+
+  getCoursebyId: async (course_id : string): Promise<StudentApiResponse<coursePageData>> => {
+    return studentApiRequest<coursePageData>(`/v1/student/course/${course_id}`, {
       method: "GET",
     });
   },

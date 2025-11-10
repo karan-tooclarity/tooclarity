@@ -20,9 +20,9 @@ import { useRouter } from "next/navigation";
 function AnalyticsPage() {
 	const [analyticsRange, setAnalyticsRange] = useState<"Weekly"|"Monthly"|"Yearly">("Weekly");
 	const [coursePerformance, setCoursePerformance] = useState<CoursePerformanceRow[]>([]);
-	const [kpiCourseViews, setKpiCourseViews] = useState<number>(0);
+	const [, setKpiCourseViews] = useState<number>(0);
 	const [kpiLeads, setKpiLeads] = useState<number>(0);
-	const [kpiViewsDelta, setKpiViewsDelta] = useState<{value:number; isPositive:boolean}>({ value: 0, isPositive: true });
+	const [, setKpiViewsDelta] = useState<{value:number; isPositive:boolean}>({ value: 0, isPositive: true });
 	const [kpiCallbacks, setKpiCallbacks] = useState<number>(0);
 	const [kpiLeadsDelta, setKpiLeadsDelta] = useState<{value:number; isPositive:boolean}>({ value: 0, isPositive: true });
 	const [isKpiLoading, setIsKpiLoading] = useState<boolean>(false);

@@ -933,7 +933,7 @@ export const programsAPI = {
     const cacheKey = `programs_${institutionId}`;
     const cached = programsCache.get(cacheKey);
     if (cached && (Date.now() - cached.timestamp) < PROGRAMS_CACHE_DURATION) return cached.data as ApiResponse<unknown>;
-    const res = await apiRequest(`/v1/institutions/${encodeURIComponent(institutionId)}/courses?type=PROGRAM`, { method: 'GET' });
+    const res = await apiRequest(`/v1/institutions/${encodeURIComponent(institutionId)}/courses`, { method: 'GET' });
     const payload = res as { data?: unknown; courses?: unknown };
     const raw = payload?.data || payload?.courses || [];
     const arr = Array.isArray(raw) ? raw : Array.isArray((raw as { data?: unknown })?.data) ? (raw as { data: unknown[] }).data : [];

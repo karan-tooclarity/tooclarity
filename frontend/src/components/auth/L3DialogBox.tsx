@@ -396,7 +396,7 @@ const handleSchoolSubmit = async (e: FormEvent<HTMLFormElement>) => {
         : undefined;
 
     const current = normalize(schoolFormDataWithBooleans) as import("@/lib/localDb").InstitutionRecord;
-    let effectiveId: number | null = null;
+    let effectiveId: string | null = null;
 
     if (latest) {
       const latestNormalized = normalize(latest);
@@ -522,7 +522,7 @@ const handleSchoolSubmit = async (e: FormEvent<HTMLFormElement>) => {
           : undefined;
 
       const current = normalize(collegeFormDataWithBooleans);
-      let effectiveId: number | null = null;
+      let effectiveId: string | null = null;
 
       if (latest) {
         const latestNormalized = normalize(latest);
@@ -628,7 +628,7 @@ const handleSchoolSubmit = async (e: FormEvent<HTMLFormElement>) => {
         : undefined;
 
     const current = normalize(coachingFormDataWithBooleans);
-    let effectiveId: number | null = null;
+    let effectiveId: string | null = null;
 
     if (latest) {
       const latestNormalized = normalize(latest);
@@ -768,7 +768,7 @@ const handleUndergraduateSubmit = async (e: React.FormEvent<HTMLFormElement>) =>
     });
     
     const currentData = normalize(formDataWithBooleans) as import("@/lib/localDb").InstitutionRecord;
-    let effectiveId: number | null = null;
+    let effectiveId: string | null = null;
     
     // 4. Load existing data and decide whether to update or add a new entry
     const institutions = await getAllInstitutionsFromDB();
@@ -939,7 +939,7 @@ const handleUndergraduateSubmit = async (e: React.FormEvent<HTMLFormElement>) =>
       });
 
       const current = normalize(formDataWithBooleans) as import("@/lib/localDb").InstitutionRecord ;
-      let effectiveId: number | null = null;
+      let effectiveId: string | null = null;
 
       if (latest) {
         const latestNormalized = normalize(latest);

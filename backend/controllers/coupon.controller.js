@@ -9,10 +9,8 @@ const { Institution } = require("../models/Institution");
 
 const PLANS = require("../config/plans");
 
-
 exports.createCoupon = asyncHandler(async (req, res, next) => {
-  const { code, discountedPercentage, planType, institutionIds } =
-    req.body;
+  const { code, discountedPercentage, planType, institutionIds } = req.body;
 
   const adminId = req.userId;
 
@@ -95,8 +93,8 @@ exports.applyCoupon = asyncHandler(async (req, res, next) => {
     message: "Coupon applied successfully",
     data: {
       discountAmount: discount,
-    },
-  });
+    },
+  });
 });
 
 exports.listInstitutions = async (req, res, next) => {
@@ -109,9 +107,7 @@ exports.listInstitutions = async (req, res, next) => {
     // Build filter
     const filter = {};
     if (search) {
-      filter.$or = [
-        { instituteName: { $regex: search, $options: "i" } },
-      ];
+      filter.$or = [{ instituteName: { $regex: search, $options: "i" } }];
     }
 
     // Query DB (select only _id and instituteName)
