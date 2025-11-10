@@ -370,7 +370,7 @@ exports.filterInstitutions = asyncHandler(async (req, res, next) => {
   const limit = parseInt(req.query.limit, 10) || 10;
   const from = (page - 1) * limit;
 
-  const { q, instituteType, state, pincode, ...otherFilters } = req.query;
+  const { q, instituteType, state, pincode, minPrice, maxPrice, ...otherFilters } = req.query;
 
   const esQuery = {
     bool: {
@@ -383,7 +383,7 @@ exports.filterInstitutions = asyncHandler(async (req, res, next) => {
     esQuery.bool.must.push({
       multi_match: {
         query: q,
-        fields: ["instituteName", "about", "mission", "vision", "city"], // Fields to search against
+        fields: ["instituteName", "about", "mission", "vision", "city"],
         fuzziness: "AUTO",
       },
     });
@@ -401,6 +401,7 @@ exports.filterInstitutions = asyncHandler(async (req, res, next) => {
     esQuery.bool.filter.push({ term: { "pincode": pincode } });
   }
 
+  // Apply other simple filters
   for (const key in otherFilters) {
     if (key !== 'page' && key !== 'limit') {
       esQuery.bool.filter.push({ term: { [key]: otherFilters[key] } });
@@ -408,7 +409,36 @@ exports.filterInstitutions = asyncHandler(async (req, res, next) => {
   }
 
   try {
-    // 3. Execute query
+    // 🔹 Step 1: If price filters exist, find eligible institution IDs
+    let institutionIdsInRange = null;
+    if (minPrice || maxPrice) {
+      const priceQuery = {};
+      if (minPrice) priceQuery.$gte = parseFloat(minPrice);
+      if (maxPrice) priceQuery.$lte = parseFloat(maxPrice);
+
+      const matchingCourses = await Course.find(
+        { price: priceQuery },
+        "institution"
+      ).lean();
+
+      institutionIdsInRange = [...new Set(matchingCourses.map(c => c.institution.toString()))];
+
+      if (institutionIdsInRange.length === 0) {
+        return res.status(200).json({
+          success: true,
+          count: 0,
+          pagination: { currentPage: page, totalPages: 0, totalInstitutions: 0 },
+          data: [],
+        });
+      }
+
+      // Add filter to Elasticsearch query
+      esQuery.bool.filter.push({
+        terms: { _id: institutionIdsInRange },
+      });
+    }
+
+    // 🔹 Step 2: Execute ES search
     const { body } = await esClient.search({
       index: esIndex,
       from: from,
@@ -418,12 +448,11 @@ exports.filterInstitutions = asyncHandler(async (req, res, next) => {
       },
     });
 
-    // 4. Process and send response
     const totalDocuments = body.hits.total.value;
-    const institutions = body.hits.hits.map(hit => hit._source); // Extract documents from hits
+    const institutions = body.hits.hits.map(hit => hit._source);
 
-    logger.info({ filters: req.query, results: institutions.length }, "Elasticsearch search performed.");
-    
+    logger.info({ filters: req.query, results: institutions.length }, "Elasticsearch search with price range performed.");
+
     res.status(200).json({
       success: true,
       count: institutions.length,

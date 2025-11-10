@@ -367,6 +367,16 @@ export default function L2DialogBox({
             instructorProfile: c.instructorProfile ?? "",
             subject: c.subject ?? "",
             createdBranch: group.branchName ?? "",
+            consultancyName: "",
+            studentAdmissions: "",
+            countriesOffered: "",
+            academicOfferings: "",
+            businessProof: null,
+            businessProofUrl: "",
+            businessProofPreviewUrl: "",
+            panAadhaar: null,
+            panAadhaarUrl: "",
+            panAadhaarPreviewUrl: "",
           };
 
           loadedCourses.push(loadedCourse);
