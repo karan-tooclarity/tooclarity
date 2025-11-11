@@ -1,16 +1,16 @@
 // controllers/coupon.controller.js
 
 const Coupon = require("../models/coupon");
-const Admin = require("../models/Admin"); // Import the new Admin model
+// const Admin = require("../models/Admin"); // Import the new Admin model
 const AppError = require("../utils/appError");
 const asyncHandler = require("express-async-handler");
-const InstitutionAdmin = require("../models/InstituteAdmin");
+// const InstitutionAdmin = require("../models/InstituteAdmin");
 const { Institution } = require("../models/Institution");
 
 const PLANS = require("../config/plans");
 
 exports.createCoupon = asyncHandler(async (req, res, next) => {
-  const { code, discountedPercentage, planType, institutionIds } = req.body;
+  const { code, discountedPercentage, planType, maxUses } = req.body;
 
   const adminId = req.userId;
 
@@ -22,9 +22,9 @@ exports.createCoupon = asyncHandler(async (req, res, next) => {
     return next(new AppError("Invalid plan type", 400));
   }
 
-  if (!Array.isArray(institutionIds) || institutionIds.length === 0) {
-    return next(new AppError("At least one institution is required", 400));
-  }
+  // if (!Array.isArray(institutionIds) || institutionIds.length === 0) {
+  //   return next(new AppError("At least one institution is required", 400));
+  // }
 
   let validTill = new Date();
   if (planType === "yearly") {
@@ -39,7 +39,8 @@ exports.createCoupon = asyncHandler(async (req, res, next) => {
     const coupon = await Coupon.create({
       code,
       discountPercentage: discountedPercentage,
-      institutions: institutionIds,
+      // institutions: institutionIds,
+      maxUses,
       validTill,
       planType,
       createdBy: adminId,
