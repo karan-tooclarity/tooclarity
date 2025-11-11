@@ -214,6 +214,7 @@ const StudentDashboard: React.FC = () => {
     setIsLoadingMore(true);
     const nextPage = currentPage + 1;
     const endIndex = nextPage * COURSES_PER_PAGE;
+    const startIndex = 0;
     const newDisplayedCourses = filteredCourses.slice(startIndex, endIndex);
     setDisplayedCourses(newDisplayedCourses);
     setCurrentPage(nextPage);
