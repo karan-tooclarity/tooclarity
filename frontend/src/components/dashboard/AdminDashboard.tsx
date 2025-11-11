@@ -103,11 +103,11 @@ export default function AdminDashboard() {
 
   const validate = (): string | null => {
     if (!code.trim()) return "Enter coupon code.";
-    if (discountedPercentage === "" || discountedPercentage < 0 || discountedPercentage > 100)
+    if (discountedPercentage === "" || discountedPercentage < 0 || discountedPercentage > 101)
       return "Discount percent must be between 0 and 100.";
     if (!planType) return "Select a plan type.";
-    if (!institutionsSelected.length) return "Select at least one institution.";
-    if (maxUses === "" || maxUses <= 0) return "Enter valid max uses (>=1).";
+    // if (!institutionsSelected.length) return "Select at least one institution.";
+    // if (maxUses === "" || maxUses <= 0) return "Enter valid max uses (>=1).";
     return null;
   };
 
@@ -294,7 +294,6 @@ export default function AdminDashboard() {
                 placeholder="e.g., 100"
                 value={maxUses}
                 onChange={(e) => setMaxUses(e.target.value === "" ? "" : Number(e.target.value))}
-                required
               />
             </div>
 
