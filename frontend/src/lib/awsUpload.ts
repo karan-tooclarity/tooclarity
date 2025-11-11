@@ -46,7 +46,7 @@ export async function uploadToS3(file: File): Promise<UploadResult> {
   try {
     // Step 1: Get presigned URL from backend
     const uploadURL = await getPresignedUrl(file.name, file.type);
-    console.log('upload url', uploadURL);
+
 
     // Step 2: Upload the file to S3
     const uploadResponse = await fetch(uploadURL, {

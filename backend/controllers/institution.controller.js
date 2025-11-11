@@ -1,3 +1,4 @@
+// backend / controller / institution.controller.js
 const mongoose = require("mongoose");
 const { Institution } = require("../models/Institution");
 const asyncHandler = require("express-async-handler");
@@ -6,12 +7,13 @@ const InstituteAdmin = require("../models/InstituteAdmin");
 const Branch = require("../models/Branch");
 const Course = require("../models/Course");
 const { validationResult } = require('express-validator');
+const { esClient, esIndex } = require('../config/elasticsearch');
 
 /**
- * @desc    CREATE L1 Institution (General Info)
- * @route   POST /api/v1/institutions
- * @access  Private
- */
+@desc    CREATE L1 Institution (General Info)
+@route   POST /api/v1/institutions
+@access  Private
+*/
 exports.createL1Institution = asyncHandler(async (req, res, next) => {
   const session = await mongoose.startSession();
   session.startTransaction();
@@ -44,9 +46,11 @@ exports.createL1Institution = asyncHandler(async (req, res, next) => {
 
     await session.commitTransaction();
 
+    await syncInstitutionToES(newInstitution._id);
+
     logger.info(
       { userId: req.userId, institutionId: newInstitution._id },
-      "L1 institution created successfully."
+      "L1 institution created and synced to ES."
     );
 
     return res.status(201).json({
@@ -79,17 +83,17 @@ exports.createL1Institution = asyncHandler(async (req, res, next) => {
 });
 
 /**
- * @desc    UPDATE L2 Institution
- * @route   PUT /api/v1/institutions/details
- * @access  Private
- */
+@desc    UPDATE L2 Institution
+@route   PUT /api/v1/institutions/details
+@access  Private
+*/
 exports.updateL2InstitutionDetails = asyncHandler(async (req, res, next) => {
   try {
     const userId = req.userId;
     const institution = await Institution.findOne({ institutionAdmin: userId });
     if (!institution) {
       logger.error({ userId }, "Institution not found for this user");
-      return next(new AppError("Institution not found for this user", 404));
+      return res.status(404).json({ status: 'fail', message: 'Institution not found for this user' });
     }
 
     const schemaFields = Object.keys(institution.constructor.schema.paths);
@@ -126,6 +130,9 @@ exports.updateL2InstitutionDetails = asyncHandler(async (req, res, next) => {
       validateBeforeSave: true,
     });
 
+    await syncInstitutionToES(updatedInstitution._id);
+    logger.info(`Institution ${updatedInstitution._id} updated and synced to ES.`);
+
     res.status(200).json({
       status: "success",
       message: "L2 completed. Institution details updated successfully.",
@@ -138,10 +145,10 @@ exports.updateL2InstitutionDetails = asyncHandler(async (req, res, next) => {
 });
 
 /**
- * @desc    READ the institution of the logged-in admin
- * @route   GET /api/v1/institutions/me
- * @access  Private
- */
+@desc    READ the institution of the logged-in admin
+@route   GET /api/v1/institutions/me
+@access  Private
+*/
 exports.getMyInstitution = asyncHandler(async (req, res, next) => {
 
   // Try from user document, else by institutionAdmin
@@ -171,36 +178,37 @@ exports.getMyInstitution = asyncHandler(async (req, res, next) => {
  * @access  Private
  */
 exports.deleteMyInstitution = asyncHandler(async (req, res, next) => {
-  const session = await mongoose.startSession();
-  session.startTransaction();
-  try {
-    const institutionId = req.user.institution;
-    const institution = await Institution.findById(institutionId).session(session);
+    const session = await mongoose.startSession();
+    session.startTransaction();
+    try {
+        const user = await InstituteAdmin.findById(req.userId).session(session);
+        if (!user || !user.institution) {
+            await session.abortTransaction();
+            return res.status(404).json({ status: "fail", message: "Institution not found for this user." });
+        }
+        
+        const institutionId = user.institution;
 
-    if (!institution) {
-      return res.status(404).json({ status: "fail", message: "Institution not found." });
+        await Institution.findByIdAndDelete(institutionId, { session });
+
+        user.institution = undefined;
+        await user.save({ session });
+
+        // Remove from Elasticsearch after successful deletion
+        await esClient.delete({ index: esIndex, id: institutionId.toString() });
+        logger.info(`Institution ${institutionId} deleted from MongoDB and Elasticsearch.`);
+
+        await session.commitTransaction();
+
+        res.status(204).send();
+    } catch (error) {
+        await session.abortTransaction();
+        logger.error("Error during institution deletion:", error);
+        next(error);
+    } finally {
+        session.endSession();
     }
-
-    await institution.remove({ session });
-
-    req.user.institution = undefined;
-    await req.user.save({ session, validateBeforeSave: false });
-
-    await session.commitTransaction();
-
-    res.status(204).json({
-      status: "success",
-      data: null,
-    });
-  } catch (error) {
-    await session.abortTransaction();
-    next(error);
-  } finally {
-    session.endSession();
-  }
 });
-
-
 exports.uploadFileData = asyncHandler(async (req, res, next) => {
   const file = req.file;
   if (!file) {
@@ -264,6 +272,18 @@ exports.uploadFileData = asyncHandler(async (req, res, next) => {
     let branchToCoursesMap = [];
     let directCourses = [];
 
+    const normalizeCoursePayload = (course) => {
+      const normalized = { ...course };
+      if (!normalized.type) {
+        normalized.type = "COURSE";
+      }
+      if (normalized.brotureUrl && !normalized.brochureUrl) {
+        normalized.brochureUrl = normalized.brotureUrl;
+        delete normalized.brotureUrl;
+      }
+      return normalized;
+    };
+
     for (const item of courses || []) {
       if (item.branchName) {
         const { courses: branchCourses, ...branchData } = item;
@@ -275,7 +295,7 @@ exports.uploadFileData = asyncHandler(async (req, res, next) => {
       } else if (item.courses) {
         directCourses.push(
           ...item.courses.map((course) => ({
-            ...course,
+            ...normalizeCoursePayload(course),
             institution: institutionId,
             branch: null,
           }))
@@ -296,7 +316,7 @@ exports.uploadFileData = asyncHandler(async (req, res, next) => {
       const branchCourses = branchToCoursesMap[index];
       if (branchCourses.length > 0) {
         const courseDocs = branchCourses.map((course) => ({
-          ...course,
+          ...normalizeCoursePayload(course),
           institution: institutionId,
           branch: branch._id,
         }));
@@ -313,6 +333,8 @@ exports.uploadFileData = asyncHandler(async (req, res, next) => {
     // ✅ Commit transaction
     await session.commitTransaction();
     session.endSession();
+
+    await syncInstitutionToES(institutionId);
 
     // ✅ ApiResponse compliant response
     res.status(201).json({
@@ -338,59 +360,142 @@ exports.uploadFileData = asyncHandler(async (req, res, next) => {
 });
 
 /**
- * @desc    Filter and find institutions with pagination
- * @route   GET /api/v1/institutions/search
- * @access  Public
- */
+@desc    Filter and find institutions with pagination
+@route   GET /api/v1/institutions/search
+@access  Public
+*/
 exports.filterInstitutions = asyncHandler(async (req, res, next) => {
   // 1. Pagination
-  const page = req.query.page || 1;
-  const limit = req.query.limit || 10;
-  const skip = (page - 1) * limit;
+  const page = parseInt(req.query.page, 10) || 1;
+  const limit = parseInt(req.query.limit, 10) || 10;
+  const from = (page - 1) * limit;
 
-  const query = {};
-  const { instituteType, state, pincode, ...booleanFilters } = req.query;
+  const { q, instituteType, state, pincode, minPrice, maxPrice, ...otherFilters } = req.query;
+
+  const esQuery = {
+    bool: {
+      must: [],
+      filter: [],
+    },
+  };
+
+  if (q) {
+    esQuery.bool.must.push({
+      multi_match: {
+        query: q,
+        fields: ["instituteName", "about", "mission", "vision", "city"],
+        fuzziness: "AUTO",
+      },
+    });
+  } else {
+    esQuery.bool.must.push({ match_all: {} });
+  }
 
   if (instituteType) {
-    query.instituteType = instituteType;
+    esQuery.bool.filter.push({ term: { "instituteType.keyword": instituteType } });
   }
   if (state) {
-    query.state = state;
+    esQuery.bool.filter.push({ term: { "state.keyword": state } });
   }
   if (pincode) {
-    query.pincode = pincode;
+    esQuery.bool.filter.push({ term: { "pincode": pincode } });
   }
 
-  // Add boolean filters to the query
-  for (const key in booleanFilters) {
-    if (booleanFilters[key] === 'true') {
-      query[key] = true;
-    } else {
-      query[key] = false;
+  // Apply other simple filters
+  for (const key in otherFilters) {
+    if (key !== 'page' && key !== 'limit') {
+      esQuery.bool.filter.push({ term: { [key]: otherFilters[key] } });
     }
   }
 
-  // 3. Execute query
-  const institutions = await Institution.find(query)
-    .limit(limit)
-    .skip(skip)
-    .select('-institutionAdmin -__v')
-    .lean(); //.lean() gives plain JS objects instead of Mongoose docs, making it faster for read-only ops.
+  try {
+    // 🔹 Step 1: If price filters exist, find eligible institution IDs
+    let institutionIdsInRange = null;
+    if (minPrice || maxPrice) {
+      const priceQuery = {};
+      if (minPrice) priceQuery.$gte = parseFloat(minPrice);
+      if (maxPrice) priceQuery.$lte = parseFloat(maxPrice);
 
-  // 4. Get total count for pagination metadata
-  const totalDocuments = await Institution.countDocuments(query);
+      const matchingCourses = await Course.find(
+        { price: priceQuery },
+        "institution"
+      ).lean();
 
-  logger.info({ filters: query, results: institutions.length }, "Institution search performed.");
+      institutionIdsInRange = [...new Set(matchingCourses.map(c => c.institution.toString()))];
 
-  // 5. Send response
-  res.status(200).json({
-    success: true,
-    count: institutions.length,
-    pagination: {
-      currentPage: page,
-      totalPages: Math.ceil(totalDocuments / limit),
-      totalInstitutions: totalDocuments,
-    },
-    data: institutions,
-  });
+      if (institutionIdsInRange.length === 0) {
+        return res.status(200).json({
+          success: true,
+          count: 0,
+          pagination: { currentPage: page, totalPages: 0, totalInstitutions: 0 },
+          data: [],
+        });
+      }
+
+      // Add filter to Elasticsearch query
+      esQuery.bool.filter.push({
+        terms: { _id: institutionIdsInRange },
+      });
+    }
+
+    // 🔹 Step 2: Execute ES search
+    const { body } = await esClient.search({
+      index: esIndex,
+      from: from,
+      size: limit,
+      body: {
+        query: esQuery,
+      },
+    });
+
+    const totalDocuments = body.hits.total.value;
+    const institutions = body.hits.hits.map(hit => hit._source);
+
+    logger.info({ filters: req.query, results: institutions.length }, "Elasticsearch search with price range performed.");
+
+    res.status(200).json({
+      success: true,
+      count: institutions.length,
+      pagination: {
+        currentPage: page,
+        totalPages: Math.ceil(totalDocuments / limit),
+        totalInstitutions: totalDocuments,
+      },
+      data: institutions,
+    });
+
+  } catch (error) {
+    logger.error("Error during Elasticsearch search:", error);
+    next(error);
+  }
 });
+
+/**
+ * @desc    Helper function to sync a single institution document to Elasticsearch
+ * @param   {string} institutionId - The ID of the institution to sync
+ */
+const syncInstitutionToES = async (institutionId) => {
+  try {
+    const institution = await Institution.findById(institutionId).lean();
+    if (!institution) {
+      await esClient.delete({
+        index: esIndex,
+        id: institutionId,
+      });
+      logger.warn(`Institution ${institutionId} not found in MongoDB. Removed from Elasticsearch.`);
+      return;
+    }
+    await esClient.index({
+      index: esIndex,
+      id: institution._id.toString(),
+      body: institution,
+    });
+    logger.info(`Successfully synced institution ${institutionId} to Elasticsearch.`);
+  } catch (error) {
+    if (error.meta && error.meta.statusCode === 404) {
+      logger.warn(`Attempted to delete non-existent document ${institutionId} from Elasticsearch.`);
+    } else {
+      logger.error(`Error syncing institution ${institutionId} to Elasticsearch:`, error);
+    }
+  }
+};

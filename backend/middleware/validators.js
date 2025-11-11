@@ -415,10 +415,9 @@ exports.validateL1Creation = [
     .escape(),
 
   // --- Conditional Validation for Approved By ---
-  body("approvedBy")
-    .if(body("instituteType").not().equals("Study Halls")) // Only validate if type is NOT 'Study Halls'
-    .notEmpty()
-    .withMessage("Approved By is required")
+  body('approvedBy')
+    .if(body('instituteType').not().isIn(['Study Halls', 'Study Abroad'])) // Skip for Study Halls and Study Abroad
+    .notEmpty().withMessage('Approved By is required')
     .trim()
     .isLength({ min: 2, max: 100 })
     .withMessage("Approved By must be between 2 and 100 characters")
@@ -429,12 +428,10 @@ exports.validateL1Creation = [
     .escape(),
 
   // --- Conditional Validation for Establishment Date ---
-  body("establishmentDate")
-    .if(body("instituteType").not().equals("Study Halls")) // Only validate if type is NOT 'Study Halls'
-    .notEmpty()
-    .withMessage("Establishment Date is required")
-    .isISO8601()
-    .withMessage("Must be a valid date")
+  body('establishmentDate')
+    .if(body('instituteType').not().isIn(['Study Halls', 'Study Abroad'])) // Skip for Study Halls and Study Abroad
+    .notEmpty().withMessage('Establishment Date is required')
+    .isISO8601().withMessage('Must be a valid date')
     .custom((value) => {
       const enteredDate = new Date(value);
       const today = new Date();
@@ -488,7 +485,13 @@ exports.validateL1Creation = [
   // .isURL()
   // .withMessage("Please enter a valid URL"),
 
-  body("logoUrl").trim().isURL().withMessage("Logo URL must be a valid URL."),
+  // --- Conditional Validation for Logo URL ---
+  body("logoUrl")
+    .optional({ checkFalsy: true })
+    .if(body('instituteType').not().equals('Study Abroad')) // Skip for Study Abroad
+    .trim()
+    .isURL()
+    .withMessage("Logo URL must be a valid URL."),
 
   handleValidationErrors, // Your existing error handler
 ];
@@ -903,6 +906,8 @@ exports.validateL3Details = async (req, res, next) => {
         validationChain = coachingCenterL3Rules;
         break;
       case "Study Abroad":
+        validationChain = studyAbroadL3Rules; // Use the new ruleset
+        break;
       case "Tution Center's":
       case "Study Halls":
         return next(); // Skip validation for these types as per your logic
@@ -1186,6 +1191,31 @@ const coachingCenterL3Rules = [
     .withMessage("A selection for Certification is required."),
 ];
 
+const studyAbroadL3Rules = [
+  body('consultancyName')
+    .trim()
+    .notEmpty().withMessage('Consultancy name is required.')
+    .isLength({ min: 3, max: 100 }).withMessage('Consultancy name must be between 3 and 100 characters.'),
+
+  body('totalAdmissions')
+    .notEmpty().withMessage('Total student admissions count is required.')
+    .isInt({ min: 0 }).withMessage('Total admissions must be a non-negative whole number.'),
+
+  body('countries')
+    .isArray({ min: 1 }).withMessage('At least one country must be selected.'),
+  body('countries.*')
+     .isString().withMessage('Each country must be a string.')
+     .trim()
+     .notEmpty().withMessage('Country names cannot be empty.'),
+
+  body('academicOfferings')
+    .isArray({ min: 1 }).withMessage('At least one academic offering must be selected.'),
+  body('academicOfferings.*')
+    .isIn(["Bachelors", "Masters", "PhD", "Diploma", "Certificate Programs", "Graduate", "Undergraduate", "Postgraduate"])
+    .withMessage('Invalid academic offering selected.'),
+];
+// END>>> NEW VALIDATION RULESET
+
 // ✅ --- MASTER FILE UPLOAD VALIDATOR ---
 
 exports.validateUploadedFile = async (req, res, next) => {
@@ -1317,9 +1347,10 @@ exports.validateUploadedFile = async (req, res, next) => {
         l3ValidationChain = ugPgUniversityL3Rules;
         break;
       // ✅ Case added for Coaching Centers
-      case "Coaching centers":
-        l3ValidationChain = coachingCenterL3Rules;
-        break;
+      case 'Coaching centers': l3ValidationChain = coachingCenterL3Rules; break;
+      // START>>> MODIFICATION
+      case 'Study Abroad': l3ValidationChain = studyAbroadL3Rules; break;
+      // END>>> MODIFICATION
       default:
         l3ValidationChain = [];
     }
@@ -1473,6 +1504,7 @@ module.exports.schoolL3Rules = schoolL3Rules;
 module.exports.intermediateCollegeL3Rules = intermediateCollegeL3Rules;
 module.exports.ugPgUniversityL3Rules = ugPgUniversityL3Rules;
 module.exports.coachingCenterL3Rules = coachingCenterL3Rules;
+module.exports.studyAbroadL3Rules = studyAbroadL3Rules;
 
 // Export the validation error handler
 module.exports.handleValidationErrors = handleValidationErrors;

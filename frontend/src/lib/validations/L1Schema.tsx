@@ -32,7 +32,7 @@ export const L1Schema = Joi.object({ // <-- Opening brace
     }),
 
   approvedBy: Joi.when("instituteType", {
-    is: "Study Halls",
+    is: Joi.alternatives().try("Study Halls", "Study Abroad"),
     then: Joi.string().allow("").optional(),
     otherwise: Joi.string()
       .min(2)
@@ -48,7 +48,7 @@ export const L1Schema = Joi.object({ // <-- Opening brace
   }),
 
   establishmentDate: Joi.when("instituteType", {
-    is: "Study Halls",
+    is: Joi.alternatives().try("Study Halls", "Study Abroad"),
     then: Joi.string().allow("").optional(),
     otherwise: Joi.string()
       .required()
@@ -108,14 +108,17 @@ export const L1Schema = Joi.object({ // <-- Opening brace
       "string.pattern.base": "Please enter a valid URL (must start with http:// or https://)",
     }),
 
-  logoUrl: Joi.string()
-    .uri()
-    .pattern(/\.(jpg|jpeg|png)$/i)
-    .required()
-    .messages({
-      "string.empty": "Logo is required",
-      "any.required": "Logo is required",
-      "string.uri": "Invalid logo URL format",
-      // "string.pattern.base": "Logo must be a valid image file (.jpg, .jpeg, .png)",
-    }),
+  logoUrl: Joi.when("instituteType", {
+    is: "Study Abroad",
+    then: Joi.string().allow("").optional(),
+    otherwise: Joi.string()
+      .uri()
+      .pattern(/\.(jpg|jpeg|png)$/i)
+      .required()
+      .messages({
+        "string.empty": "Logo is required",
+        "any.required": "Logo is required",
+        "string.uri": "Invalid logo URL format",
+      }),
+  }),
 }).unknown(true); // <-- ✅ Correct closing brace for the whole object

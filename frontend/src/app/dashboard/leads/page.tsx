@@ -77,7 +77,7 @@ function LeadsPage() {
 	const fetchList = useCallback(async () => {
 		try {
 			const recent = await enquiriesAPI.getRecentEnquiries();
-			console.log('Recent enquiries response:', recent);
+
 			if ((recent as { success?: boolean; data?: { enquiries?: unknown[] } })?.success && Array.isArray((recent as { success?: boolean; data?: { enquiries?: unknown[] } }).data?.enquiries)) {
 				const enquiries = (recent as { data: { enquiries: Record<string, unknown>[] } }).data.enquiries;
 				const mapped: StudentItem[] = enquiries.map((enquiry: Record<string, unknown>, idx: number) => ({
@@ -109,13 +109,11 @@ function LeadsPage() {
 				throw new Error('Student not found');
 			}
 
-			console.log('Updating status:', { enquiryId: studentId, newStatus, notes });
-
+			
 			// Call the API to update status
 			const response = await enquiriesAPI.updateEnquiryStatus(studentId, { status: newStatus, notes });
 			
-			console.log('API Response:', response);
-			
+						
 			if (response.success) {
 				// Update local state optimistically
 				setBaseStudents(prev => prev.map(s => 
@@ -130,8 +128,7 @@ function LeadsPage() {
 				// Invalidate and refetch data
 				queryClient.invalidateQueries({ queryKey: ['infiniteLeads'] });
 				
-				console.log('Status updated successfully:', response.data);
-			} else {
+							} else {
 				throw new Error(response.message || 'Failed to update status');
 			}
 		} catch (error) {
@@ -204,8 +201,7 @@ function LeadsPage() {
 			// Deduplicate by id to avoid React key collisions
 			const seen = new Set<string>();
 			const unique = mapped.filter(m => { if (seen.has(m.id)) return false; seen.add(m.id); return true; });
-			console.log(`[DEBUG] Leads page - after deduplication: ${unique.length} unique items from ${flat.length} total`);
-			setBaseStudents(unique);
+						setBaseStudents(unique);
 			
 			// Extract unique programs from all enquiries for filter options
 			const programSet = new Set<string>();

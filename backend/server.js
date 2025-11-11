@@ -1,72 +1,76 @@
+// server.js
 const mongoose = require('mongoose');
 const dotenv = require('dotenv');
+const path = require('path');
 const { Institution } = require('./models/Institution');
-// const {Course} =require('./models/Course')
 
-// dotenv.config();
+// ✅ Load correct environment file
 const envFile = process.env.NODE_ENV === 'production' ? '.env.production' : '.env.development';
 dotenv.config({ path: envFile });
 
-console.log(`Enviourment loaded :${process.env.NODE_ENV}`)
-console.log(`Using ile ${envFile}`);
+console.log(`Environment loaded: ${process.env.NODE_ENV}`);
+console.log(`Using file: ${envFile}`);
+
 const app = require('./app');
 
+// ✅ MongoDB connection
 const DB = process.env.MONGO_URI;
 mongoose.connect(DB).then(() => console.log('✅ MongoDB connection successful!'));
 
+// ✅ Start Express server
 const port = process.env.PORT || 3001;
 const server = app.listen(port, () => {
-    console.log(`🚀 App running on port ${port}...`);
-    try { require('./jobs/notification.job').startNotificationWorker(); } catch (e) { console.error('Failed to start notification worker:', e?.message || e); }
+  console.log(`🚀 App running on port ${port}...`);
+  try {
+    require('./jobs/notification.job').startNotificationWorker();
+  } catch (e) {
+    console.error('Failed to start notification worker:', e?.message || e);
+  }
 });
 
-// Attach Socket.IO
+// ✅ Attach Socket.IO
 const { Server } = require('socket.io');
 const io = new Server(server, {
   cors: {
     origin: process.env.CLIENT_ORIGIN_WEB,
-    credentials: true
-  }
+    credentials: true,
+  },
 });
 app.set('io', io);
+
 // Socket singleton for workers
-try { require('./utils/socket').setIO(io); } catch {}
+try {
+  require('./utils/socket').setIO(io);
+} catch {}
 
 io.on('connection', (socket) => {
-  // Expect client to join institution room
-  socket.on('joinInstitution', (institutionId) => {
-    if (institutionId) socket.join(`institution:${institutionId}`);
-  });
-  // InstitutionAdmin scope room for cross-institution aggregates
-  socket.on('joinInstitutionAdmin', (adminId) => {
-    if (adminId) socket.join(`institutionAdmin:${adminId}`);
-  });
-  // Student-specific room
-  socket.on('joinStudent', (studentId) => {
-    if (studentId) socket.join(`student:${studentId}`);
-  });
-  // Program-specific room (optional for program pages)
-  socket.on('joinProgram', (programId) => {
-    if (programId) socket.join(`program:${programId}`);
-  });
-  // Admin-specific room (platform admin)
-  socket.on('joinAdmin', (adminId) => {
-    if (adminId) socket.join(`admin:${adminId}`);
-  });
-  // Branch-specific room
-  socket.on('joinBranch', (branchId) => {
-    if (branchId) socket.join(`branch:${branchId}`);
-  });
+  socket.on('joinInstitution', (institutionId) => institutionId && socket.join(`institution:${institutionId}`));
+  socket.on('joinInstitutionAdmin', (adminId) => adminId && socket.join(`institutionAdmin:${adminId}`));
+  socket.on('joinStudent', (studentId) => studentId && socket.join(`student:${studentId}`));
+  socket.on('joinProgram', (programId) => programId && socket.join(`program:${programId}`));
+  socket.on('joinAdmin', (adminId) => adminId && socket.join(`admin:${adminId}`));
+  socket.on('joinBranch', (branchId) => branchId && socket.join(`branch:${branchId}`));
 });
 
-// Emit realtime events even if DB is updated externally (watch courseViews changes)
+// ✅ Integrate Workers Here (the magic)
+(async () => {
+  try {
+    const workerPath = path.join(__dirname, 'workers', 'index.js');
+    require(workerPath); // instantly runs the async IIFE inside workers/index.js
+    console.log('⚙️ Background workers initialized');
+  } catch (err) {
+    console.error('❌ Failed to initialize workers:', err.message || err);
+  }
+})();
+
+// ✅ Watch for Course changes (realtime updates)
 (async () => {
   try {
     const Course = require('./models/Course');
     const { Institution } = require('./models/Institution');
-    const changeStream = Course.watch([
-      { $match: { 'operationType': { $in: ['update', 'replace'] } } }
-    ], { fullDocument: 'updateLookup' });
+    const changeStream = Course.watch([{ $match: { operationType: { $in: ['update', 'replace'] } } }], {
+      fullDocument: 'updateLookup',
+    });
 
     changeStream.on('change', async (change) => {
       try {
@@ -74,46 +78,66 @@ io.on('connection', (socket) => {
         if (!doc) return;
         const updated = change.updateDescription?.updatedFields || {};
         const institutionId = String(doc.institution);
-        const { Institution } = require('./models/Institution');
         const inst = await Institution.findById(institutionId).select('institutionAdmin');
-
         const keys = Object.keys(updated);
-        const viewsRollupsChanged = keys.some(k => k.startsWith('viewsRollups'));
-        const comparisonsRollupsChanged = keys.some(k => k.startsWith('comparisonRollups'));
+        const viewsRollupsChanged = keys.some((k) => k.startsWith('viewsRollups'));
+        const comparisonsRollupsChanged = keys.some((k) => k.startsWith('comparisonRollups'));
 
-        // courseViews or viewsRollups change → emit views events and institutionAdmin totals
+        // courseViews or viewsRollups change → emit events
         if (typeof updated.courseViews !== 'undefined' || viewsRollupsChanged || change.operationType === 'replace') {
-          if (institutionId) io.to(`institution:${institutionId}`).emit('courseViewsUpdated', { institutionId, courseId: String(doc._id), courseViews: doc.courseViews });
+          if (institutionId)
+            io.to(`institution:${institutionId}`).emit('courseViewsUpdated', {
+              institutionId,
+              courseId: String(doc._id),
+              courseViews: doc.courseViews,
+            });
+
           if (inst?.institutionAdmin) {
             const adminId = String(inst.institutionAdmin);
-            io.to(`institutionAdmin:${adminId}`).emit('courseViewsUpdated', { institutionId, courseId: String(doc._id), courseViews: doc.courseViews });
+            io.to(`institutionAdmin:${adminId}`).emit('courseViewsUpdated', {
+              institutionId,
+              courseId: String(doc._id),
+              courseViews: doc.courseViews,
+            });
+
             const institutions = await Institution.find({ institutionAdmin: adminId }).select('_id');
-            const ids = institutions.map(i => i._id);
+            const ids = institutions.map((i) => i._id);
             if (ids.length > 0) {
-              const agg = await require('./models/Course').aggregate([
+              const agg = await Course.aggregate([
                 { $match: { institution: { $in: ids } } },
-                { $group: { _id: null, totalViews: { $sum: { $ifNull: ["$courseViews", 0] } } } }
+                { $group: { _id: null, totalViews: { $sum: { $ifNull: ['$courseViews', 0] } } } },
               ]);
-              const totalViews = (agg[0]?.totalViews) || 0;
+              const totalViews = agg[0]?.totalViews || 0;
               io.to(`institutionAdmin:${adminId}`).emit('institutionAdminTotalViews', { totalViews });
             }
           }
         }
 
-        // comparisons or comparisonRollups change → emit comparison events and institutionAdmin totals
+        // comparisons change → emit comparison events
         if (typeof updated.comparisons !== 'undefined' || comparisonsRollupsChanged || change.operationType === 'replace') {
-          if (institutionId) io.to(`institution:${institutionId}`).emit('comparisonsUpdated', { institutionId, courseId: String(doc._id), comparisons: doc.comparisons });
+          if (institutionId)
+            io.to(`institution:${institutionId}`).emit('comparisonsUpdated', {
+              institutionId,
+              courseId: String(doc._id),
+              comparisons: doc.comparisons,
+            });
+
           if (inst?.institutionAdmin) {
             const adminId = String(inst.institutionAdmin);
-            io.to(`institutionAdmin:${adminId}`).emit('comparisonsUpdated', { institutionId, courseId: String(doc._id), comparisons: doc.comparisons });
+            io.to(`institutionAdmin:${adminId}`).emit('comparisonsUpdated', {
+              institutionId,
+              courseId: String(doc._id),
+              comparisons: doc.comparisons,
+            });
+
             const institutions = await Institution.find({ institutionAdmin: adminId }).select('_id');
-            const ids = institutions.map(i => i._id);
+            const ids = institutions.map((i) => i._id);
             if (ids.length > 0) {
-              const agg = await require('./models/Course').aggregate([
+              const agg = await Course.aggregate([
                 { $match: { institution: { $in: ids } } },
-                { $group: { _id: null, totalComparisons: { $sum: { $ifNull: ["$comparisons", 0] } } } }
+                { $group: { _id: null, totalComparisons: { $sum: { $ifNull: ['$comparisons', 0] } } } },
               ]);
-              const totalComparisons = (agg[0]?.totalComparisons) || 0;
+              const totalComparisons = agg[0]?.totalComparisons || 0;
               io.to(`institutionAdmin:${adminId}`).emit('institutionAdminTotalComparisons', { totalComparisons });
             }
           }
@@ -127,28 +151,33 @@ io.on('connection', (socket) => {
   }
 })();
 
-// Watch enquiries collection for realtime callback/demo updates and total leads
+// ✅ Watch Enquiries for realtime updates
 (async () => {
   try {
     const Enquiries = require('./models/Enquiries');
     const { Institution } = require('./models/Institution');
-    const stream = Enquiries.watch([{ $match: { operationType: { $in: ['insert'] } } }], { fullDocument: 'updateLookup' });
+    const stream = Enquiries.watch([{ $match: { operationType: { $in: ['insert'] } } }], {
+      fullDocument: 'updateLookup',
+    });
+
     stream.on('change', async (change) => {
       try {
         const doc = change.fullDocument;
         if (!doc) return;
         const institutionId = String(doc.institution);
         if (institutionId) io.to(`institution:${institutionId}`).emit('enquiryCreated', { enquiry: doc });
-        // Notify institutionAdmin rooms as well and push updated totals
+
         const inst = await Institution.findById(institutionId).select('institutionAdmin');
         if (inst?.institutionAdmin) {
           const adminId = String(inst.institutionAdmin);
           io.to(`institutionAdmin:${adminId}`).emit('enquiryCreated', { enquiry: doc });
-          // Emit updated total leads (callback/demo enquiries only)
-          const { default: mongoose } = require('mongoose');
+
           const institutions = await Institution.find({ institutionAdmin: adminId }).select('_id');
-          const ids = institutions.map(i => i._id);
-          const totalLeads = await Enquiries.countDocuments({ institution: { $in: ids }, enquiryType: { $in: [/^callback$/i, /^demo$/i] } });
+          const ids = institutions.map((i) => i._id);
+          const totalLeads = await Enquiries.countDocuments({
+            institution: { $in: ids },
+            enquiryType: { $in: [/^callback$/i, /^demo$/i] },
+          });
           io.to(`institutionAdmin:${adminId}`).emit('institutionAdminTotalLeads', { totalLeads });
         }
       } catch (err) {
@@ -160,10 +189,9 @@ io.on('connection', (socket) => {
   }
 })();
 
-process.on('unhandledRejection', err => {
-    console.error('UNHANDLED REJECTION! 💥 Shutting down...');
-    console.error(err.name, err.message);
-    server.close(() => {
-        process.exit(1);
-    });
+// ✅ Global error handling
+process.on('unhandledRejection', (err) => {
+  console.error('UNHANDLED REJECTION! 💥 Shutting down...');
+  console.error(err.name, err.message);
+  server.close(() => process.exit(1));
 });

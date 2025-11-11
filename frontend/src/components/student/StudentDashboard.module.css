@@ -227,6 +227,17 @@
   animation: fadeIn 0.3s ease;
 }
 
+.paginationContainer {
+  display: flex;
+  justify-content: center;
+  padding-top: 24px;
+}
+
+.paginationDisabled {
+  pointer-events: none;
+  opacity: 0.5;
+}
+
 /* Empty state styling */
 .emptyState {
   display: flex;

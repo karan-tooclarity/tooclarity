@@ -2,17 +2,19 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import { Loader2 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { authAPI } from "@/lib/api";
 interface StudentOtpScreenProps {
   phoneNumber?: string;
   _onVerify?: (otp: string) => Promise<void>;
-  onResendOtp?: () => Promise<void>;
   onBack?: () => void;
   onSuccess?: () => void;
 }
 
 const StudentOtpScreen: React.FC<StudentOtpScreenProps> = ({
   phoneNumber = "",
+  _onVerify,
+  onBack,
   onSuccess,
 }) => {
   // const router = useRouter();
@@ -118,6 +120,8 @@ const StudentOtpScreen: React.FC<StudentOtpScreenProps> = ({
       setError("Failed to resend OTP. Please try again.");
     }
   };
+
+
 
   return (
     <div className="mx-auto flex w-full max-w-md flex-1 flex-col">

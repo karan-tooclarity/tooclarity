@@ -29,7 +29,7 @@ const Header: React.FC = () => {
   const handleOtpVerified = () => {
     setIsOtpOpen(false);
     // Optional: show toast, navigate, or refresh user here
-    console.log("✅ OTP verified successfully");
+
   };
 
   return (

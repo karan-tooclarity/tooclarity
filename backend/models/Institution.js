@@ -336,9 +336,49 @@ const TutionCenters = Institution.discriminator(
   new mongoose.Schema({}, baseOptions)
 );
 
+const studyAbroadSchema = new mongoose.Schema({
+  consultancyName: {
+    type: String,
+    required: [true, "Consultancy name is required."],
+    trim: true,
+  },
+  totalAdmissions: {
+    type: Number,
+    required: [true, "Total student admissions count is required."],
+    min: 0,
+  },
+  countries: {
+    type: [String],
+    required: [true, "At least one country is required."],
+    default: [],
+  },
+  academicOfferings: {
+    type: [String],
+    required: [true, "Academic offerings are required."],
+    enum: ["Bachelors", "Masters", "PhD", "Diploma", "Certificate Programs", "Graduate", "Undergraduate", "Postgraduate"],
+    default: [],
+  },
+  businessProofUrl: {
+    type: String,
+    trim: true,
+  },
+  legalIdUrl: {
+    type: String,
+    trim: true,
+  },
+  // L3 Additional Details (Placements-like) for Study Abroad
+  applicationAssistance: { type: Boolean, default: false },
+  visaProcessingSupport: { type: Boolean, default: false },
+  testOperation: { type: Boolean, default: false },
+  preDepartureOrientation: { type: Boolean, default: false },
+  accommodationAssistance: { type: Boolean, default: false },
+  educationLoans: { type: Boolean, default: false },
+  postArrivalSupport: { type: Boolean, default: false },
+});
+
 const StudyAbroad = Institution.discriminator(
   "Study Abroad",
-  new mongoose.Schema({}, baseOptions)
+  studyAbroadSchema
 );
 
 

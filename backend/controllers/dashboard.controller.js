@@ -14,8 +14,9 @@ const {
     CoachingCenter,
     IntermediateCollege,
     UgPgUniversity,
-    StudyHalls,      
-    TuitionCenters
+    StudyHalls,
+    TuitionCenters,
+    StudyAbroad
 } = require("../models/Institution"); 
 
 const {
@@ -285,6 +286,10 @@ exports.updateInstitutionAndCourseDetails = async (req, res, next) => {
             case "Tution Center's":
                 validationRules = l2TuitionCourseRules;
                 break;
+            case "Study Abroad":
+                // Assuming base course rules apply, add specific Study Abroad rules if created
+                validationRules = [...l2BaseCourseRules];
+                break;
         }
 
         if (validationRules.length > 0) {
@@ -329,6 +334,10 @@ exports.updateInstitutionAndCourseDetails = async (req, res, next) => {
             "Tution Center's": {
                 institution: [],
                 course: ['tuitionType', 'instructorProfile', 'subject', 'totalSeats', 'availableSeats', 'operationalDays', 'openingTime', 'closingTime', 'pricePerSeat']
+            },
+            'Study Abroad': {
+                institution: ['consultancyName', 'totalAdmissions', 'countries', 'academicOfferings'],
+                course: ['courseName', 'aboutCourse', 'courseDuration', 'mode', 'priceOfCourse', 'location', 'image', 'brochure']
             }
         };
         
@@ -360,6 +369,7 @@ exports.updateInstitutionAndCourseDetails = async (req, res, next) => {
             case 'Under Graduation/Post Graduation': InstitutionModel = UgPgUniversity; break;
             case 'Study Halls': InstitutionModel = StudyHalls; break;
             case "Tution Center's": InstitutionModel = TuitionCenters; break;
+            case 'Study Abroad': InstitutionModel = StudyAbroad; break;
             default: InstitutionModel = Institution; break;
         }
         const [updatedInstitution, updatedCourse] = await Promise.all([

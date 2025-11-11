@@ -73,9 +73,9 @@ export default function DashboardLayout({
             >
               <Topbar
                 userName={user?.name || user?.admin}
-                onSearch={(query) => console.log("Search:", query)}
-                onNotificationClick={() => console.log("Notifications clicked")}
-                onProfileClick={() => console.log("Profile clicked")}
+                onSearch={(query) => {}}
+                onNotificationClick={() => {}}
+                onProfileClick={() => {}}
               />
               {children}
             </motion.main>

@@ -291,8 +291,8 @@ const StudentonBoarding: React.FC = () => {
       setAvatarFile(null);
     }
     if (user.address) setLocation(user.address);
-    if (user.birthday) setBirthday(normalizedBirthday);
-  }, [user]);
+    if (user.birthday && !birthday) setBirthday(normalizedBirthday);
+  }, [user, fullName, birthday]);
 
   const progressPct = useMemo(() => {
     // Step 1-4: Personal info (12%)
@@ -363,7 +363,7 @@ const StudentonBoarding: React.FC = () => {
 
       setSubmitting(true);
       try {
-        console.log("User data:", user);
+
 
         let profilePictureUrl: string | undefined;
 
@@ -394,7 +394,7 @@ const StudentonBoarding: React.FC = () => {
           payload.ProfilePicture = profilePictureUrl;
         }
 
-        console.log("Sending payload to update user:", payload);
+
 
         const res = await apiRequest(`/v1/students/`, {
           method: "PUT",
@@ -707,10 +707,7 @@ const StudentonBoarding: React.FC = () => {
           break;
       }
 
-      console.log("Sending academic profile:", {
-        profileType: profileTypeToSend,
-        details,
-      });
+
 
       const response = await studentOnboardingAPI.updateAcademicProfile({
         profileType: profileTypeToSend,

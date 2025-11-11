@@ -314,17 +314,9 @@ export function useInfiniteLeads(pageSize: number = 10) {
       // Fetch enquiries list for the institution admin's institutions (use /recent for all pages including index 1)
       const response = await enquiriesAPI.getRecentEnquiriesWithOffset(offset, pageSize) as { data?: { enquiries?: Record<string, unknown>[] } };
       const list = (response?.data?.enquiries || []) as Record<string, unknown>[];
-      console.log(`[DEBUG] useInfiniteLeads (enquiries) - page ${pageIndex}, offset ${offset}, limit ${pageSize}, got ${list.length} enquiries`);
+
       
-      // Debug: Log first enquiry to see student data
-      if (list.length > 0) {
-        console.log(`[DEBUG] Frontend first enquiry student data:`, {
-          studentId: (list[0].student as { _id?: string })?._id,
-          studentName: (list[0].student as { name?: string })?.name,
-          studentEmail: (list[0].student as { email?: string })?.email,
-          studentPhone: (list[0].student as { contactNumber?: string })?.contactNumber
-        });
-      }
+
 
       const mapped = list.map((enquiry: Record<string, unknown>, idx: number) => ({
         date: new Date((enquiry.createdAt as string | number) || Date.now() - idx * 86400000).toLocaleDateString('en-GB'),
@@ -369,7 +361,7 @@ export function useRefreshDashboard() {
       return true;
     },
     onSuccess: () => {
-      console.log('Dashboard data refreshed');
+
     },
     onError: (error) => {
       console.error('Failed to refresh dashboard:', error);
