@@ -191,7 +191,7 @@ const StudentDashboard: React.FC = () => {
     setIsLoadingMore(false);
   }, [filteredCourses]);
 
-  const loadMoreCourses = () => {
+  // const loadMoreCourses = () => {
   // Load more courses function
   // const loadMoreCourses = () => {
   //   if (isLoadingMore || displayedCourses.length >= filteredCourses.length) return;
