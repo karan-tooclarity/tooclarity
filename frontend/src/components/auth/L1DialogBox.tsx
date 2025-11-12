@@ -720,14 +720,15 @@ export default function L1DialogBox({
             </_CardContent>
 
             <_CardFooter>
+
               <Button
                 type="submit"
-                disabled={isLoading || !isFormComplete}
+                disabled={isLoading}
                 className={`w-full max-w-[500px] h-[48px] mt-5 mx-auto rounded-[12px] font-semibold transition-colors ${
                   isFormComplete && !isLoading
                     ? "bg-[#0222D7] text-white"
-                    : "bg-gray-400 text-white cursor-not-allowed"
-                } ${isLoading ? "opacity-50" : ""}`}
+                    : "bg-[#697282] text-white"
+                } ${isLoading ? "opacity-50 cursor-not-allowed" : ""}`}
               >
                 {isLoading ? "Saving..." : "Save & Next"}
               </Button>

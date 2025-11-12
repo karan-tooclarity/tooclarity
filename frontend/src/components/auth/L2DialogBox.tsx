@@ -1372,7 +1372,7 @@ export default function L2DialogBox({
 
       if (unassignedCourses.length > 0) {
       sanitizedPayload.push({
-        branchName: "Unassigned Branch",
+        branchName: "",
         branchAddress: "",
         contactInfo: "",
         locationUrl: "",

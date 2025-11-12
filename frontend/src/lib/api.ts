@@ -1128,6 +1128,12 @@ export const paymentAPI = {
     });
   },
 
+  getPaymentDetails: async (): Promise<ApiResponse<{ totalInactiveCourses?: number; totalAmount?: number; planPrice?: number; pricePerCourse?: number }>> => {
+    return apiRequest("/v1/payment/details", {
+      method: "GET",
+    });
+  },
+
   /**
    * Verify Razorpay payment on backend with polling until status is final
    * - Polls the backend until message is "active" or "expired"

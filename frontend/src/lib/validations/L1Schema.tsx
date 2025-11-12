@@ -32,7 +32,8 @@ export const L1Schema = Joi.object({ // <-- Opening brace
     }),
 
   approvedBy: Joi.when("instituteType", {
-    is: Joi.alternatives().try("Study Halls", "Study Abroad"),
+    // is:  "Study Abroad",
+    is: Joi.valid("Study Abroad", "Study Halls"),
     then: Joi.string().allow("").optional(),
     otherwise: Joi.string()
       .min(2)
@@ -109,7 +110,8 @@ export const L1Schema = Joi.object({ // <-- Opening brace
     }),
 
   logoUrl: Joi.when("instituteType", {
-    is: "Study Abroad",
+    // is: "Study Abroad",
+    is: Joi.valid("Study Abroad", "Study Halls"),
     then: Joi.string().allow("").optional(),
     otherwise: Joi.string()
       .uri()

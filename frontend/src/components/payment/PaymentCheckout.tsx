@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { _Card, _CardContent, _CardHeader, _CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -68,8 +68,40 @@ export default function PaymentCheckout({ onProcessing, onSuccess, onFailure }: 
   const [coupon, setCoupon] = useState("");
   const [appliedCoupon, setAppliedCoupon] = useState<string | null>(null);
   const [isPaying, setIsPaying] = useState(false);
+  const [paymentDetails, setPaymentDetails] = useState<{ totalInactiveCourses: number; pricePerCourse: number; totalAmount: number } | null>(null);
 
   const plan = PLAN_MAP[selectedPlan];
+
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      try {
+        const res = await paymentAPI.getPaymentDetails();
+        if (!active) return;
+        if (res.success && res.data) {
+          const data = res.data as {
+            totalInactiveCourses?: number;
+            totalAmount?: number;
+            pricePerCourse?: number;
+            planPrice?: number;
+          };
+          const totalInactiveCourses = Number(data.totalInactiveCourses ?? 0);
+          const pricePerCourse = Number(data.pricePerCourse ?? data.planPrice ?? plan.currentPrice) || plan.currentPrice;
+          const calculatedTotal = data.totalAmount ?? (typeof data.totalInactiveCourses !== "undefined" ? totalInactiveCourses * pricePerCourse : undefined);
+          const totalAmount = Number(calculatedTotal);
+          setPaymentDetails({
+            totalInactiveCourses,
+            pricePerCourse,
+            totalAmount: Number.isFinite(totalAmount) ? totalAmount : pricePerCourse,
+          });
+        }
+      } catch (_e) {
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, [plan.currentPrice]);
 
   // Coupon state
   const [couponDiscount, setCouponDiscount] = useState(0);
@@ -91,8 +123,9 @@ export default function PaymentCheckout({ onProcessing, onSuccess, onFailure }: 
     orderId?: string | null;
   } | null>(null);
 
-  const baseAmount = plan.currentPrice;
-  const _subtotal = baseAmount;
+  const totalInactiveCourses = paymentDetails?.totalInactiveCourses ?? 0;
+  const baseAmount = paymentDetails?.pricePerCourse ?? plan.currentPrice;
+  const _subtotal = paymentDetails?.totalAmount ?? baseAmount;
   const _payable = Math.max(_subtotal - couponDiscount, 0);
 
   async function applyCoupon() {
@@ -125,7 +158,7 @@ export default function PaymentCheckout({ onProcessing, onSuccess, onFailure }: 
 
       // 1) Create order on backend using payable amount
       const res = await paymentAPI.initiatePayment({
-        amount: baseAmount,
+        amount: _payable,
         planType: selectedPlan,
         couponCode: appliedCoupon ?? undefined,
       });
@@ -356,6 +389,14 @@ export default function PaymentCheckout({ onProcessing, onSuccess, onFailure }: 
             <_CardContent className="space-y-4 px-6 pb-6">
               {/* Line items */}
               <div className="space-y-2 text-sm">
+                <div className="flex itms-center justify-between">
+                  <div>Total Courses
+                    <div className="text-muted-foreground text-xs">
+                      (Total number of courses)
+                    </div>
+                  </div>
+                  <div>{totalInactiveCourses} Courses </div>
+                </div>
                 <div className="flex items-center justify-between">
                   <div>
                     Too Clarity
