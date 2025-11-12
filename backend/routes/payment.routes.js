@@ -10,5 +10,6 @@ publicRouter.post('/verify', paymentController.verifyPayment);
 // 👇 Protected routes
 protectedRouter.post('/create-order', paymentController.createOrder);
 protectedRouter.get('/verify-payment', paymentController.pollSubscriptionStatus);
+protectedRouter.get('/details', paymentController.getPayableAmount);
 
 module.exports = { publicRouter, protectedRouter };

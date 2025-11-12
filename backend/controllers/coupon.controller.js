@@ -4,8 +4,9 @@ const Coupon = require("../models/coupon");
 // const Admin = require("../models/Admin"); // Import the new Admin model
 const AppError = require("../utils/appError");
 const asyncHandler = require("express-async-handler");
-// const InstitutionAdmin = require("../models/InstituteAdmin");
+const InstitutionAdmin = require("../models/InstituteAdmin");
 const { Institution } = require("../models/Institution");
+const Course = require("../models/Course");
 
 const PLANS = require("../config/plans");
 
@@ -68,32 +69,56 @@ exports.createCoupon = asyncHandler(async (req, res, next) => {
  * @route   POST /api/v1/coupon/apply
  * @access  Private/InstitutionAdmin
  */
+
 exports.applyCoupon = asyncHandler(async (req, res, next) => {
-  const { code } = req.body;
-  const institutionAdminId = req.userId;
+  const { code, planType = "yearly" } = req.body;
+  const userId = req.userId;
 
-  const coupon = await Coupon.findOne({
-    code: code,
-    // institutions: institutionAdminId,
-  });
+  if (!userId) {
+    return next(new AppError("Missing userId in request", 400));
+  }
 
+  // ✅ Step 1: Get institution from InstituteAdmin
+  const admin = await InstitutionAdmin.findById(userId).select("institution");
+  if (!admin || !admin.institution) {
+    return next(new AppError("Institution not found for this user", 404));
+  }
+
+  const institutionId = admin.institution;
+
+  // ✅ Step 2: Find and validate coupon
+  const coupon = await Coupon.findOne({ code });
   if (!coupon) {
     return next(new AppError("Invalid or expired coupon", 404));
   }
 
-  if (new Date(coupon.validTill) < new Date()) {
+  if (coupon.validTill && new Date(coupon.validTill) < new Date()) {
     return next(new AppError("Coupon has expired", 400));
   }
 
-  const originalAmount = PLANS[coupon.planType];
-  const discount = (originalAmount * coupon.discountPercentage) / 100;
-  const finalAmount = Math.max(originalAmount - discount, 0);
+  // ✅ Step 3: Count total inactive courses for that institution
+  const totalInactiveCourses = await Course.countDocuments({
+    institution: institutionId,
+    status: "Inactive",
+  });
 
-  res.status(200).json({
+  // ✅ Step 4: Calculate plan price
+  const planPrice = PLANS[planType];
+  if (!planPrice) {
+    return next(new AppError("Invalid plan type specified", 400));
+  }
+
+  // ✅ Step 5: Compute total amount and apply discount
+  const totalBeforeDiscount = totalInactiveCourses * planPrice;
+  const discountAmount = (totalBeforeDiscount * coupon.discountPercentage) / 100;
+  const totalAfterDiscount = Math.max(totalBeforeDiscount - discountAmount, 0);
+
+  // ✅ Step 6: Send clean, idempotent response (no DB writes)
+  return res.status(200).json({
     success: true,
     message: "Coupon applied successfully",
     data: {
-      discountAmount: discount,
+      discountAmount: discountAmount,
     },
   });
 });

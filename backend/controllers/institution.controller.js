@@ -298,6 +298,8 @@ exports.uploadFileData = asyncHandler(async (req, res, next) => {
             ...normalizeCoursePayload(course),
             institution: institutionId,
             branch: null,
+            courseSubscriptionStartDate: null,
+            courseSubsctiptionStartDate: null
           }))
         );
       }

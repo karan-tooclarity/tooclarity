@@ -131,7 +131,7 @@ exports.googleAuthCallback = async (req, res, next) => {
             : "login_failed";
 
         const target =
-          state === "student" ? "/student/login" : "/";
+          state === "student" ? "/student/login" : "/institute";
 
         return redirectViaFrontend(target, {
           status: "fail",
@@ -159,7 +159,7 @@ exports.googleAuthCallback = async (req, res, next) => {
         console.warn("Registration failed:", err.message);
 
         const target =
-          state === "student" ? "/student/signup" : "/";
+          state === "student" ? "/student/signup" : "/institute";
         return redirectViaFrontend(target, {
           status: "fail",
           reason: "already_registered",

@@ -44,6 +44,15 @@ const courseSchema = new mongoose.Schema(
       type: String, // file path / URL
     },
 
+    status:{
+      type: String,
+      enum:['Active','Inactive'],
+      default:'Inactive'
+    },
+
+    courseSubscriptionStartDate:{type:Date},
+    courseSubscriptionEndDate:{type:Date},
+
     // Additional fields for Under Graduate / Post Graduate
     graduationType: { type: String },
     streamType: { type: String },

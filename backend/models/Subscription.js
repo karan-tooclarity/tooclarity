@@ -35,6 +35,10 @@ const subscriptionSchema = new mongoose.Schema(
     razorpayPaymentId: {
       type: String,
     },
+    amount: {
+      type: Number,
+      required: true,
+    }
   },
   { timestamps: true }
 );
