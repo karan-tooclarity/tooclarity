@@ -101,7 +101,8 @@ exports.createOrder = asyncHandler(async (req, res, next) => {
     }
 
     const discount = (amount * coupon.discountPercentage) / 100;
-    amount = Math.max(0, amount - discount);
+    amount = Math.max(0, Math.round((amount - discount) * 100) / 100);
+
 
     console.log("[Payment] Coupon applied:", {
       couponCode,

@@ -48,5 +48,6 @@ protectedRouter.post("/logout", authController.logout);
 publicRouter.post("/forgot-password", authController.forgotPassword);
 publicRouter.patch("/reset-password/:token", authController.resetPassword);
 publicRouter.post("/resend-otp", authController.resendOtp);
+protectedRouter.put("/verify-contact-number", authController.updatePhoneNumber);
 
 module.exports = { publicRouter, protectedRouter };

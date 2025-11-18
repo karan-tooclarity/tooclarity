@@ -30,7 +30,7 @@ exports.getHistory = asyncHandler(async (req, res) => {
     invoiceId: sub.razorpayPaymentId || sub.razorpayOrderId || null,
     planType: sub.planType,
     status: sub.status,
-    amount: amountFromPlan,
+    amount: sub.amount,
     date: sub.startDate || sub.createdAt,
     startDate: sub.startDate,
     endDate: sub.endDate,

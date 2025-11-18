@@ -18,10 +18,10 @@ interface ScheduleCallbackDialogProps {
 }
 
 export interface CallbackFormData {
-  fullName: string;
-  email: string;
+  // fullName: string;
+  // email: string;
   phoneNumber: string;
-  message?: string;
+  // message?: string;
 }
 
 export const ScheduleCallbackDialog: React.FC<ScheduleCallbackDialogProps> = ({
@@ -30,10 +30,7 @@ export const ScheduleCallbackDialog: React.FC<ScheduleCallbackDialogProps> = ({
   onSubmit,
 }) => {
   const [formData, setFormData] = useState<CallbackFormData>({
-    fullName: "",
-    email: "",
     phoneNumber: "",
-    message: "",
   });
 
   const [errors, setErrors] = useState<Partial<CallbackFormData>>({});
@@ -41,19 +38,6 @@ export const ScheduleCallbackDialog: React.FC<ScheduleCallbackDialogProps> = ({
 
   const validateForm = (): boolean => {
     const newErrors: Partial<CallbackFormData> = {};
-
-    // Validate full name
-    if (!formData.fullName.trim()) {
-      newErrors.fullName = "Full name is required";
-    }
-
-    // Validate email
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!formData.email.trim()) {
-      newErrors.email = "Email is required";
-    } else if (!emailRegex.test(formData.email)) {
-      newErrors.email = "Please enter a valid email";
-    }
 
     // Validate phone number
     const phoneRegex = /^[0-9]{10}$/;
@@ -93,10 +77,10 @@ export const ScheduleCallbackDialog: React.FC<ScheduleCallbackDialogProps> = ({
 
       // Reset form and close dialog on success
       setFormData({
-        fullName: "",
-        email: "",
+        // fullName: "",
+        // email: "",
         phoneNumber: "",
-        message: "",
+        // message: "",
       });
       onOpenChange(false);
     } catch (error) {
@@ -109,10 +93,10 @@ export const ScheduleCallbackDialog: React.FC<ScheduleCallbackDialogProps> = ({
   const handleClose = () => {
     // Reset form when closing
     setFormData({
-      fullName: "",
-      email: "",
+      // fullName: "",
+      // email: "",
       phoneNumber: "",
-      message: "",
+      // message: "",
     });
     setErrors({});
     onOpenChange(false);
@@ -127,36 +111,12 @@ export const ScheduleCallbackDialog: React.FC<ScheduleCallbackDialogProps> = ({
         <div className={styles.header}>
           <_DialogHeader className={styles.dialogHeader}>
             <_DialogTitle className={styles.title}>
-              Schedule a Call back
+              Verify your phone number
             </_DialogTitle>
           </_DialogHeader>
         </div>
 
         <form onSubmit={handleSubmit} className={styles.form}>
-          <div className={styles.inputGroup}>
-            <InputField
-              label="Full name"
-              name="fullName"
-              value={formData.fullName}
-              onChange={handleChange}
-              placeholder="Sa*****n"
-              required
-              error={errors.fullName}
-            />
-          </div>
-
-          <div className={styles.inputGroup}>
-            <InputField
-              label="Email Id"
-              name="email"
-              type="email"
-              value={formData.email}
-              onChange={handleChange}
-              placeholder="ex*****@gmail.com"
-              required
-              error={errors.email}
-            />
-          </div>
 
           <div className={styles.inputGroup}>
             <InputField
@@ -170,19 +130,6 @@ export const ScheduleCallbackDialog: React.FC<ScheduleCallbackDialogProps> = ({
               error={errors.phoneNumber}
               inputMode="numeric"
             />
-          </div>
-
-          <div className={styles.inputGroup}>
-            <button
-              type="button"
-              className={styles.askButton}
-              onClick={() => {
-                // This could open a message input or redirect to chat
-                console.log("Ask me anything clicked");
-              }}
-            >
-              Ask me anything ?
-            </button>
           </div>
 
           <div className={styles.submitButtonContainer}>

@@ -10,47 +10,21 @@ import { useAuth } from "@/lib/auth-context";
 import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
 
-// Define user metrics type for strong typing
-interface UserMetrics {
-  programsVisited?: number;
-  wishlistCount?: number;
-  requestsRaised?: number;
-}
-
-interface User {
-  name?: string;
-  email?: string;
-  metrics?: UserMetrics;
-  profilePicture?: string;
-}
 
 const ProfilePage: React.FC = () => {
-  const { user } = useAuth() as { user: User | null };
+  const { user } = useAuth() 
   const { logout } = useAuth();
   const router = useRouter();
 
   // Wishlist count comes from localStorage key 'wishlistedCourses'
-  const [wishlistCount, setWishlistCount] = useState<number | string>(() => {
-    if (typeof window === "undefined") return user?.metrics?.wishlistCount ?? "--";
+  const [, setWishlistCount] = useState<number | string>(() => {
     try {
       const saved = localStorage.getItem("wishlistedCourses");
       return saved ? JSON.parse(saved).length : 0;
     } catch {
-      return user?.metrics?.wishlistCount ?? "--";
+      return user?.wishlistCount?? "--";
     }
   });
-
-  // const handleLogout = async () => {
-  //   try {
-  //     await logout();
-  //     localStorage.removeItem("auth_token");
-  //     toast.success("Logged out successfully!");
-  //     router.push("/student/login");
-  //   } catch (err) {
-  //     console.error("Logout failed:", err);
-  //     toast.error("Logout failed. Please try again.");
-  //   }
-  // };
 
   const handleLogout = useCallback(async () => {
     try {
@@ -70,7 +44,7 @@ const ProfilePage: React.FC = () => {
         const saved = localStorage.getItem("wishlistedCourses");
         setWishlistCount(saved ? JSON.parse(saved).length : 0);
       } catch {
-        setWishlistCount(user?.metrics?.wishlistCount ?? "--");
+        setWishlistCount(user?.wishlistCount ?? "--");
       }
     };
 
@@ -93,9 +67,9 @@ const ProfilePage: React.FC = () => {
   }, [user]); // cleaned dependency list
 
   // Derived primitive values to avoid any casts and complex deps in useMemo
-  const programsVisitedValue = user?.metrics?.programsVisited ?? "42";
-  const wishlistValue = wishlistCount ?? user?.metrics?.wishlistCount ?? "05";
-  const requestsRaisedValue = user?.metrics?.requestsRaised ?? "07";
+  const programsVisitedValue = user?.requestDemoCount ?? "0";
+  const wishlistValue = user?.wishlistCount ?? "0";
+  const requestsRaisedValue = user?.callRequestCount ?? "0";
 
   const stats = useMemo(
     () => [
@@ -205,6 +179,7 @@ const ProfilePage: React.FC = () => {
             name={user?.name || "------"}
             avatar={user?.profilePicture}
             email={user?.email || "----@gmail.com"}
+            contactNumber={user?.phone || "contactNumber"}
           />
           <div className={styles.rightColumn}>
             <ProfileStats stats={stats} />

@@ -16,15 +16,19 @@ import { toast } from "react-toastify";
 interface Otp_DialogBoxProps {
   open: boolean;
   setOpen: (open: boolean) => void;
-  email: string;
+  email?: string;
+  phoneNumber?: string;
   onVerificationSuccess: () => void;
+  fromStudent?: boolean;
 }
 
-export default function Otp_DialogBox({ 
-  open, 
-  setOpen, 
-  email, 
-  onVerificationSuccess 
+export default function Otp_DialogBox({
+  open,
+  setOpen,
+  email,
+  phoneNumber,
+  onVerificationSuccess,
+  fromStudent = false,
 }: Otp_DialogBoxProps) {
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [error, setError] = useState("");
@@ -63,7 +67,7 @@ export default function Otp_DialogBox({
 
   const handleOtpChange = (index: number, value: string) => {
     if (value.length > 1) return; // Only allow single digit
-    
+
     const newOtp = [...otp];
     newOtp[index] = value;
     setOtp(newOtp);
@@ -82,9 +86,84 @@ export default function Otp_DialogBox({
     }
   };
 
+  // const handleVerifyOTP = async () => {
+  //   const otpString = otp.join("");
+
+  //   if (otpString.length !== 6) {
+  //     setError("Please enter complete OTP");
+  //     return;
+  //   }
+
+  //   setLoading(true);
+  //   setError("");
+
+  //   try {
+  //     const response = await authAPI.verifyOTP({
+  //       email: email,
+  //       contactNumber: phoneNumber,
+  //       otp: otpString,
+  //     });
+
+  //     if (response.success) {
+  //       onVerificationSuccess();
+  //       setOpen(false);
+  //       await refreshUser();
+  //       toast.success("Account Registered Successfully!");
+  //       router.push("/signup");
+  //     } else {
+  //       setError(response.message || "Invalid OTP. Please try again.");
+  //     }
+  //   } catch (_error) {
+  //     setError("Failed to verify OTP. Please try again.");
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+
+  //   const handleVerifyOTP = async () => {
+  //   const otpString = otp.join("");
+
+  //   if (otpString.length !== 6) {
+  //     setError("Please enter complete OTP");
+  //     return;
+  //   }
+
+  //   setLoading(true);
+  //   setError("");
+
+  //   try {
+  //     // Build correct payload dynamically
+  //     const payload: any = {
+  //       otp: otpString,
+  //     };
+
+  //     if (email) {
+  //       payload.email = email;
+  //     } else if (phoneNumber) {
+  //       payload.contactNumber = phoneNumber;
+  //     }
+
+  //     const response = await authAPI.verifyOTP(payload);
+
+  //     if (response.success) {
+  //       onVerificationSuccess();
+  //       setOpen(false);
+  //       await refreshUser();
+  //       toast.success("Account Registered Successfully!");
+  //       router.push("/signup");
+  //     } else {
+  //       setError(response.message || "Invalid OTP. Please try again.");
+  //     }
+  //   } catch (_error) {
+  //     setError("Failed to verify OTP. Please try again.");
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+
   const handleVerifyOTP = async () => {
     const otpString = otp.join("");
-    
+
     if (otpString.length !== 6) {
       setError("Please enter complete OTP");
       return;
@@ -94,12 +173,32 @@ export default function Otp_DialogBox({
     setError("");
 
     try {
-      const response = await authAPI.verifyOTP({
-        email,
-        otp: otpString,
-      });
+      type VerifyOtpPayload =
+        | { otp: string; email: string; contactNumber?: never }
+        | { otp: string; contactNumber: string; email?: never };
+
+      let payload: VerifyOtpPayload;
+
+      if (email) {
+        payload = { otp: otpString, email };
+      } else if (phoneNumber) {
+        payload = { otp: otpString, contactNumber: phoneNumber };
+      } else {
+        throw new Error("Either email or phoneNumber must be provided");
+      }
+
+      const response = await authAPI.verifyOTP(payload);
 
       if (response.success) {
+        if (fromStudent) {
+          // STUDENT SIDE FLOW
+          toast.success("Phone verified successfully!");
+          setOpen(false);
+          await refreshUser();
+          return;
+        }
+
+        // INSTITUTE/ADMIN FLOW
         onVerificationSuccess();
         setOpen(false);
         await refreshUser();
@@ -120,8 +219,8 @@ export default function Otp_DialogBox({
     setError("");
 
     try {
-      const response = await authAPI.resendOTP({email: email});
-      
+      const response = await authAPI.resendOTP({ email: email });
+
       if (response.success) {
         setTimer(60);
         setCanResend(false);
@@ -189,9 +288,7 @@ export default function Otp_DialogBox({
           {/* Timer and Resend */}
           <div className="text-center">
             {!canResend ? (
-              <p className="text-gray-500 text-sm">
-                Resend code in {timer}s
-              </p>
+              <p className="text-gray-500 text-sm">Resend code in {timer}s</p>
             ) : (
               <button
                 onClick={handleResendOTP}

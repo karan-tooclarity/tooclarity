@@ -4,6 +4,7 @@ import InputField from "@/components/ui/InputField";
 import { Upload } from "lucide-react";
 import type { Course } from "../../L2DialogBox";
 import { ChangeEvent } from "react";
+import Image from "next/image";
 
 interface StudyAbroadFormProps {
   currentCourse: Course;
@@ -60,9 +61,9 @@ export default function StudyAbroadForm({
   currentCourse,
   handleCourseChange,
   handleFileChange,
-  setCourses,
-  courses,
-  selectedCourseId,
+  // setCourses,
+  // courses,
+  // selectedCourseId,
   courseErrors = {},
 }: StudyAbroadFormProps) {
   return (
@@ -124,7 +125,9 @@ export default function StudyAbroadForm({
           </label>
           <label className="relative w-full h-[180px] rounded-[12px] border-2 border-dashed border-[#DADADD] bg-[#F8F9FA] flex flex-col items-center justify-center cursor-pointer hover:bg-[#F0F1F2] transition-colors overflow-hidden">
             {currentCourse.imagePreviewUrl || currentCourse.imageUrl ? (
-              <img
+              <Image
+                width={100}
+                height={100}
                 src={currentCourse.imagePreviewUrl || currentCourse.imageUrl}
                 alt="Course Image Preview"
                 className="w-[100px] h-[100px] object-cover rounded-md"
@@ -196,7 +199,9 @@ export default function StudyAbroadForm({
             </label>
             <label className="relative w-full h-[180px] rounded-[12px] border-2 border-dashed border-[#DADADD] bg-[#F8F9FA] flex flex-col items-center justify-center cursor-pointer hover:bg-[#F0F1F2] transition-colors overflow-hidden">
               {currentCourse.businessProofPreviewUrl || currentCourse.businessProofUrl ? (
-                <img
+                <Image
+                  width={100}
+                  height={100}
                   src={currentCourse.businessProofPreviewUrl || currentCourse.businessProofUrl}
                   alt="Business Proof Preview"
                   className="w-[100px] h-[100px] object-cover rounded-md"

@@ -272,6 +272,13 @@ export const authAPI = {
     });
   },
 
+  verifyContactNumber: async (contactNumber: string): Promise<ApiResponse> => {
+    return apiRequest("/v1/auth/verify-contact-number", {
+      method: "PUT",
+      body: JSON.stringify({ contactNumber }),
+    });
+  },
+
   // Resend OTP
   resendOTP: async (resendOtpData: resendOtpData): Promise<ApiResponse> => {
     return apiRequest("/v1/auth/resend-otp", {

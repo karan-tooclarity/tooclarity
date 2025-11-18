@@ -7,11 +7,23 @@ const router = express.Router({ mergeParams: true });
 
 router.route('/')
     .post(
-        uploadCourseFiles, // 1. Handle file uploads first
-        // validateCourseCreation, // 2. Then validate the rest of the body
+        uploadCourseFiles,
         courseController.createCourse
     )
     .get(courseController.getAllCoursesForInstitution);
+
+
+router.get('/search', courseController.searchCourses);
+
+router.get('/filter', courseController.filterCourses);
+
+router.get('/summary/metrics/institution-admin', courseController.getInstitutionAdminMetricSummaryUnified);
+router.get('/summary/metrics/institution-admin/range', courseController.getInstitutionAdminMetricByRangeUnified);
+router.get('/summary/metrics/institution-admin/series', courseController.getInstitutionAdminMetricSeriesUnified);
+
+router.post('/:courseId/metrics', courseController.incrementMetricUnified);
+
+router.post("/enquiry", courseController.updateStatsAndCreateEnquiry)
 
 router.route('/:courseId')
     .get(courseController.getCourseById)
@@ -21,15 +33,5 @@ router.route('/:courseId')
         courseController.updateCourse
     )
     .delete(courseController.deleteCourse);
-
-// Unified metric increment (views | comparisons)
-router.post('/:courseId/metrics', courseController.incrementMetricUnified);
-
-// InstitutionAdmin-level course metrics
-router.get('/summary/metrics/institution-admin', courseController.getInstitutionAdminMetricSummaryUnified);
-router.get('/summary/metrics/institution-admin/range', courseController.getInstitutionAdminMetricByRangeUnified);
-router.get('/summary/metrics/institution-admin/series', courseController.getInstitutionAdminMetricSeriesUnified);
-
-// router.post('/:courseId/request-call', courseController.requestCallBack);
 
 module.exports = router;

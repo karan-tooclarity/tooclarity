@@ -38,7 +38,7 @@ export function TimePicker({
         .padStart(2, "0")} ${ampm}`;
       onChange(formatted);
     }
-  }, [hour, minute, ampm,onChange]);
+  }, [hour, minute, ampm, onChange]);
 
   const handleSelect = () => {
     if (hour !== null && minute !== null) {

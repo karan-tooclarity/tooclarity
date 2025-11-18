@@ -13,6 +13,7 @@ export interface User {
   designation?: string;
   linkedin?: string;
   verified: boolean;
+  isPhoneVerified?: boolean;
   institution?: string;
   isPaymentDone?: boolean;
   isProfileCompleted?: boolean;
@@ -21,6 +22,30 @@ export interface User {
   profilePicture?: string;
   address?: string;
   birthday?: string;
+  callRequestCount?: number;
+  wishlistCount?: number;
+  requestDemoCount?: number;
+}
+
+interface UserProfileResponse {
+  id: string;
+  email: string;
+  contactNumber?: string;
+  designation?: string;
+  linkedin?: string;
+  isPhoneVerified?: boolean;
+  name: string;
+  institution?: string;
+  isPaymentDone?: boolean;
+  isProfileCompleted?: boolean;
+  role: string;
+  googleId?: string;
+  ProfilePicture?: string;
+  address?: string;
+  birthday?: string;
+  callRequestCount?: number;
+  wishlistCount?: number;
+  requestDemoCount?: number;
 }
 
 interface UserStoreState {
@@ -66,14 +91,19 @@ export const useUserStore = create<UserStoreState>((set, get) => ({
     })),
 
   // login: async (email: string, password: string, type?: "admin" | "institution" | "student") => {
-  login: async( loginData: LoginData) => {
+  login: async (loginData: LoginData) => {
     try {
       // const response = await authAPI.login({ email, password, type });
       const response = await authAPI.login(loginData);
       if (response.success) {
         const responseData = response.data as Record<string, unknown>;
         const data = responseData?.user || responseData;
-        if (data && typeof data === 'object' && ((data as Record<string, unknown>).id || (data as Record<string, unknown>).email)) {
+        if (
+          data &&
+          typeof data === "object" &&
+          ((data as Record<string, unknown>).id ||
+            (data as Record<string, unknown>).email)
+        ) {
           // Normalize to User shape using available fields
           const userData = data as Record<string, unknown>;
           const user: User = {
@@ -84,10 +114,12 @@ export const useUserStore = create<UserStoreState>((set, get) => ({
             designation: (userData.designation as string) || "",
             linkedin: (userData.linkedin as string) || "",
             verified: (userData.verified as boolean) ?? true,
+            isPhoneVerified: (userData.isPhoneVerified as boolean) ?? false,
             name: userData.name as string,
             institution: (userData.institution as string) || ",",
             isPaymentDone: (userData.isPaymentDone as boolean) ?? false,
-            isProfileCompleted: (userData.isProfileCompleted as boolean) ?? false,
+            isProfileCompleted:
+              (userData.isProfileCompleted as boolean) ?? false,
             role: (userData.role as string) || "",
             googleId: userData.googleId as string,
             address: (userData.address as string) || "",
@@ -102,7 +134,8 @@ export const useUserStore = create<UserStoreState>((set, get) => ({
       }
       return false;
     } catch (e) {
-      if (process.env.NODE_ENV === 'development') console.error("Login error:", e);
+      if (process.env.NODE_ENV === "development")
+        console.error("Login error:", e);
       return false;
     }
   },
@@ -111,7 +144,8 @@ export const useUserStore = create<UserStoreState>((set, get) => ({
     try {
       await authAPI.logout();
     } catch (e) {
-      if (process.env.NODE_ENV === 'development') console.error("Logout error:", e);
+      if (process.env.NODE_ENV === "development")
+        console.error("Logout error:", e);
     } finally {
       get().setUser(null);
     }
@@ -121,32 +155,44 @@ export const useUserStore = create<UserStoreState>((set, get) => ({
     try {
       set({ loading: true });
       const response = await authAPI.getProfile();
+
       if (response.success && response.data) {
-        const data = response.data as Record<string, unknown>;
+        const data = response.data as UserProfileResponse;
+
         const u: User = {
-          id: "",
-          email: data.email as string,
+          id: data.id,
+          email: data.email,
           admin: "",
-          phone: data.contactNumber as string,
-          designation: (data.designation as string) || "",
-          linkedin: (data.linkedin as string) || "",
+          phone: data.contactNumber,
+          designation: data.designation || "",
+          linkedin: data.linkedin || "",
           verified: true,
-          name: data.name as string,
-          institution: (data.institution as string) || ",",
-          isPaymentDone: (data.isPaymentDone as boolean) || false,
-          isProfileCompleted: (data.isProfileCompleted as boolean) || false,
-          role: (data.role as string) || "",
-          googleId: data.googleId as string,
-          profilePicture: (data.profilePicture as string) || "",
-          address: (data.address as string) || "",
-          birthday: (data.birthday as string) || "",
+          isPhoneVerified: data.isPhoneVerified || false,
+          name: data.name,
+          institution: data.institution || "",
+          isPaymentDone: data.isPaymentDone || false,
+          isProfileCompleted: data.isProfileCompleted || false,
+          role: data.role,
+          googleId: data.googleId,
+          profilePicture: data.ProfilePicture || "",
+          address: data.address || "",
+          birthday: data.birthday || "",
         };
+
+        if (data.role === "STUDENT") {
+          u.callRequestCount = data.callRequestCount ?? 0;
+          u.wishlistCount = data.wishlistCount ?? 0;
+          u.requestDemoCount = data.requestDemoCount ?? 0;
+        }
+
         set({ user: u, isAuthenticated: true });
       } else {
         set({ user: null, isAuthenticated: false });
       }
     } catch (e) {
-      if (process.env.NODE_ENV === 'development') console.error("Refresh user error:", e);
+      if (process.env.NODE_ENV === "development") {
+        console.error("Refresh user error:", e);
+      }
       set({ user: null, isAuthenticated: false });
     } finally {
       set({ loading: false });

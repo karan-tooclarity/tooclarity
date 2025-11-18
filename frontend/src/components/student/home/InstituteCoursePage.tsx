@@ -1,19 +1,25 @@
 "use client";
 
-import React, { useState } from 'react';
-import { CoursePage as GenericCoursePage } from './CoursePage';
-import { Kindergarten } from '../coursePage/Kindergarten';
-import { School } from '../coursePage/School';
-import { Intermediate } from '../coursePage/Intermediate';
-import { UG_PG } from '../coursePage/UG_PG';
-import { CoachingCenter } from '../coursePage/CoachingCenter';
-import { StudyHall } from '../coursePage/StudyHall';
-import { ExamPreparation } from '../coursePage/ExamPreparation';
-import { StudyAbroad } from '../coursePage/StudyAbroad';
-import { TuitionCentre } from '../coursePage/TuitionCentre';
-import ScheduleCallbackDialog, { CallbackFormData } from './ScheduleCallbackDialog';
-import BookDemoDialog, { BookDemoFormData } from './BookDemoDialog';
-
+import React, { useState } from "react";
+import { CoursePage as GenericCoursePage } from "./CoursePage";
+import { Kindergarten } from "../coursePage/Kindergarten";
+import { School } from "../coursePage/School";
+import { Intermediate } from "../coursePage/Intermediate";
+import { UG_PG } from "../coursePage/UG_PG";
+import { CoachingCenter } from "../coursePage/CoachingCenter";
+import { StudyHall } from "../coursePage/StudyHall";
+import { ExamPreparation } from "../coursePage/ExamPreparation";
+import { StudyAbroad } from "../coursePage/StudyAbroad";
+import { TuitionCentre } from "../coursePage/TuitionCentre";
+import ScheduleCallbackDialog, {
+  CallbackFormData,
+} from "./ScheduleCallbackDialog";
+import BookDemoDialog, { BookDemoFormData } from "./BookDemoDialog";
+import OtpDialogBox from "../../auth/OtpDialogBox";
+import { studentDashboardAPI } from "../../../lib/students-api";
+import { useUserStore } from "@/lib/user-store";
+import { authAPI } from "@/lib/api";
+import { toast } from 'react-toastify'
 
 interface BaseCourse {
   id: string;
@@ -32,10 +38,11 @@ interface BaseCourse {
   startDate?: string;
   image?: string;
   operationalDays?: string[];
-  instructor?: string,
-  subject?: string,
-  hallName?: string,
-  totalSeats?: string,
+  instructor?: string;
+  subject?: string;
+  hallName?: string;
+  totalSeats?: string;
+  isWishlisted?: boolean;
   features?: {
     recognized?: boolean;
     activities?: boolean;
@@ -43,50 +50,60 @@ interface BaseCourse {
     extraCare?: boolean;
     mealsProvided?: boolean;
     playground?: boolean;
-    resumeBuilding?: boolean
-    linkedinOptimization?: boolean
-    mockInterviews?: boolean
-    exclusiveJobPortal?: boolean
-    placementDrives?: boolean
-    library?: boolean
-    entranceExam?: boolean
-    managementQuota?: boolean
+    resumeBuilding?: boolean;
+    linkedinOptimization?: boolean;
+    mockInterviews?: boolean;
+    exclusiveJobPortal?: boolean;
+    placementDrives?: boolean;
+    library?: boolean;
+    entranceExam?: boolean;
+    managementQuota?: boolean;
     classSize?: string;
-    classSizeRatio?: string
+    classSizeRatio?: string;
     schoolCategory?: string;
     curriculumType?: string;
     hostelFacility?: boolean;
     certification?: boolean;
-    hasWifi?: boolean,
-    hasChargingPoints?: boolean,
-    hasAC?: boolean,
-    hasPersonalLocker?: boolean,
-    collegeCategory?: string,
+    hasWifi?: boolean;
+    hasChargingPoints?: boolean;
+    hasAC?: boolean;
+    hasPersonalLocker?: boolean;
+    collegeCategory?: string;
   };
 }
 
 export interface InstituteCoursePageProps {
   course: BaseCourse;
-  instituteType?: string; // Raw institute type label from API or filters
+  instituteType?: string;
   onBack?: () => void;
   onRequestCall?: () => void;
   onBookDemo?: () => void;
 }
 
-// Normalization helper to map potential variations to component keys
 function normalizeType(raw?: string): string {
-  if (!raw) return '';
+  if (!raw) return "";
   const cleaned = raw.trim().toLowerCase();
-  if (cleaned === "school's" || cleaned === 'school' || cleaned === 'schools') return 'School';
-  if (cleaned === 'under graduation/post graduation') return 'UG_PG';
-  if (cleaned === 'coaching centers' ) return 'CoachingCenter';
-  if (cleaned === 'study halls' ) return 'StudyHall';
-  if (cleaned === 'exam' || cleaned === 'exam preparation' || cleaned === 'exampreparation') return 'ExamPreparation';
-  if (cleaned === 'study abroad' || cleaned === 'studyabroad' || cleaned === 'abroad') return 'StudyAbroad';
-  if (cleaned === "tution center's" ) return 'TuitionCentre';
-  if (cleaned === 'intermediate college(k12)') return 'Intermediate';
-  if (cleaned === 'kindergarten/childcare center') return 'Kindergarten';
-  return ''; // Unknown -> fallback generic
+  if (cleaned === "school's" || cleaned === "school" || cleaned === "schools")
+    return "School";
+  if (cleaned === "under graduation/post graduation") return "UG_PG";
+  if (cleaned === "coaching centers") return "CoachingCenter";
+  if (cleaned === "study halls") return "StudyHall";
+  if (
+    cleaned === "exam" ||
+    cleaned === "exam preparation" ||
+    cleaned === "exampreparation"
+  )
+    return "ExamPreparation";
+  if (
+    cleaned === "study abroad" ||
+    cleaned === "studyabroad" ||
+    cleaned === "abroad"
+  )
+    return "StudyAbroad";
+  if (cleaned === "tution center's") return "TuitionCentre";
+  if (cleaned === "intermediate college(k12)") return "Intermediate";
+  if (cleaned === "kindergarten/childcare center") return "Kindergarten";
+  return "";
 }
 
 interface CourseComponentProps {
@@ -117,54 +134,105 @@ export const InstituteCoursePage: React.FC<InstituteCoursePageProps> = ({
 }) => {
   const [isCallbackDialogOpen, setIsCallbackDialogOpen] = useState(false);
   const [isBookDemoDialogOpen, setIsBookDemoDialogOpen] = useState(false);
+  const [isOtpDialogOpen, setIsOtpDialogOpen] = useState(false);
+  const [pendingAction, setPendingAction] = useState<
+    "requestCall" | "bookDemo" | null
+  >(null);
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const { user } = useUserStore();
 
-  const handleRequestCall = () => {
-    setIsCallbackDialogOpen(true);
+  const handleRequestCall = async () => {
+    if (user?.isPhoneVerified) {
+      try {
+        await studentDashboardAPI.submitEnquiry({
+          institutionId: course.institutionId,
+          type: "callRequest",
+          courseId: course.id,
+        });
+
+        // if (user?.callRequestCount !== undefined) {
+        //   updateUser({ callRequestCount: user.callRequestCount + 1 });
+        // }
+
+        if (onRequestCall) {
+          onRequestCall();
+        }
+      } catch (error) {
+        console.error("Error submitting call request:", error);
+        // toast.error('Failed to request call');
+      }
+    } else {
+      setPendingAction("requestCall");
+      setIsCallbackDialogOpen(true);
+    }
   };
 
   const handleBookDemo = () => {
-    setIsBookDemoDialogOpen(true);
+    if (user?.isPhoneVerified) {
+      setIsBookDemoDialogOpen(true);
+    } else {
+      setPendingAction("bookDemo");
+      setIsCallbackDialogOpen(true);
+    }
   };
 
   const handleCallbackSubmit = async (data: CallbackFormData) => {
-    try {
-      // TODO: Add API call to submit callback request
-      console.log('Callback request submitted:', data);
-      
-      // Call the original onRequestCall if provided
-      if (onRequestCall) {
-        onRequestCall();
-      }
-      
-      // You can add toast notification here
-      // toast.success('Callback request submitted successfully!');
-    } catch (error) {
-      console.error('Error submitting callback request:', error);
-      // toast.error('Failed to submit callback request');
+  try {
+    setPhoneNumber(data.phoneNumber);
+    console.log("Sending OTP to phone:", data.phoneNumber);
+
+    const response = await authAPI.verifyContactNumber(data.phoneNumber);
+
+    if (response?.success) {
+      setIsCallbackDialogOpen(false);
+      setIsOtpDialogOpen(true);
+      toast.success("OTP sent successfully!");
+    } else {
+      toast.error(response?.message || "Failed to send OTP");
     }
-  };
+
+  } catch (error) {
+    toast.error( "Something went wrong while sending OTP");
+    console.error(error);
+  }
+};
 
   const handleDemoSubmit = async (data: BookDemoFormData) => {
     try {
-      // TODO: Add API call to submit demo booking
-      console.log('Demo booking submitted:', data);
-      
-      // Call the original onBookDemo if provided
+      await studentDashboardAPI.submitEnquiry({
+        institutionId: course.institutionId,
+        type: "demoRequest",
+        date: data.date,
+        timeSlot: data.timeSlot,
+      });
+
+      // if (user?.requestDemoCount !== undefined) {
+      //   updateUser({ requestDemoCount: user.requestDemoCount + 1 });
+      // }
+
       if (onBookDemo) {
         onBookDemo();
       }
-      
-      // You can add toast notification here
-      // toast.success('Demo booked successfully!');
+      setIsBookDemoDialogOpen(false);
+      toast.success('Demo booked successfully!');
     } catch (error) {
-      console.error('Error submitting demo booking:', error);
-      // toast.error('Failed to book demo');
+      toast.error('Failed to book demo');
+      console.error("Error booking demo:", error);
     }
   };
 
-  const key = normalizeType(instituteType) || 'StudyHall';
-  console.log("Key:", key);
-  console.log(instituteType) // Default for now
+  const handleOtpVerificationSuccess = () => {
+    if (pendingAction === "requestCall") {
+      if (onRequestCall) {
+        onRequestCall();
+      }
+    } else if (pendingAction === "bookDemo") {
+      setIsBookDemoDialogOpen(true);
+    }
+    setPendingAction(null);
+  };
+
+  const key = normalizeType(instituteType) || "StudyHall";
   const Component = componentMap[key] || GenericCoursePage;
 
   return (
@@ -184,6 +252,13 @@ export const InstituteCoursePage: React.FC<InstituteCoursePageProps> = ({
         open={isBookDemoDialogOpen}
         onOpenChange={setIsBookDemoDialogOpen}
         onSubmit={handleDemoSubmit}
+      />
+      <OtpDialogBox
+        open={isOtpDialogOpen}
+        setOpen={setIsOtpDialogOpen}
+        phoneNumber={phoneNumber}
+        onVerificationSuccess={handleOtpVerificationSuccess}
+        fromStudent={true}
       />
     </>
   );

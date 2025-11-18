@@ -17,17 +17,11 @@ interface BookDemoDialogProps {
 }
 
 export interface BookDemoFormData {
-  fullName: string;
-  email: string;
-  phoneNumber: string;
   date: string;
   timeSlot: "10:00 AM" | "12:00 PM" | "";
 }
 
 interface BookDemoFormErrors {
-  fullName?: string;
-  email?: string;
-  phoneNumber?: string;
   date?: string;
   timeSlot?: string;
 }
@@ -38,9 +32,6 @@ export const BookDemoDialog: React.FC<BookDemoDialogProps> = ({
   onSubmit,
 }) => {
   const [formData, setFormData] = useState<BookDemoFormData>({
-    fullName: "",
-    email: "",
-    phoneNumber: "",
     date: "",
     timeSlot: "",
   });
@@ -50,27 +41,6 @@ export const BookDemoDialog: React.FC<BookDemoDialogProps> = ({
 
   const validateForm = (): boolean => {
     const newErrors: BookDemoFormErrors = {};
-
-    // Validate full name
-    if (!formData.fullName.trim()) {
-      newErrors.fullName = "Full name is required";
-    }
-
-    // Validate email
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!formData.email.trim()) {
-      newErrors.email = "Email is required";
-    } else if (!emailRegex.test(formData.email)) {
-      newErrors.email = "Please enter a valid email";
-    }
-
-    // Validate phone number
-    const phoneRegex = /^[0-9]{10}$/;
-    if (!formData.phoneNumber.trim()) {
-      newErrors.phoneNumber = "Phone number is required";
-    } else if (!phoneRegex.test(formData.phoneNumber.replace(/[^0-9]/g, ""))) {
-      newErrors.phoneNumber = "Please enter a valid 10-digit phone number";
-    }
 
     // Validate date
     if (!formData.date.trim()) {
@@ -119,9 +89,6 @@ export const BookDemoDialog: React.FC<BookDemoDialogProps> = ({
 
       // Reset form and close dialog on success
       setFormData({
-        fullName: "",
-        email: "",
-        phoneNumber: "",
         date: "",
         timeSlot: "",
       });
@@ -136,9 +103,6 @@ export const BookDemoDialog: React.FC<BookDemoDialogProps> = ({
   const handleClose = () => {
     // Reset form when closing
     setFormData({
-      fullName: "",
-      email: "",
-      phoneNumber: "",
       date: "",
       timeSlot: "",
     });
@@ -163,45 +127,6 @@ export const BookDemoDialog: React.FC<BookDemoDialogProps> = ({
         </div>
 
         <form onSubmit={handleSubmit} className={styles.form}>
-          <div className={styles.inputGroup}>
-            <InputField
-              label="Full name"
-              name="fullName"
-              value={formData.fullName}
-              onChange={handleChange}
-              placeholder="Sa*****an"
-              required
-              error={errors.fullName}
-            />
-          </div>
-
-          <div className={styles.inputGroup}>
-            <InputField
-              label="Email Id"
-              name="email"
-              type="email"
-              value={formData.email}
-              onChange={handleChange}
-              placeholder="ex*****@gmail.com"
-              required
-              error={errors.email}
-            />
-          </div>
-
-          <div className={styles.inputGroup}>
-            <InputField
-              label="Phone Number"
-              name="phoneNumber"
-              type="tel"
-              value={formData.phoneNumber}
-              onChange={handleChange}
-              placeholder="93*****90"
-              required
-              error={errors.phoneNumber}
-              inputMode="numeric"
-            />
-          </div>
-
           <div className={styles.inputGroup}>
             <InputField
               label="Date"

@@ -28,6 +28,7 @@ const dashboardRoutes = require("./routes/dashboard.routes");
 const googleRoutes = require('./routes/google.routes');
 const s3Routes = require("./routes/s3.routes")
 const publicRoutes = require("./routes/public.routes");
+const wishlistRoutes = require("./routes/student/wishlist.routes");
 
 // import global auth middleware
 const globalAuthMiddleware = require("./middleware/globalAuth.middleware");
@@ -83,7 +84,6 @@ app.use(express.json({ limit: "10kb" }));
 app.use("/api/v1/auth", authPublicRoutes);
 app.use("/auth/google", googleRoutes);
 app.use("/api/v1/payment/", paymentPublicRoutes);
-app.use("/api/v1/public", publicRoutes);
 // app.get("/health", (req, res) => res.status(200).send("OK"));
 
 // Apply Global Auth Middleware (for all routes below this line)
@@ -96,6 +96,7 @@ const requireStudent = [authorizeRoles(["STUDENT"])];
 app.use("/api/v1/auth", authProtectedRoutes);
 app.use("/api/v1/students", studentRoutes, requireStudent); 
 
+app.use("/api/v1/public", requireStudent, publicRoutes);
 
 app.use("/api/v1/payment", requireInstituteAdmin, paymentProtectedRoutes);
 app.use("/api/v1/admin/coupon", requireAdmin, adminRoute);
@@ -126,6 +127,11 @@ app.use(
   requireStudent,
   courseRoutes
 );
+
+app.use("/api/v1/student/wishlist",
+  requireStudent,
+  wishlistRoutes
+)
 
 // Unified subscription scope under institution
 app.use(

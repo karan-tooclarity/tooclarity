@@ -3,7 +3,7 @@ const mongoose = require("mongoose");
 const enquirySchema = new mongoose.Schema({
   institution: { type: mongoose.Schema.Types.ObjectId, ref: "Institution", required: true, index: true },
 
-  programInterest: { type: String, required: true, trim: true },
+  programInterest: { type: String, trim: true },
   enquiryType: {
     type: String,
     enum: ["Requested for callback", "Requested for demo"],

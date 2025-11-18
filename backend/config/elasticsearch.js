@@ -1,4 +1,5 @@
 // backend/config/elasticsearch.js
+require('dotenv').config({ path: './.env.production' });
 const { Client } = require('@elastic/elasticsearch');
 const logger = require('./logger');
 
@@ -10,6 +11,9 @@ const esClient = new Client({
   node: ELASTICSEARCH_NODE,
   auth: {
     apiKey: process.env.ELASTICSEARCH_API_KEY
+  },
+  ssl: {
+    rejectUnauthorized: false,
   },
 });
 

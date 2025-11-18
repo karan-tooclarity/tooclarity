@@ -303,7 +303,7 @@ export const CoachingCenter: React.FC<CoursePageProps> = ({
 
             <div className={styles.featureItem} style={{ minWidth: 0 }}>
               <div className={styles.featureIcon} style={{ minWidth: 0, position: 'relative' }}>
-                <sup className={styles.additionalBottomSupNo} >{course.features?.certification? "Yes" : "No"}</sup>
+                <sup className={styles.additionalBottomSup} >{course.features?.certification? "Yes" : "No"}</sup>
                 <svg width="25" height="30" viewBox="0 0 25 30" fill="none" xmlns="http://www.w3.org/2000/svg" xmlnsXlink="http://www.w3.org/1999/xlink">
                 <rect width="25" height="30" fill="url(#pattern0_2450_4031)"/>
                 <defs>

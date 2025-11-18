@@ -1,4 +1,6 @@
 const mongoose = require("mongoose");
+const { Client } = require('@elastic/elasticsearch');
+const esClient = new Client({ node: process.env.ELASTICSEARCH_URL || 'http://localhost:9200' });
 
 const courseSchema = new mongoose.Schema(
   {
@@ -35,7 +37,7 @@ const courseSchema = new mongoose.Schema(
     location: {
       type: String,
       trim: true,
-      maxlength: 100,
+      maxlength: 10000,
     },
     imageUrl: {
       type: String, // file path / URL
@@ -108,5 +110,75 @@ const courseSchema = new mongoose.Schema(
 );
 
 const Course = mongoose.model("Course", courseSchema);
+
+
+// --- POST SAVE ---
+courseSchema.post('save', async function (doc) {
+  try {
+    if (doc.status === 'Active') {
+      await esClient.index({
+        index: 'courses_index',
+        id: doc._id.toString(),
+        document: {
+          id: doc._id.toString(),
+          courseName: doc.courseName || null,
+          selectBranch: doc.selectBranch || null,
+        },
+      });
+      console.log(`✅ Indexed new course ${doc._id} to Elasticsearch`);
+    } else {
+      // Remove if not active
+      await esClient.delete({
+        index: 'courses_index',
+        id: doc._id.toString(),
+      }).catch(() => {});
+      console.log(`🗑️ Removed inactive course ${doc._id} from Elasticsearch`);
+    }
+  } catch (err) {
+    console.error('❌ Error syncing course to Elasticsearch (save):', err.message);
+  }
+});
+
+// --- POST UPDATE ---
+courseSchema.post('findOneAndUpdate', async function (doc) {
+  try {
+    if (!doc) return;
+    if (doc.status === 'Active') {
+      await esClient.index({
+        index: 'courses_index',
+        id: doc._id.toString(),
+        document: {
+          id: doc._id.toString(),
+          courseName: doc.courseName || null,
+          selectBranch: doc.selectBranch || null,
+        },
+      });
+      console.log(`🔁 Updated course ${doc._id} in Elasticsearch`);
+    } else {
+      await esClient.delete({
+        index: 'courses_index',
+        id: doc._id.toString(),
+      }).catch(() => {});
+      console.log(`🗑️ Removed inactive course ${doc._id} from Elasticsearch`);
+    }
+  } catch (err) {
+    console.error('❌ Error syncing course to Elasticsearch (update):', err.message);
+  }
+});
+
+// --- POST DELETE ---
+courseSchema.post('findOneAndDelete', async function (doc) {
+  try {
+    if (doc) {
+      await esClient.delete({
+        index: 'courses_index',
+        id: doc._id.toString(),
+      });
+      console.log(`🗑️ Deleted course ${doc._id} from Elasticsearch`);
+    }
+  } catch (err) {
+    console.error('❌ Error syncing course to Elasticsearch (delete):', err.message);
+  }
+});
 
 module.exports = Course;

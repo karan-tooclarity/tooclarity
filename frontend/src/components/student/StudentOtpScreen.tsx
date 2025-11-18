@@ -2,7 +2,6 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import { Loader2 } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { authAPI } from "@/lib/api";
 interface StudentOtpScreenProps {
   phoneNumber?: string;
@@ -13,8 +12,8 @@ interface StudentOtpScreenProps {
 
 const StudentOtpScreen: React.FC<StudentOtpScreenProps> = ({
   phoneNumber = "",
-  _onVerify,
-  onBack,
+  // _onVerify,
+  // onBack,
   onSuccess,
 }) => {
   // const router = useRouter();

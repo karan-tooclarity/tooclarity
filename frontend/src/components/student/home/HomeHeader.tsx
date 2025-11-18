@@ -3,6 +3,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
+import { studentDashboardAPI, type DashboardCourse } from '@/lib/students-api';
 import styles from './HomeHeader.module.css';
 
 interface HomeHeaderProps {
@@ -13,6 +14,7 @@ interface HomeHeaderProps {
   onNotificationClick?: () => void;
   onWishlistClick?: () => void;
   onSearchChange?: (query: string) => void;
+  onSearchResults?: (query: string, results: DashboardCourse[] | null) => void;
   onProfileClick?: () => void;
   /**
    * Controls visibility of the search bar + filter button section.
@@ -29,6 +31,7 @@ export const HomeHeader: React.FC<HomeHeaderProps> = ({
   onNotificationClick,
   // onWishlistClick,
   onSearchChange,
+  onSearchResults,
   onProfileClick,
   showSearchAndFilter = true,
 }) => {
@@ -36,6 +39,9 @@ export const HomeHeader: React.FC<HomeHeaderProps> = ({
   // const pathname = usePathname();
   const [, setIsMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);
+  const [searchTerm, setSearchTerm] = useState(searchValue);
+  const latestOnSearchChange = useRef(onSearchChange);
+  const latestOnSearchResults = useRef(onSearchResults);
 
   // const navItems = [
   //   {
@@ -98,6 +104,49 @@ export const HomeHeader: React.FC<HomeHeaderProps> = ({
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
   }, []);
+  useEffect(() => {
+    latestOnSearchChange.current = onSearchChange;
+  }, [onSearchChange]);
+  useEffect(() => {
+    latestOnSearchResults.current = onSearchResults;
+  }, [onSearchResults]);
+  useEffect(() => {
+    setSearchTerm(searchValue);
+  }, [searchValue]);
+  useEffect(() => {
+    if (!showSearchAndFilter) {
+      return;
+    }
+    const controller = new AbortController();
+    const timeoutId = window.setTimeout(async () => {
+      const rawQuery = searchTerm;
+      const trimmedQuery = rawQuery.trim();
+      latestOnSearchChange.current?.(rawQuery);
+      if (!trimmedQuery) {
+        latestOnSearchResults.current?.(rawQuery, null);
+        return;
+      }
+      try {
+        const response = await studentDashboardAPI.searchInstitutionCourses(trimmedQuery, controller.signal);
+        console.log("response", response.data);
+        if (response.success && Array.isArray(response.data)) {
+          latestOnSearchResults.current?.(rawQuery, response.data);
+        } else {
+          latestOnSearchResults.current?.(rawQuery, null);
+        }
+      } catch (error) {
+        if (error instanceof DOMException && error.name === 'AbortError') {
+          return;
+        }
+        console.error(error);
+        latestOnSearchResults.current?.(rawQuery, null);
+      }
+    }, 500);
+    return () => {
+      window.clearTimeout(timeoutId);
+      controller.abort();
+    };
+  }, [searchTerm, showSearchAndFilter]);
   const getInitials = (name: string) => {
     return name
       .split(' ')
@@ -149,8 +198,8 @@ export const HomeHeader: React.FC<HomeHeaderProps> = ({
                 type="text"
                 className={styles.searchBar}
                 placeholder='"Search courses "'
-                value={searchValue}
-                onChange={(e) => onSearchChange?.(e.target.value)}
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
                 aria-label="Search courses"
               />
             </div>

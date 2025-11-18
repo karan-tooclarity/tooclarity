@@ -262,3 +262,24 @@
     font-size: 14px;
   }
 }
+
+.applyButtonContainer {
+  margin-top: 12px;
+  display: flex;
+  justify-content: flex-end; /* aligns next to Institute Type */
+}
+
+.applyButton {
+  background-color: #0222d7;
+  color: #fff;
+  padding: 8px 20px;
+  font-size: 14px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.applyButton:hover {
+  background-color: #001aa3;
+}

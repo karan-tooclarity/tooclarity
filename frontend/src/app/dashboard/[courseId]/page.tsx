@@ -142,6 +142,10 @@ const CourseDetailsPage: React.FC = () => {
     );
   }
 
+  const extendedCareString = courseData.institution.extendedCare ? "Yes" : "No";
+  const mealsProvided = courseData.institution.mealsProvided ? "Yes" : "No";
+  const playground = courseData.institution.playground ? "Yes" : "No";
+
   return (
     <>
     <div className={styles.pageContainer}>
@@ -184,13 +188,14 @@ const CourseDetailsPage: React.FC = () => {
           subject: courseData.course.subject || '',
           hallName: courseData.course.hallName || '',
           totalSeats: courseData.course.totalSeats || '0',
+          isWishlisted: courseData.isWishlisted || false,
           features: {
             recognized: true,
             activities: true,
             transport: courseData.institution.busService === true,
-            extraCare: courseData.institution.extendedCare === 'yes',
-            mealsProvided: courseData.institution.mealsProvided === 'Yes',
-            playground: courseData.institution.playground === true,
+            extraCare: extendedCareString === "Yes",
+            mealsProvided: mealsProvided === "Yes",
+            playground: courseData.institution.playground === true || playground === "Yes",
             resumeBuilding: courseData.institution.resumeBuilding === true,
             linkedinOptimization: courseData.institution.linkedinOptimization === true,
             mockInterviews: courseData.institution.mockInterviews === true,

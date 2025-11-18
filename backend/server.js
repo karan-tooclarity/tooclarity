@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const dotenv = require('dotenv');
 const path = require('path');
 const { Institution } = require('./models/Institution');
+const { initializeElasticsearch } = require('./config/esSync');
 
 // ✅ Load correct environment file
 const envFile = process.env.NODE_ENV === 'production' ? '.env.production' : '.env.development';
@@ -13,9 +14,16 @@ console.log(`Using file: ${envFile}`);
 
 const app = require('./app');
 
-// ✅ MongoDB connection
 const DB = process.env.MONGO_URI;
-mongoose.connect(DB).then(() => console.log('✅ MongoDB connection successful!'));
+
+mongoose.connection.once('open', async () => {
+  console.log('✅ MongoDB connection successful!');
+  try {
+    await initializeElasticsearch(); // 🚀 Perform safe ES sync once DB is ready
+  } catch (err) {
+    console.error('Elasticsearch sync error:', err?.message || err);
+  }
+});
 
 // ✅ Start Express server
 const port = process.env.PORT || 3001;

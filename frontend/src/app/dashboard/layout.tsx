@@ -73,7 +73,7 @@ export default function DashboardLayout({
             >
               <Topbar
                 userName={user?.name || user?.admin}
-                onSearch={(query) => {}}
+                onSearch={() => {}}
                 onNotificationClick={() => {}}
                 onProfileClick={() => {}}
               />

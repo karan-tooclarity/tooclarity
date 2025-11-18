@@ -3,6 +3,7 @@
 import { Course } from "@/components/auth/L2DialogBox";
 import { apiRequest, type ApiResponse } from "./api";
 import { InstitutionRecord } from "./localDb";
+import { ActiveFilters } from "@/components/student/home/FilterSidebar";
 
 export type StudentApiResponse<T = unknown> = ApiResponse<T>;
 
@@ -81,10 +82,10 @@ export interface CoachingCenterDetails {
   // Add other coaching-specific fields
 }
 
-export type AcademicProfileDetails = 
-  | KindergartenDetails 
-  | SchoolDetails 
-  | GraduationDetails 
+export type AcademicProfileDetails =
+  | KindergartenDetails
+  | SchoolDetails
+  | GraduationDetails
   | CoachingCenterDetails
   | Record<string, unknown>;
 
@@ -138,57 +139,128 @@ export interface CourseForStudent {
   type?: "PROGRAM" | "COURSE";
 }
 
-export interface DashboardCourse{
+export interface DashboardCourse {
   _id: string;
   courseName: string;
   imageUrl?: string;
   courseDuration?: string;
   priceOfCourse?: number;
   selectBranch?: string;
-  institutionDetails:{
-    id:string;
-    instituteName:string;
-    logoUrl?:string;
-    locationURL?:string;
-  }
+  isWishlisted?: boolean;
+  institutionDetails: {
+    id: string;
+    instituteName: string;
+    logoUrl?: string;
+    locationURL?: string;
+  };
 }
 
-export interface coursePageData{
+export interface coursePageData {
   course: Course;
   institution: InstitutionRecord;
+  isWishlisted?: boolean;
 }
 
 // ===== Student Dashboard API (stubs) =====
 export const studentDashboardAPI = {
   // Fetch the current user's profile (shared profile endpoint)
   getProfile: async (): Promise<StudentApiResponse<StudentProfile>> => {
-    const res = await studentApiRequest<StudentProfile>("/v1/profile", { method: "GET" });
+    const res = await studentApiRequest<StudentProfile>("/v1/profile", {
+      method: "GET",
+    });
     // Normalize shape to StudentProfile best-effort
     const rawData = res.data || res;
-    const data = typeof rawData === 'object' && rawData !== null ? rawData : {};
-    
+    const data = typeof rawData === "object" && rawData !== null ? rawData : {};
+
     const normalized: StudentProfile = {
-      id: (data as Record<string, unknown>)?.id as string || (data as Record<string, unknown>)?._id as string || "",
-      name: (data as Record<string, unknown>)?.name as string || "",
-      email: (data as Record<string, unknown>)?.email as string || "",
-      phoneNumber: (data as Record<string, unknown>)?.contactNumber as string | undefined,
-      profilePicture: (data as Record<string, unknown>)?.profilePicture as string || (data as Record<string, unknown>)?.ProfilePicutre as string, // backend may use ProfilePicutre
-      birthday: (data as Record<string, unknown>)?.birthday as string | undefined, // if backend provides
+      id:
+        ((data as Record<string, unknown>)?.id as string) ||
+        ((data as Record<string, unknown>)?._id as string) ||
+        "",
+      name: ((data as Record<string, unknown>)?.name as string) || "",
+      email: ((data as Record<string, unknown>)?.email as string) || "",
+      phoneNumber: (data as Record<string, unknown>)?.contactNumber as
+        | string
+        | undefined,
+      profilePicture:
+        ((data as Record<string, unknown>)?.profilePicture as string) ||
+        ((data as Record<string, unknown>)?.ProfilePicutre as string), // backend may use ProfilePicutre
+      birthday: (data as Record<string, unknown>)?.birthday as
+        | string
+        | undefined, // if backend provides
     };
-    
+
     return { success: true, message: "ok", data: normalized };
   },
 
   // Fetch all visible courses (public endpoint - no auth required)
-  getVisibleCourses: async (): Promise<StudentApiResponse<DashboardCourse[]>> => {
+  getVisibleCourses: async (): Promise<
+    StudentApiResponse<DashboardCourse[]>
+  > => {
     return studentApiRequest<DashboardCourse[]>("/v1/public/courses", {
       method: "GET",
     });
   },
 
-  getCoursebyId: async (course_id : string): Promise<StudentApiResponse<coursePageData>> => {
-    return studentApiRequest<coursePageData>(`/v1/student/course/${course_id}`, {
-      method: "GET",
+  searchInstitutionCourses: async (
+    search?: string,
+    signal?: AbortSignal
+  ): Promise<StudentApiResponse<DashboardCourse[]>> => {
+    const params = new URLSearchParams();
+    if (search) params.set("q", search);
+
+    const qs = params.toString();
+
+    return studentApiRequest<DashboardCourse[]>(
+      `/v1/student/course/search${qs ? `?${qs}` : ""}`,
+      { method: "GET", signal }
+    );
+  },
+
+  filterInstitutionCourses: async (
+    filters: ActiveFilters,
+    signal?: AbortSignal
+  ): Promise<StudentApiResponse<DashboardCourse[]>> => {
+    const params = new URLSearchParams();
+
+    Object.entries(filters).forEach(([key, value]) => {
+      if (Array.isArray(value) && value.length > 0) {
+        params.set(key, value.join(","));
+      } else if (typeof value === "string" && value.trim() !== "") {
+        params.set(key, value);
+      }
+    });
+
+    const qs = params.toString();
+
+    return studentApiRequest<DashboardCourse[]>(
+      `/v1/student/course/filter${qs ? `?${qs}` : ""}`,
+      { method: "GET", signal }
+    );
+  },
+
+  getCoursebyId: async (
+    course_id: string
+  ): Promise<StudentApiResponse<coursePageData>> => {
+    return studentApiRequest<coursePageData>(
+      `/v1/student/course/${course_id}`,
+      {
+        method: "GET",
+      }
+    );
+  },
+
+  // Submit enquiry for call request or demo booking
+  submitEnquiry: async (payload: {
+    institutionId: string;
+    type: "callRequest" | "demoRequest";
+    date?: string;
+    timeSlot?: string;
+    courseId?: string;
+  }): Promise<StudentApiResponse<unknown>> => {
+    return studentApiRequest("/v1/student/course/enquiry", {
+      method: "POST",
+      body: JSON.stringify(payload),
     });
   },
 
@@ -246,6 +318,24 @@ export const studentAuthAPI = {
     return studentApiRequest("/v1/student/auth/login", {
       method: "POST",
       body: JSON.stringify(loginData),
+    });
+  },
+};
+
+export const studentWishlistApi = {
+  getWishlist: async (): Promise<StudentApiResponse<DashboardCourse[]>> => {
+    return studentApiRequest("/v1/student/wishlist", {
+      method: "GET",
+    });
+  },
+
+  toggleWishlist: async (
+    courseId: string,
+    isWishlisted: boolean
+  ): Promise<StudentApiResponse> => {
+    return studentApiRequest("/v1/student/wishlist/", {
+      method: "POST",
+      body: JSON.stringify({ courseId, isWishlisted }),
     });
   },
 };

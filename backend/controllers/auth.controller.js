@@ -601,3 +601,44 @@ exports.resendOtp = async (req, res, next) => {
     next(error);
   }
 };
+
+exports.updatePhoneNumber = async (req, res, next) => {
+  try {
+    const userId = req.userId;
+    const { contactNumber } = req.body;
+
+    if (!contactNumber) {
+      return res.status(400).json({
+        status: "fail",
+        message: "Phone number cannot be empty",
+      });
+    }
+
+    // Update user and return the updated document
+    const updatedUser = await InstituteAdmin.findByIdAndUpdate(
+      userId,
+      { contactNumber,
+        isPhoneVerified: false,
+      },
+      { new: true } // returns updated document
+    );
+
+    if (!updatedUser) {
+      return res.status(404).json({
+        status: "fail",
+        message: "User not found",
+      });
+    }
+
+    await otpService.sendVerificationTokenSMS(contactNumber);
+
+    return res.status(200).json({
+      status: "success",
+      message: "Phone number updated successfully",
+      data: updatedUser,
+    });
+  } catch (error) {
+    console.log(error);
+    next(error);
+  }
+};
