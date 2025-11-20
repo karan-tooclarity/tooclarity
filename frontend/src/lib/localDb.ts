@@ -41,6 +41,12 @@ export type CourseRecord = {
   createdBranch?: string; // optional UI field
   eligibilityCriteria?: string;
   hallName?: string;
+  consultancyName?: string;
+  studentAdmissions?: number;
+  countriesOffered?:string;
+  academicOfferings?: string;
+  state?: string;
+  district?: string;
 };
 
 export type BranchCoursesRecord = {
@@ -850,6 +856,7 @@ export interface DashboardInstitutionCache {
   _id: string;
   instituteName: string;
   institutionAdmin?: string;
+  institutionType?: string;
   lastUpdated: number;
 }
 
@@ -867,6 +874,7 @@ export async function saveDashboardInstitutionCache(inst: Omit<DashboardInstitut
         _id: inst._id,
         instituteName: inst.instituteName,
         institutionAdmin: inst.institutionAdmin,
+        institutionType: inst.institutionType,
         lastUpdated: Date.now()
       } as DashboardInstitutionCache;
       const putReq = store.put(record);

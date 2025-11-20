@@ -1,4 +1,3 @@
-
 import Joi from "joi";
 
 export const alphaNumericNameRule = Joi.string()
@@ -1005,6 +1004,17 @@ export const stateRule = Joi.string()
     "string.min": "State must be at least 2 characters",
     "string.max": "State cannot exceed 50 characters",
     "any.required": "State is required",
+  });
+
+export const districtRule = Joi.string()
+  .min(2)
+  .max(100)
+  .required()
+  .messages({
+    "string.empty": "District is required",
+    "string.min": "District must be at least 2 characters",
+    "string.max": "District cannot exceed 100 characters",
+    "any.required": "District is required",
   });
 
 // URL validation (must start with http:// or https://)

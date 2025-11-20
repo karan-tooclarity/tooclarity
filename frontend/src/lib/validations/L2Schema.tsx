@@ -15,6 +15,8 @@ import {
   subDomainTypeRule,
   courseHighlightsRule,
   durationRule,
+  stateRule,
+  districtRule,
 } from "./ValidationRules";
 
 
@@ -44,6 +46,8 @@ export const baseCourseSchema = Joi.object({
       "any.required": "Price is required",
     }),
   location: urlRule.required(),
+  state: stateRule,
+  district: districtRule,
   mode: Joi.string().valid("Offline", "Online", "Hybrid").required().messages({
     "any.only": "Mode must be Offline, Online, or Hybrid",
     "string.empty": "Mode is required",
@@ -74,6 +78,8 @@ export const CoachingCenterSchema = Joi.object({
     "any.required": "Price is required",
   }),
   location: urlRule.required(),
+  state: stateRule,
+  district: districtRule,
   mode: Joi.string().valid("Offline", "Online", "Hybrid").required().messages({
     "any.only": "Mode must be Offline, Online, or Hybrid",
     "string.empty": "Mode is required",
@@ -153,6 +159,8 @@ export const StudyHallSchema = Joi.object({
     "number.min": "Price cannot be negative.",
     "any.required": "Price Per Seat is required.",
   }),
+  state: stateRule,
+  district: districtRule,
 
   // Boolean fields should be explicitly required as the user must select one
   // ✅ Add .allow(null) to each boolean validation rule
@@ -244,6 +252,8 @@ export const TuitionCenterSchema = Joi.object({
     "number.min": "Price cannot be negative.",
     "any.required": "Price Per Seat is required.",
   }),
+  state: stateRule,
+  district: districtRule,
 
   // You might need to add 'image' validation if it's required
   image: Joi.any().optional(), // Or .required() if needed
@@ -297,6 +307,8 @@ export const UGPGSchema = Joi.object({
     "string.pattern.base":
       "Eligibility criteria Including at least one letter and can only include letters, numbers, spaces, . & ' -",
   }),
+  state: stateRule,
+  district: districtRule,
   createdBranch: createdBranchRule,
 });
 
@@ -332,70 +344,6 @@ export const branchSchema = Joi.object({
   }),
 });
 
-export const StudyAbroadSchema = Joi.object({
-  consultancyName: Joi.string()
-    .min(3)
-    .max(100)
-    .required()
-    .messages({
-      "string.empty": "Consultancy name is required",
-      "string.min": "Consultancy name must be at least 3 characters",
-      "string.max": "Consultancy name must be at most 100 characters",
-      "any.required": "Consultancy name is required",
-    }),
-
-  studentAdmissions: Joi.number()
-    .min(0)
-    .required()
-    .messages({
-      "number.base": "Student admissions must be a number",
-      "number.min": "Student admissions cannot be negative",
-      "any.required": "Student admissions is required",
-    }),
-
-  countriesOffered: Joi.string()
-    .min(1)
-    .required()
-    .messages({
-      "string.empty": "Please select a country",
-      "any.required": "Country is required",
-    }),
-
-  academicOfferings: Joi.string()
-    .min(1)
-    .required()
-    .messages({
-      "string.empty": "Please select an academic offering",
-      "any.required": "Academic offering is required",
-    }),
-
-  image: Joi.any().optional(),
-  imageUrl: Joi.string().uri().allow("").optional().messages({
-    "string.uri": "Must be a valid URL",
-  }),
-  imagePreviewUrl: Joi.string().allow("").optional(),
-
-  brochure: Joi.any().optional(),
-  brochureUrl: Joi.string().uri().allow("").optional().messages({
-    "string.uri": "Must be a valid URL",
-  }),
-  brochurePreviewUrl: Joi.string().allow("").optional(),
-
-  businessProof: Joi.any().optional(),
-  businessProofUrl: Joi.string().uri().allow("").optional().messages({
-    "string.uri": "Must be a valid URL",
-  }),
-  businessProofPreviewUrl: Joi.string().allow("").optional(),
-
-  panAadhaar: Joi.any().optional(),
-  panAadhaarUrl: Joi.string().uri().allow("").optional().messages({
-    "string.uri": "Must be a valid URL",
-  }),
-  panAadhaarPreviewUrl: Joi.string().allow("").optional(),
-
-  createdBranch: createdBranchRule,
-});
-
 // L2Schema.tsx
 export const L2Schemas: Record<string, Joi.ObjectSchema> = {
   basic: baseCourseSchema,
@@ -404,5 +352,4 @@ export const L2Schemas: Record<string, Joi.ObjectSchema> = {
   tuition: TuitionCenterSchema,
   ugpg: UGPGSchema,
   branch: branchSchema,
-  studyAbroad: StudyAbroadSchema,
 };

@@ -39,6 +39,16 @@ const courseSchema = new mongoose.Schema(
       trim: true,
       maxlength: 10000,
     },
+    state: {
+      type: String,
+      trim: true,
+      maxlength: 100,
+    },
+    district: {
+      type: String,
+      trim: true,
+      maxlength: 100,
+    },
     imageUrl: {
       type: String, // file path / URL
     },

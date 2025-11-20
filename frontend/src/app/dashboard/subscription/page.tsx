@@ -88,7 +88,7 @@ function ProgramsPage() {
 
   const filteredPrograms = (Array.isArray(programs) ? programs : []).filter((p: Record<string, unknown>)=>{
     const q = search.trim().toLowerCase();
-    const name = String(p?.CourseName||"").toLowerCase();
+    const name = String(p?.CourseName|| p?.selectBranch || "").toLowerCase();
     const branch = String(p?.branchName || (p.branch as Record<string, unknown>)?.branchName || (p.institution as Record<string, unknown>)?.name || "").toLowerCase();
     const passSearch = !q || name.includes(q) || branch.includes(q);
     const branchId = typeof p.branch === 'object' && p.branch !== null ? String((p.branch as Record<string, unknown>)?._id || '') : String(p.branch || '');
@@ -156,28 +156,29 @@ function ProgramsPage() {
                   <tr key={String(p._id) || idx} className="border-t border-gray-100 dark:border-gray-800">
                     <td className="py-4 pr-4">{String(idx+1).padStart(2,'0')}</td>
                     <td className="py-4 pr-4">
-                      <div className="font-medium">{String(p.programName)}</div>
+                      <div className="font-medium">{String(p.programName || p.selectBranch)}</div>
                       <div className="text-xs text-gray-500 flex items-center gap-1">
                         <span className="opacity-60">◎</span> {String(p.branchName || (p.branch as Record<string, unknown>)?.branchName || 'Public')}
                       </div>
                     </td>
                     <td className="py-4 pr-4">
                       {(() => {
-                        const status = getProgramStatus(String(p.startDate || ''), String(p.endDate || ''));
+                        // const status = getProgramStatus(String(p.startDate || ''), String(p.endDate || ''));
+                        const status = p.status as string;
                         const statusColors = {
                           active: 'bg-green-100 text-green-700',
-                          upcoming: 'bg-blue-100 text-blue-700',
-                          expired: 'bg-red-100 text-red-700',
-                          invalid: 'bg-gray-100 text-gray-700'
+                          // upcoming: 'bg-blue-100 text-blue-700',
+                          // expired: 'bg-red-100 text-red-700',
+                          inactive: 'bg-gray-100 text-gray-700'
                         };
                         // Map status to match analytics page
-                        const displayStatus = status.status === 'active' ? 'Live' : 
-                                            status.status === 'upcoming' ? 'Paused' : 
-                                            status.status === 'expired' ? 'Expired' : 
-                                            'Draft';
+                        // const displayStatus = status.status === 'active' ? 'Live' : 
+                        //                     status.status === 'upcoming' ? 'Paused' : 
+                        //                     status.status === 'expired' ? 'Expired' : 
+                        //                     'Draft';
                         return (
-                          <span className={`inline-flex items-center text-xs rounded-full px-2 py-1 ${statusColors[status.status as keyof typeof statusColors]}`}>
-                            ● {displayStatus}
+                          <span className={`inline-flex items-center text-xs rounded-full px-2 py-1 ${statusColors[status as keyof typeof statusColors]}`}>
+                            ● {status}
                           </span>
                         );
                       })()}
