@@ -122,6 +122,15 @@ export interface Course {
   instructorProfile: string;
   subject: string;
   createdBranch: string;
+  consultancyName?: string;
+  studentAdmissions?: string;
+  countriesOffered?: string;
+  academicOfferings?: string;
+  businessProofPreviewUrl?: string;
+  businessProofUrl?: string;
+  panAadhaarPreviewUrl?: string;
+  panAadhaarUrl?: string;
+  panAadhaar?:File | null;
 }
 
 // Branch shape used locally in this component; dbId tracks IndexedDB id

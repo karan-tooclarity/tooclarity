@@ -202,7 +202,7 @@ export default function StudyAbroadForm({
                 <Image
                   width={100}
                   height={100}
-                  src={currentCourse.businessProofPreviewUrl || currentCourse.businessProofUrl}
+                  src={currentCourse.businessProofPreviewUrl || currentCourse.businessProofUrl ||"/placeholder.png"}
                   alt="Business Proof Preview"
                   className="w-[100px] h-[100px] object-cover rounded-md"
                 />
