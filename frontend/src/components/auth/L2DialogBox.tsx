@@ -100,6 +100,7 @@ export interface Course {
   aboutBranch: string;
   educationType: string;
   classSize: string;
+  classSizeRatio?: string;
   categoriesType: string;
   domainType: string;
   subDomainType: string;
