@@ -1,4 +1,6 @@
 const mongoose = require("mongoose");
+const elasticService = require("../../utils/ElasticSearchUtil");
+const { Institution } = require("../Institution");
 
 const StudyAbroadSchema = new mongoose.Schema({
   institution: {
@@ -53,6 +55,49 @@ const StudyAbroadSchema = new mongoose.Schema({
   brochureUrl: { type: String },
   businessProofUrl: { type: String },
   panAadhaarUrl: { type: String },
+});
+
+// SAVE
+StudyAbroadSchema.post("save", async function (doc) {
+  try {
+    if (doc.status !== "Active") {
+      // If saved as inactive, ensure it's removed from ES
+      await elasticService.removeCourse(doc._id);
+      return;
+    }
+
+    const institution = await Institution.findById(doc.institution).lean();
+    await elasticService.indexCourse(doc, institution);
+  } catch (err) {
+    console.error("ES save hook error:", err.message);
+  }
+});
+
+// UPDATE
+StudyAbroadSchema.post("findOneAndUpdate", async function (doc) {
+  try {
+    if (!doc) return;
+    
+    if (doc.status !== "Active") {
+      await elasticService.removeCourse(doc._id);
+      return;
+    }
+    
+    const institution = await Institution.findById(doc.institution).lean();
+    await elasticService.indexCourse(doc, institution);
+  } catch (err) {
+    console.error("ES update hook error:", err.message);
+  }
+});
+
+// DELETE
+StudyAbroadSchema.post("findOneAndDelete", async function (doc) {
+  try {
+    if (!doc) return;
+    await elasticService.removeCourse(doc._id);
+  } catch (err) {
+    console.error("ES delete hook error:", err.message);
+  }
 });
 
 const StudyAbroadCourse = mongoose.model(

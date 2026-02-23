@@ -979,6 +979,133 @@ exports.requestCallback = asyncHandler(async (req, res, next) => {
   }
 });
 
+// exports.searchCourses = asyncHandler(async (req, res) => {
+//   const userId = req.userId;
+//   const page = parseInt(req.query.page, 10) || 1;
+//   const limit = parseInt(req.query.limit, 10) || 10;
+//   const from = (page - 1) * limit;
+//   const { q } = req.query;
+
+//   // 🔍 Elasticsearch query
+//   const esQuery = q
+//     ? {
+//       multi_match: {
+//         query: q,
+//         fields: ["courseName", "selectBranch"],
+//         fuzziness: "AUTO",
+//       },
+//     }
+//     : { match_all: {} };
+
+//   // 🧠 Search in Elasticsearch
+//   const result = await esClient.search({
+//     index: "courses_index",
+//     from,
+//     size: limit,
+//     query: esQuery,
+//   });
+
+//   const ids = result.hits.hits.map((hit) => hit._source.id);
+
+//   if (!ids.length) {
+//     return res.status(200).json({
+//       success: true,
+//       total: 0,
+//       currentPage: page,
+//       totalPages: 0,
+//       data: [],
+//     });
+//   }
+
+//   // 🧩 MongoDB Aggregation to join institution info
+//   const mongoResults = await Course.aggregate([
+//     {
+//       $match: {
+//         _id: { $in: ids.map((id) => new mongoose.Types.ObjectId(id)) },
+//       },
+//     },
+
+//     {
+//       $lookup: {
+//         from: "institutions",
+//         localField: "institution",
+//         foreignField: "_id",
+//         as: "institutionDetails",
+//       },
+//     },
+//     { $unwind: "$institutionDetails" },
+
+//     {
+//       $lookup: {
+//         from: "wishlists",
+//         let: { courseId: "$_id", userId: new mongoose.Types.ObjectId(userId) },
+//         pipeline: [
+//           {
+//             $match: {
+//               $expr: {
+//                 $and: [
+//                   { $eq: ["$courseId", "$$courseId"] },
+//                   { $eq: ["$userId", "$$userId"] },
+//                 ],
+//               },
+//             },
+//           },
+//         ],
+//         as: "wishlistEntry",
+//       },
+//     },
+
+//     // Compute isWishlisted
+//     {
+//       $addFields: {
+//         isWishlisted: { $gt: [{ $size: "$wishlistEntry" }, 0] },
+//       },
+//     },
+
+//     {
+//       $project: {
+//         _id: 1,
+//         priceOfCourse: 1,
+//         courseDuration: 1,
+//         courseName: 1,
+//         imageUrl: 1,
+//         selectBranch: 1,
+//         isWishlisted: 1,
+//         "institutionDetails._id": 1,
+//         "institutionDetails.instituteName": 1,
+//         "institutionDetails.logoUrl": 1,
+//         "institutionDetails.locationURL": 1,
+//       },
+//     },
+//   ]);
+
+//   // Maintain ES order (by relevance)
+//   const orderedResults = ids
+//     .map((id) => mongoResults.find((course) => course._id.toString() === id))
+//     .filter(Boolean);
+
+//   if (userId) {
+//     for (const course of orderedResults) {
+//       RedisUtil.trackUniqueCourseViewOrImpression(
+//         "leadImpression",
+//         course._id.toString(),
+//         course.institutionDetails._id.toString(),
+//         userId,
+//       );
+//     }
+//   }
+
+//   // 🧾 Send response
+//   res.status(200).json({
+//     success: true,
+//     total: result.hits.total.value,
+//     currentPage: page,
+//     totalPages: Math.ceil(result.hits.total.value / limit),
+//     data: orderedResults,
+//   });
+// });
+
+
 exports.searchCourses = asyncHandler(async (req, res) => {
   const userId = req.userId;
   const page = parseInt(req.query.page, 10) || 1;
@@ -986,18 +1113,22 @@ exports.searchCourses = asyncHandler(async (req, res) => {
   const from = (page - 1) * limit;
   const { q } = req.query;
 
-  // 🔍 Elasticsearch query
   const esQuery = q
     ? {
-      multi_match: {
-        query: q,
-        fields: ["courseName", "selectBranch"],
-        fuzziness: "AUTO",
-      },
-    }
+        multi_match: {
+          query: q,
+          fields: [
+            "name^4",
+            "courseName^3",
+            "selectBranch^2",
+            "instituteName^2",
+            "searchText",
+          ],
+          fuzziness: "AUTO",
+        },
+      }
     : { match_all: {} };
 
-  // 🧠 Search in Elasticsearch
   const result = await esClient.search({
     index: "courses_index",
     from,
@@ -1005,9 +1136,9 @@ exports.searchCourses = asyncHandler(async (req, res) => {
     query: esQuery,
   });
 
-  const ids = result.hits.hits.map((hit) => hit._source.id);
+  const courses = result.hits.hits.map((hit) => hit._source);
 
-  if (!ids.length) {
+  if (!courses.length) {
     return res.status(200).json({
       success: true,
       total: 0,
@@ -1017,91 +1148,56 @@ exports.searchCourses = asyncHandler(async (req, res) => {
     });
   }
 
-  // 🧩 MongoDB Aggregation to join institution info
-  const mongoResults = await Course.aggregate([
-    {
-      $match: {
-        _id: { $in: ids.map((id) => new mongoose.Types.ObjectId(id)) },
-      },
+  // Wishlist check from Redis
+  let wishlistResults = [];
+  // if (userId) {
+  //   const pipeline = RedisUtil.client.pipeline();
+
+  //   courses.forEach((course) => {
+  //     pipeline.sismember(`wishlist:user:${userId}`, course.id);
+  //   });
+
+  //   wishlistResults = await pipeline.exec();
+  // }
+
+  
+
+  // Transform into DashboardCourse format
+  const formattedCourses = courses.map((course, index) => ({
+    _id: course.id,
+    courseName: course.name,
+    imageUrl: course.imageUrl,
+    courseDuration: course.courseDuration,
+    priceOfCourse: course.priceOfCourse,
+    selectBranch: course.selectBranch,
+    isWishlisted: userId ? wishlistResults[index][1] === 1 : false,
+
+    institutionDetails: {
+      id: course.institutionId,
+      instituteName: course.instituteName,
+      logoUrl: course.instituteLogo,
+      locationURL: course.locationURL,
     },
+  }));
 
-    {
-      $lookup: {
-        from: "institutions",
-        localField: "institution",
-        foreignField: "_id",
-        as: "institutionDetails",
-      },
-    },
-    { $unwind: "$institutionDetails" },
-
-    {
-      $lookup: {
-        from: "wishlists",
-        let: { courseId: "$_id", userId: new mongoose.Types.ObjectId(userId) },
-        pipeline: [
-          {
-            $match: {
-              $expr: {
-                $and: [
-                  { $eq: ["$courseId", "$$courseId"] },
-                  { $eq: ["$userId", "$$userId"] },
-                ],
-              },
-            },
-          },
-        ],
-        as: "wishlistEntry",
-      },
-    },
-
-    // Compute isWishlisted
-    {
-      $addFields: {
-        isWishlisted: { $gt: [{ $size: "$wishlistEntry" }, 0] },
-      },
-    },
-
-    {
-      $project: {
-        _id: 1,
-        priceOfCourse: 1,
-        courseDuration: 1,
-        courseName: 1,
-        imageUrl: 1,
-        selectBranch: 1,
-        isWishlisted: 1,
-        "institutionDetails._id": 1,
-        "institutionDetails.instituteName": 1,
-        "institutionDetails.logoUrl": 1,
-        "institutionDetails.locationURL": 1,
-      },
-    },
-  ]);
-
-  // Maintain ES order (by relevance)
-  const orderedResults = ids
-    .map((id) => mongoResults.find((course) => course._id.toString() === id))
-    .filter(Boolean);
-
+  // Track impressions
   if (userId) {
-    for (const course of orderedResults) {
+    for (const course of formattedCourses) {
       RedisUtil.trackUniqueCourseViewOrImpression(
         "leadImpression",
-        course._id.toString(),
-        course.institutionDetails._id.toString(),
-        userId,
+        course._id,
+        course.institutionDetails.id,
+        userId
       );
     }
   }
 
-  // 🧾 Send response
   res.status(200).json({
     success: true,
     total: result.hits.total.value,
     currentPage: page,
     totalPages: Math.ceil(result.hits.total.value / limit),
-    data: orderedResults,
+    data: formattedCourses,
   });
 });
 

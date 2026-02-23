@@ -1,4 +1,6 @@
 const mongoose = require("mongoose");
+const elasticService = require("../../utils/ElasticSearchUtil");
+const { Institution } = require("../Institution");
 
 const UpskillingSchema = new mongoose.Schema({
   institution: {
@@ -55,6 +57,50 @@ const UpskillingSchema = new mongoose.Schema({
   emioptions: { type: String, enum: ["Yes", "No"] },
   imageUrl: { type: String },
   brochureUrl: { type: String },
+});
+
+
+// SAVE
+UpskillingSchema.post("save", async function (doc) {
+  try {
+    if (doc.status !== "Active") {
+      // If saved as inactive, ensure it's removed from ES
+      await elasticService.removeCourse(doc._id);
+      return;
+    }
+
+    const institution = await Institution.findById(doc.institution).lean();
+    await elasticService.indexCourse(doc, institution);
+  } catch (err) {
+    console.error("ES save hook error:", err.message);
+  }
+});
+
+// UPDATE
+UpskillingSchema.post("findOneAndUpdate", async function (doc) {
+  try {
+    if (!doc) return;
+    
+    if (doc.status !== "Active") {
+      await elasticService.removeCourse(doc._id);
+      return;
+    }
+    
+    const institution = await Institution.findById(doc.institution).lean();
+    await elasticService.indexCourse(doc, institution);
+  } catch (err) {
+    console.error("ES update hook error:", err.message);
+  }
+});
+
+// DELETE
+UpskillingSchema.post("findOneAndDelete", async function (doc) {
+  try {
+    if (!doc) return;
+    await elasticService.removeCourse(doc._id);
+  } catch (err) {
+    console.error("ES delete hook error:", err.message);
+  }
 });
 
 const UpskillingCourse = mongoose.model("UpskillingCourse", UpskillingSchema);
